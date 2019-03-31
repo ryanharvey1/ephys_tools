@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  Copyright 2002-2010 The MathWorks, Inc. -->
+<!-- $Revision: 1.1.6.3 $  $Date: 2010/06/18 15:52:24 $ -->
+<demos>
+   <name>Curve Fitting</name>
+   <type>toolbox</type>
+   <icon>$toolbox/matlab/icons/matlabicon.gif</icon>
+   <description isCdata="no">
+       <p>
+           Curve Fitting Toolbox&#8482; provides graphical tools and command-line 
+           functions for fitting curves and surfaces to data. The toolbox lets you 
+           perform exploratory data analysis, preprocess and post-process data, 
+           compare candidate models, and remove outliers. You can conduct 
+           regression analysis using the library of linear and nonlinear models 
+           provided or specify your own custom equations.  The library provides 
+           optimized solver parameters and starting conditions to improve the 
+           quality of your fits. The toolbox also supports nonparametric modeling
+           techniques, such as splines, interpolation, and smoothing. 
+       </p><p>
+           After you create a fit, you can apply a variety of post-processing 
+           methods for plotting, interpolation and extrapolation, estimating 
+           confidence intervals, and calculating integrals and derivatives.
+       </p>
+</description>
+
+<demosection><label>Curve Fitting Tools</label>
+   <demoitem>
+	  <label>Importing and Smoothing Data (2 min, 19 sec)</label>
+       <type>video</type>
+      <callback>playbackdemo('CurveFittingImportSmooth', 'toolbox/curvefit/web/demos')</callback>
+   </demoitem>
+   <demoitem>
+      <label>Fitting Periodic Data Using a Custom Equation (3 min, 17 sec)</label>
+       <type>video</type>
+      <callback>playbackdemo('CurveFittingCustomEqn', 'toolbox/curvefit/web/demos')</callback>
+   </demoitem>
+</demosection>
+
+<demosection><label>Introductory Spline Demos</label>
+   <demoitem>
+      <label>Introduction to Spline Fitting</label>
+      <type>M-file</type>
+      <source>splexmpl</source>
+   </demoitem>
+</demosection>
+
+<demosection><label>Basic Spline Methods</label>
+   <demoitem>
+      <label>Cubic Spline Interpolation</label>
+      <type>M-file</type>
+      <source>csapidem</source>
+   </demoitem>
+   <demoitem>
+      <label>Cubic Smoothing Splines</label>
+      <type>M-file</type>
+      <source>csapsdem</source>
+   </demoitem>
+   <demoitem>
+      <label>Spline Interpolation and Real-World Data</label>
+      <type>M-file</type>
+      <source>spapidem</source>
+   </demoitem>
+</demosection>
+   
+<demosection><label>Introduction to Spline Forms</label>
+   <demoitem>
+      <label>Introduction to the B-form</label>
+      <type>M-file</type>
+      <source>spalldem</source>
+   </demoitem>
+   <demoitem>
+      <label>Introduction to the PPFORM</label>
+      <type>M-file</type>
+      <source>ppalldem</source>
+   </demoitem>
+   <demoitem>
+      <label>How to Choose Knots</label>
+      <type>M-file</type>
+      <source>pckkntdm</source>
+   </demoitem>
+   <demoitem>
+      <label>The Knots Make the B-Spline</label>
+      <type>M-GUI</type>
+      <source>bspligui</source>
+   </demoitem>
+</demosection>
+   
+<demosection><label>Spline Application Examples</label>
+   <demoitem>
+      <label>Experiment with Spline Approximation Methods</label>
+      <type>M-GUI</type>
+      <source>splinetool</source>
+   </demoitem>
+   <demoitem>
+      <label>Constructing Spline Curves</label>
+      <type>M-file</type>
+      <source>getcurv2</source>
+   </demoitem>
+   <demoitem>
+      <label>Smoothing a Histogram</label>
+      <type>M-file</type>
+      <source>histodem</source>
+   </demoitem>
+   <demoitem>
+      <label>Construction of a Chebyshev Spline</label>
+      <type>M-file</type>
+      <source>chebdem</source>
+   </demoitem>
+   <demoitem>
+      <label>Solving a Nonlinear ODE with a Boundary Layer by Collocation</label>
+      <type>M-file</type>
+      <source>difeqdem</source>
+   </demoitem>
+   <demoitem>
+      <label>Bivariate Tensor Product Splines</label>
+      <type>M-file</type>
+      <source>tspdem</source>
+   </demoitem>
+   <demoitem>
+      <label>Working with Spline Curves</label>
+      <type>M-file</type>
+      <source>spcrvdem</source>
+   </demoitem>
+</demosection>
+
+</demos>

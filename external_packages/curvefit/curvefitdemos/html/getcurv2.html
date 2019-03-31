@@ -1,0 +1,84 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Constructing Spline Curves</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="getcurv2.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit getcurv2">Open getcurv2.m in the Editor</a></div><div class="right"><a href="matlab:echodemo getcurv2">Run in the Command Window</a></div></div><div class="content"><h1>Constructing Spline Curves</h1><!--introduction--><p>This demo illustrates how to use the <tt>cscvn</tt> command from Curve Fitting Toolbox&#8482; to construct cubic spline curves in two and three dimensions.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Selecting the Points</a></li><li><a href="#2">Connecting the Points</a></li><li><a href="#4">3-D Spline Curves</a></li><li><a href="#5">Connecting the Points</a></li></ul></div><h2>Selecting the Points<a name="1"></a></h2><p>This example will demonstrate how to draw a smooth curve through a list of points, in the order in which they occur. First, we select some random points in the plane, and store them in a matrix, one point per <i>column</i>.</p><pre class="codeinput">npts = 10;
+xy = [randn(1,npts); randn(1,npts)];
+plot(xy(1,:),xy(2,:),<span class="string">'ro'</span>,<span class="string">'LineWidth'</span>,2);
+text(xy(1,:), xy(2,:),[repmat(<span class="string">'  '</span>,npts,1), num2str((1:npts)')])
+set(gca,<span class="string">'XTick'</span>,[],<span class="string">'YTick'</span>,[])
+</pre><img vspace="5" hspace="5" src="getcurv2_01.png" alt=""> <h2>Connecting the Points<a name="2"></a></h2><p>Next, construct the curve using the <tt>cscvn</tt> command and plot it using <tt>fnplt</tt>.</p><pre class="codeinput">hold <span class="string">on</span>
+fnplt(cscvn(xy),<span class="string">'r'</span>,2)
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="getcurv2_02.png" alt=""> <p>You could also use the <tt>getcurve</tt> command if you wanted to input the list of points interactively.</p><h2>3-D Spline Curves<a name="4"></a></h2><p>It's just as easy to create spline curves in three dimensions. This time, we'll do something less random. First, we generate the points.</p><pre class="codeinput">npts = 13;
+t = linspace(0,8*pi,npts);
+z = linspace(-1,1,npts);
+omz = sqrt(1-z.^2);
+xyz = [cos(t).*omz; sin(t).*omz; z];
+plot3(xyz(1,:),xyz(2,:),xyz(3,:),<span class="string">'ro'</span>,<span class="string">'LineWidth'</span>,2);
+text(xyz(1,:),xyz(2,:),xyz(3,:),[repmat(<span class="string">'  '</span>,npts,1), num2str((1:npts)')])
+set(gca,<span class="string">'XTick'</span>,[],<span class="string">'YTick'</span>,[],<span class="string">'ZTick'</span>,[])
+box <span class="string">on</span>
+</pre><img vspace="5" hspace="5" src="getcurv2_03.png" alt=""> <h2>Connecting the Points<a name="5"></a></h2><p>Here is the 3D spline curve through these points provided by <tt>cscvn</tt>. By appending the first point to the end of the list, we get a smooth <i>closed</i> curve.</p><pre class="codeinput">hold <span class="string">on</span>
+fnplt(cscvn(xyz(:,[1:end 1])),<span class="string">'r'</span>,2)
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="getcurv2_04.png" alt=""> <p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Constructing Spline Curves
+% This demo illustrates how to use the |cscvn| command from Curve Fitting
+% Toolbox(TM) to construct cubic spline curves in two and three dimensions.
+
+% Copyright 1987-2010 The MathWorks, Inc.
+% $Revision: 1.1.6.3 $
+
+%% Selecting the Points
+% This example will demonstrate how to draw a smooth curve through a list of
+% points, in the order in which they occur. First, we select some random
+% points in the plane, and store them in a matrix, one point per _column_.
+npts = 10;
+xy = [randn(1,npts); randn(1,npts)];
+plot(xy(1,:),xy(2,:),'ro','LineWidth',2);
+text(xy(1,:), xy(2,:),[repmat('  ',npts,1), num2str((1:npts)')])
+set(gca,'XTick',[],'YTick',[])
+
+%% Connecting the Points
+% Next, construct the curve using the |cscvn| command and plot it using
+% |fnplt|.
+hold on
+fnplt(cscvn(xy),'r',2)
+hold off
+%%
+% You could also use the |getcurve| command if you wanted to input the list
+% of points interactively.
+
+%% 3-D Spline Curves
+% It's just as easy to create spline curves in three dimensions. This time,
+% we'll do something less random. First, we generate the points.
+npts = 13;
+t = linspace(0,8*pi,npts);
+z = linspace(-1,1,npts);
+omz = sqrt(1-z.^2);
+xyz = [cos(t).*omz; sin(t).*omz; z];
+plot3(xyz(1,:),xyz(2,:),xyz(3,:),'ro','LineWidth',2);
+text(xyz(1,:),xyz(2,:),xyz(3,:),[repmat('  ',npts,1), num2str((1:npts)')])
+set(gca,'XTick',[],'YTick',[],'ZTick',[])
+box on
+
+%% Connecting the Points
+% Here is the 3D spline curve through these points provided by |cscvn|. By
+% appending the first point to the end of the list, we get a smooth _closed_
+% curve.
+hold on
+fnplt(cscvn(xyz(:,[1:end 1])),'r',2)
+hold off
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

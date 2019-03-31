@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  Copyright 2002-2010 The MathWorks, Inc. -->
+<!-- $Revision: 1.1.6.3 $  $Date: 2010/06/18 15:52:24 $ -->
+<demos>
+   <name>Curve Fitting</name>
+   <type>toolbox</type>
+   <icon>$toolbox/matlab/icons/matlabicon.gif</icon>
+   <description isCdata="no">
+       <p>           Curve Fitting Toolbox(TM) は、曲線と曲面をデータに近似するための            グラフィカル ツールおよびコマンドライン関数を提供します。この            ツールボックスを使うことで、探索的データ解析、データの前処理と後処理、            候補となるモデルの比較、および外れ値を削除できます。            与えられた線形および非線形モデルのライブラリを使用して回帰分析したり、            ユーザー定義のカスタム式を指定することができます。ライブラリによって            最適化されたソルバー パラメーターと近似の質を改善するための開始条件が            与えられます。さらに、ツールボックスは、スプライン、内挿および           平滑化などのノンパラメトリックなモデリング手法もサポートします。        </p><p>           近似を作成した後、プロット表示、内挿と外挿、            信頼区間の推定、および積分と微分の計算などの            さまざまな後処理法を適用できます。       </p>
+</description>
+
+<demosection><label>曲線近似ツール</label>
+   <demoitem>
+	  <label>データのインポートと平滑化 (2 分 19 秒)</label>
+       <type>video</type>
+      <callback>playbackdemo('CurveFittingImportSmooth', 'toolbox/curvefit/web/demos')</callback>
+   </demoitem>
+   <demoitem>
+      <label>カスタム式を使用した周期的なデータ近似 (3 分 17 秒)</label>
+       <type>video</type>
+      <callback>playbackdemo('CurveFittingCustomEqn', 'toolbox/curvefit/web/demos')</callback>
+   </demoitem>
+</demosection>
+
+<demosection><label>スプラインのデモの紹介</label>
+   <demoitem>
+      <label>スプライン近似ツールの紹介</label>
+      <type>M-file</type>
+      <source>splexmpl</source>
+   </demoitem>
+</demosection>
+
+<demosection><label>基本的なスプライン法</label>
+   <demoitem>
+      <label>3 次スプライン内挿</label>
+      <type>M-file</type>
+      <source>csapidem</source>
+   </demoitem>
+   <demoitem>
+      <label>3 次平滑化スプライン</label>
+      <type>M-file</type>
+      <source>csapsdem</source>
+   </demoitem>
+   <demoitem>
+      <label>スプライン内挿と実世界のデータ</label>
+      <type>M-file</type>
+      <source>spapidem</source>
+   </demoitem>
+</demosection>
+   
+<demosection><label>スプラインの型の紹介</label>
+   <demoitem>
+      <label>B 型 スプラインの紹介</label>
+      <type>M-file</type>
+      <source>spalldem</source>
+   </demoitem>
+   <demoitem>
+      <label>PPFORM の紹介</label>
+      <type>M-file</type>
+      <source>ppalldem</source>
+   </demoitem>
+   <demoitem>
+      <label>節点の選択方法</label>
+      <type>M-file</type>
+      <source>pckkntdm</source>
+   </demoitem>
+   <demoitem>
+      <label>節点による B スプラインの作成</label>
+      <type>M-GUI</type>
+      <source>bspligui</source>
+   </demoitem>
+</demosection>
+   
+<demosection><label>スプライン アプリケーションの例</label>
+   <demoitem>
+      <label>スプライン近似法の試行</label>
+      <type>M-GUI</type>
+      <source>splinetool</source>
+   </demoitem>
+   <demoitem>
+      <label>スプライン曲線の作成</label>
+      <type>M-file</type>
+      <source>getcurv2</source>
+   </demoitem>
+   <demoitem>
+      <label>平滑化ヒストグラム</label>
+      <type>M-file</type>
+      <source>histodem</source>
+   </demoitem>
+   <demoitem>
+      <label>チェビシェフ スプラインの作成</label>
+      <type>M-file</type>
+      <source>chebdem</source>
+   </demoitem>
+   <demoitem>
+      <label>ガウス点での配列による ODE の解法</label>
+      <type>M-file</type>
+      <source>difeqdem</source>
+   </demoitem>
+   <demoitem>
+      <label>二変数テンソル積スプライン</label>
+      <type>M-file</type>
+      <source>tspdem</source>
+   </demoitem>
+   <demoitem>
+      <label>スプライン曲線の取り扱い</label>
+      <type>M-file</type>
+      <source>spcrvdem</source>
+   </demoitem>
+</demosection>
+
+</demos>

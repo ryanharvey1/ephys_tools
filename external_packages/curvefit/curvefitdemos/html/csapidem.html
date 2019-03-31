@@ -1,0 +1,565 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Cubic Spline Interpolation</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="csapidem.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit csapidem">Open csapidem.m in the Editor</a></div><div class="right"><a href="matlab:echodemo csapidem">Run in the Command Window</a></div></div><div class="content"><h1>Cubic Spline Interpolation</h1><!--introduction--><p>This demo illustrates how to use the <tt>csapi</tt> and <tt>csape</tt> commands from Curve Fitting Toolbox&#8482; to construct cubic spline interpolants.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">The CSAPI Command</a></li><li><a href="#5">How to Check the Output of CSAPI</a></li><li><a href="#6">Example: The Truncated Power Function</a></li><li><a href="#9">The Interpolation Error</a></li><li><a href="#11">A Truncated Power That Cannot be Reproduced</a></li><li><a href="#13">Using the ppform Instead of Values</a></li><li><a href="#14">Example: Differentiating and Integrating the Interpolant</a></li><li><a href="#19">The CSAPE Command</a></li><li><a href="#22">Other End Conditions: The `Natural' Spline Interpolant</a></li><li><a href="#25">Other End Conditions: Prescribing Second Derivatives</a></li><li><a href="#27">Other End Conditions: Prescribing Slopes</a></li><li><a href="#28">Other End Conditions: Mixed End Conditions</a></li><li><a href="#29">Other End Conditions: Periodic Conditions</a></li><li><a href="#30">End Conditions Not Explicitly Covered by CSAPI or CSAPE</a></li></ul></div><h2>The CSAPI Command<a name="1"></a></h2><p>The command</p><pre>   values = csapi(x,y,xx)</pre><p>returns the values at <tt>xx</tt> of the cubic spline interpolant to the given data (<tt>x,y</tt>), using the not-a-knot end condition. This interpolant is a piecewise cubic function, with break sequence <tt>x</tt>, whose cubic pieces join together to form a function with two continuous derivatives. The "not-a-knot" end condition means that, at the first and last interior break, even the third derivative is continuous (up to round-off error).</p><p>Specifying only two data points results in a straight line interpolant.</p><pre class="codeinput">x = [0 1];
+y = [2 0];
+xx = linspace(0,6,121);
+plot(xx,csapi(x,y,xx),<span class="string">'k-'</span>,x,y,<span class="string">'ro'</span>)
+title(<span class="string">'Interpolant to Two Points'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_01.png" alt=""> <p>Specifying three data points gives a parabola.</p><pre class="codeinput">x = [2 3 5];
+y = [1 0 4];
+plot(xx,csapi(x,y,xx),<span class="string">'k-'</span>,x,y,<span class="string">'ro'</span>)
+title(<span class="string">'Interpolant to Three Points'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_02.png" alt=""> <p>More generally, four or more data points give a cubic spline.</p><pre class="codeinput">x = [1 1.5 2 4.1 5];
+y = [1 -1 1 -1 1];
+plot(xx,csapi(x,y,xx),<span class="string">'k-'</span>,x,y,<span class="string">'ro'</span>)
+title(<span class="string">'Cubic Spline Interpolant to Five Points'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_03.png" alt=""> <h2>How to Check the Output of CSAPI<a name="5"></a></h2><p>These look like nice interpolants, but how do we check that <tt>csapi</tt> performs as advertised?</p><p>We already saw that <tt>csapi</tt> interpolates, because we plotted the data points and the interpolant went right through those points. But to be sure that we get a cubic spline, it is best to start with data from a cubic spline of the expected sort and check whether <tt>csapi</tt> <i>reproduces</i> that cubic spline, i.e., gives back that cubic spline from which the data were taken.</p><h2>Example: The Truncated Power Function<a name="6"></a></h2><p>One simple example of a cubic spline function to check against is the truncated third power, i.e., the function</p><p><img src="csapidem_eq01242.png" alt="$$f(x) = ((x - xi)_{+})^3,$$"></p><p>where <tt>xi</tt> is one of the breaks and the "+" subscript indicates the <i>truncation function</i>, provided by the command <tt>subplus</tt>:</p><pre class="codeinput">help <span class="string">subplus</span>
+</pre><pre class="codeoutput"> SUBPLUS Positive part.
+ 
+                                   x , if  x&gt;=0
+    y  = subplus(x) := (x)_{+}  =               ,
+                                   0 , if  x&lt;=0
+ 
+   returns the positive part of X. Used for computing truncated powers.
+
+    Reference page in Help browser
+       doc subplus
+
+</pre><p>The truncated 3rd power is plotted below for the particular choice <tt>xi</tt> = <tt>2</tt>. As expected, it is zero to the left of 2, and rises like (x-2)^3 to the right of 2.</p><pre class="codeinput">plot(xx, subplus(xx-2).^3,<span class="string">'y'</span>,<span class="string">'LineWidth'</span>,3)
+axis([0,6,-10,70])
+</pre><img vspace="5" hspace="5" src="csapidem_04.png" alt=""> <p>Now we interpolate this particular cubic spline at the data sites 0:6, and plot the interpolant on top of the spline, in black.</p><pre class="codeinput">x = 0:6;
+y = subplus(x-2).^3;
+values = csapi(x,y,xx);
+hold <span class="string">on</span>
+plot(xx,values,<span class="string">'k'</span>,x,y,<span class="string">'ro'</span>)
+hold <span class="string">off</span>
+title(<span class="string">'Interpolant to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_05.png" alt=""> <h2>The Interpolation Error<a name="9"></a></h2><p>When comparing two functions, it is usually much more informative to plot their difference.</p><pre class="codeinput">plot(xx, values - subplus(xx-2).^3)
+title(<span class="string">'Error in Cubic Spline Interpolation to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_06.png" alt=""> <p>To put the size of their difference into context, you can also compute the maximum data value. This shows the error to be no worse than the inevitable round-off.</p><pre class="codeinput">max_y = max(abs(y))
+</pre><pre class="codeoutput">
+max_y =
+
+    64
+
+</pre><h2>A Truncated Power That Cannot be Reproduced<a name="11"></a></h2><p>As a further test, we interpolate a truncated power whose <tt>csapi</tt>-produced interpolant at the sites 0:6 cannot coincide with it. For example, the first interior break of the interpolating spline is not really a knot since <tt>csapi</tt> uses the "not-a-knot" condition, hence the interpolant has three continuous derivatives at that site. This implies that we should not be able to reproduce the truncated 3rd power centered at that site since its third derivative is discontinuous across that site.</p><pre class="codeinput">values = csapi(x,subplus(x-1).^3,xx);
+plot(xx, values - subplus(xx-1).^3)
+title(<span class="string">'Error in Not-a-Knot Interpolant to ((x-1)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_07.png" alt=""> <p>Since 1 is a first interior knot, it is not active for this interpolant.</p><p>The difference is as large as .18, but decays rapidly as we move away from 1. This illustrates that <i>cubic spline interpolation is essentially local</i>.</p><h2>Using the ppform Instead of Values<a name="13"></a></h2><p>It is possible to retain the interpolating cubic spline in a form suitable for subsequent evaluation, or for calculating its derivatives, or for other manipulations. This is done by calling <tt>csapi</tt> in the form</p><pre>  pp = csapi(x,y)</pre><p>which returns the ppform of the interpolant. You can evaluate this form at some new points <tt>xx</tt> by the command</p><pre>  values = fnval(pp,xx)</pre><p>You can differentiate the interpolant by the command</p><pre>  dpp = fnder(pp)</pre><p>or integrate it by the command</p><pre>  ipp = fnint(pp)</pre><p>which return the ppform of the derivative or the integral, respectively.</p><h2>Example: Differentiating and Integrating the Interpolant<a name="14"></a></h2><p>To demonstrate differentiation of an interpolant, we plot the derivative of this truncated power</p><p><img src="csapidem_eq33109.png" alt="$$f'_2(x) = 3((x - 2)_{+})^2,$$"></p><p>(again in yellow) and then, on top of it, the derivative of our interpolant to the original truncated third power function (again in black).</p><pre class="codeinput">plot(xx,3*subplus(xx-2).^2,<span class="string">'y'</span>,<span class="string">'LineWidth'</span>,3)
+pp = csapi(x,subplus(x-2).^3);
+dpp = fnder(pp);
+hold <span class="string">on</span>
+plot(xx,fnval(dpp,xx),<span class="string">'k'</span>)
+hold <span class="string">off</span>
+title(<span class="string">'Derivative of Interpolant to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_08.png" alt=""> <p>Again, the more informative comparison is to plot their difference, and as before this is no bigger than round-off.</p><pre class="codeinput">plot(xx, fnval(dpp,xx) - 3*subplus(xx-2).^2)
+title(<span class="string">'Error in Derivative of interpolant to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_09.png" alt=""> <p>The second derivative of the truncated power is</p><p><img src="csapidem_eq51510.png" alt="$$f''_2(x) = 6(x-2)_+$$"></p><p>A plot of the difference between this function and the second derivative of the interpolant to the original function shows that there are now jumps, but they are still within roundoff.</p><pre class="codeinput">ddpp = fnder(dpp);
+plot(xx, fnval(ddpp,xx) - 6*subplus(xx-2))
+title(<span class="string">'Error in Second Derivative of Interpolant to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_10.png" alt=""> <p>The integral of the truncated power is</p><p><img src="csapidem_eq75545.png" alt="$$F_2(x) = ((x-2)_+)^4/4.$$"></p><p>A plot of the difference between this function and the integral of the interpolant to the original function again shows that the errors are within round-off.</p><pre class="codeinput">ipp = fnint(pp);
+plot(xx, fnval(ipp,xx) - subplus(xx-2).^4/4)
+title(<span class="string">'Error in Integral of Interpolant to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_11.png" alt=""> <h2>The CSAPE Command<a name="19"></a></h2><p>Like <tt>csapi</tt>, the <tt>csape</tt> command provides a cubic spline interpolant to given data.  However, it permits various additional end conditions. Its simplest version,</p><pre>  pp = csape(x,y)</pre><p>uses the Lagrange end condition, which is a common alternative to the not-a-knot condition used by <tt>csapi</tt>.  <tt>csape</tt> does not directly return values of the interpolant, but only its ppform.</p><p>For example, consider again interpolation to the function</p><p><img src="csapidem_eq85692.png" alt="$$f_1(x) = ((x-1)_+)^3,$$"></p><p>which <tt>csapi</tt> fails to reproduce well. We plot the error of the not-a-knot interpolant returned by <tt>csapi</tt> (in black), along with the error of the interpolant obtained from <tt>csape</tt> (in red).</p><pre class="codeinput">exact = subplus(xx-1).^3;
+plot(xx, fnval(csapi(x,subplus(x-1).^3),xx) - exact,<span class="string">'k'</span>)
+hold <span class="string">on</span>
+plot(xx, fnval(csape(x,subplus(x-1).^3),xx) - exact,<span class="string">'r'</span>)
+title(<span class="string">'Error in Not-a-Knot vs. Lagrange End Conditions'</span>)
+legend({<span class="string">'Not-a-Knot'</span> <span class="string">'Lagrange'</span>});
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="csapidem_12.png" alt=""> <p>There is not much difference between the two interpolants in this case.</p><h2>Other End Conditions: The `Natural' Spline Interpolant<a name="22"></a></h2><p>The <tt>csape</tt> command also provides ways to specify several other types of end conditions for an interpolating cubic spline. For example, the command</p><pre>  pp = csape(x,y,'variational')</pre><p>uses the so-called `natural' end conditions. This means that the second derivative is zero at the two extreme breaks.</p><p>To demonstrate, we apply `natural' cubic spline interpolation to the function</p><p><img src="csapidem_eq68937.png" alt="$$f_2(x) = ((x-2)_+)^3,$$"></p><p>and plot the error. The code below computes the `natural' spline interpolant with an alternative argument syntax that is equivalent to the 'variational' string argument: using the string 'second' specifies that <tt>csape</tt> should set the second derivative at the extreme data sites to the default value of 0.</p><pre class="codeinput">pp = csape(x,subplus(x-2).^3,<span class="string">'second'</span>);
+plot(xx, fnval(pp,xx) - subplus(xx-2).^3)
+title(<span class="string">'Error in ''Natural'' Spline Interpolation to ((x-2)_+)^3'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_13.png" alt=""> <p>Note the large error near the right end.  This is due to the fact that the 'natural' end conditions implicitly insist on having a zero second derivative there.</p><h2>Other End Conditions: Prescribing Second Derivatives<a name="25"></a></h2><p>We can also explicitly use the correct second derivatives to get a small error. First, we compute the correct second derivative values of the truncated power at the endpoints.</p><pre class="codeinput">endcond = 6*subplus(x([1 end])-2);
+</pre><p>Then we create the interpolant, specifying that second derivatives at the endpoints are to be matched to the second derivative values we just computed.  We do this by providing <tt>endcond(1)</tt> for the left endpoint condition, and <tt>endcond(2)</tt> for the right, along with the data values.</p><pre class="codeinput">pp = csape(x,[endcond(1) subplus(x-2).^3 endcond(2)], <span class="string">'second'</span>);
+plot(xx, fnval(pp,xx) - subplus(xx-2).^3,<span class="string">'r'</span>)
+title([<span class="string">'Error in Spline Interpolation to ((x-1)_+)^3'</span>; <span class="keyword">...</span>
+       <span class="string">'  When Matching the 2nd Derivative at Ends  '</span>])
+</pre><img vspace="5" hspace="5" src="csapidem_14.png" alt=""> <h2>Other End Conditions: Prescribing Slopes<a name="27"></a></h2><p><tt>csape</tt> also permits specification of endpoint <i>slopes</i>. This is the <i>clamped</i> (or, <i>complete</i>) cubic spline interpolant. The statement</p><pre>       pp = csape(x,[sl,y,sr],'clamped')</pre><p>creates the cubic spline interpolant to the data (<tt>x</tt>, <tt>y</tt>) that also has slope <tt>sl</tt> at the leftmost data site and slope <tt>sr</tt> at the rightmost data site.</p><h2>Other End Conditions: Mixed End Conditions<a name="28"></a></h2><p>It is even possible to mix these conditions. For example, our much-exercised truncated power function</p><p><img src="csapidem_eq74267.png" alt="$$f_1(x) = ((x-1)_+)^3$$"></p><p>has slope 0 at <tt>x</tt>=0 and second derivative 30 at <tt>x</tt>=6 (the last data site).</p><p>Therefore, by matching the slope at the left end and the curvature at the right, we expect no error in the resulting interpolant.</p><pre class="codeinput">pp = csape(x, [0 subplus(x-1).^3 30], [1 2]);
+plot(xx, fnval(pp,xx) - subplus(xx-1).^3)
+title([<span class="string">'Error in Spline Interpolation to ((x-1)_+)^3'</span>; <span class="keyword">...</span>
+       <span class="string">'        with Mixed End Conditions.          '</span>])
+</pre><img vspace="5" hspace="5" src="csapidem_15.png" alt=""> <h2>Other End Conditions: Periodic Conditions<a name="29"></a></h2><p>It is also possible to prescribe <i>periodic</i> end conditions. For example, the sine function is 2*pi-periodic and has the values <tt>[0 -1 0 1 0]</tt> at the sites <tt>(pi/2)*(-2:2)</tt>. The difference, between the sine function and its periodic cubic spline interpolant at these sites, is only 2 percent. Not bad.</p><pre class="codeinput">x = (pi/2)*(-2:2);
+y = [0 -1 0 1 0];
+pp = csape(x,y, <span class="string">'periodic'</span> );
+xx = linspace(-pi,pi,201);
+plot(xx, sin(xx) - fnval(pp,xx), <span class="string">'x'</span>)
+title(<span class="string">'Error in Periodic Cubic Spline Interpolation to sin(x)'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_16.png" alt=""> <h2>End Conditions Not Explicitly Covered by CSAPI or CSAPE<a name="30"></a></h2><p>Any end condition not covered explicitly by <tt>csapi</tt> or <tt>csape</tt> can be handled by constructing the interpolant with the <tt>csape</tt> default side conditions, and then adding to it an appropriate scalar multiple of an interpolant to zero values and some side conditions. If there are two `nonstandard' side conditions to be satisfied, you may have to solve a 2-by-2 linear system first.</p><p>For example, suppose that you want to compute the cubic spline interpolant <tt>s</tt> to the data</p><pre class="codeinput">x = 0:.25:3;
+q = @(x) x.*(-1 + x.*(-1+x.*x/5));
+y = q(x);
+</pre><p>and enforce the condition</p><pre>  lambda(s) := a * (Ds)(e) + b * (D^2 s)(e) = c</pre><p>on the first and second derivatives of <tt>s</tt> at the point <tt>e</tt>.</p><p>The data were generated from a quartic polynomial that happens to satisfy this side condition with specific parameters</p><pre class="codeinput">e = x(1);
+a = 2; b = -3; c = 4;
+</pre><p>To construct the interpolant that satisfies this specific condition, we first construct the interpolant with the default end conditions</p><pre class="codeinput">pp1 = csape(x,y);
+</pre><p>and the first derivative of its first polynomial piece.</p><pre class="codeinput">dp1 = fnder(fnbrk(pp1,1));
+</pre><p>In addition, we construct the cubic spline interpolant to zero data values, specifying that it have a slope of 1 at <tt>e</tt>,</p><pre class="codeinput">pp0 = csape(x,[1,zeros(size(y)),0], [1,0]);
+</pre><p>as well as constructing the first derivative of its first polynomial piece.</p><pre class="codeinput">dp0 = fnder(fnbrk(pp0,1));
+</pre><p>Then we compute <tt>lambda</tt> for both <tt>pp1</tt> and <tt>pp0</tt>,</p><pre class="codeinput">lam1 = a*fnval(dp1,e) + b*fnval(fnder(dp1),e);
+lam0 = a*fnval(dp0,e) + b*fnval(fnder(dp0),e);
+</pre><p>and construct the correct linear combination of <tt>pp1</tt> and <tt>pp0</tt> to get a cubic spline</p><pre>  s := pp1 + ((c - lambda(pp1))/lambda(pp0)) * pp0</pre><p>that does satisfy the desired condition, as well as the default end condition at the right endpoint. We form this linear combination with the help of <tt>fncmb</tt>.</p><pre class="codeinput">s = fncmb(pp0,(c-lam1)/lam0,pp1);
+</pre><p>A plot of the interpolation error shows that <tt>s</tt> fits the quartic polynomial slightly better near <tt>e</tt> than the interpolant <tt>pp1</tt> with the default conditions does.</p><pre class="codeinput">xx = (-.3):.05:.7; yy = q(xx);
+plot(xx, fnval(pp1,xx) - yy, <span class="string">'x'</span>)
+hold <span class="string">on</span>
+plot(xx, fnval(s,xx) - yy, <span class="string">'o'</span>)
+hold <span class="string">off</span>
+legend({<span class="string">'Default conditions'</span> <span class="string">'Nonstandard conditions'</span>},<span class="string">'location'</span>,<span class="string">'SE'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_17.png" alt=""> <p>If we want to enforce the condition</p><pre>  mu(s) := (D^3 s)(3) = 14.6</pre><p>on the third derivative of the interpolant (the quartic satisfies this condition), then we construct an additional cubic spline interpolating to zero values, and with zero first derivative at the left endpoint, hence certain to be independent from <tt>pp0</tt>.</p><pre class="codeinput">pp2 = csape(x,[0,zeros(size(y)),1],[0,1]);
+</pre><p>Then we find the coefficients <tt>d0</tt> and <tt>d2</tt> in the linear combination</p><pre>  s := pp1 + d0*pp0 + d2*pp2</pre><p>that solves the linear system</p><pre>  lambda(s) = c
+  mu(s) = 14.6</pre><p>Note that both <tt>pp0</tt> and <tt>pp2</tt> vanish at all interpolation sites, hence <tt>s</tt> will match the given data for any choice of <tt>d0</tt> and <tt>d2</tt>.</p><p>For amusement, we use the MATLAB&reg; encoding facility to write a loop to compute <tt>lambda(pp_j)</tt> and <tt>mu(pp_j)</tt>, for <tt>j</tt>=0:2.</p><pre class="codeinput">dd = zeros(2,3);
+<span class="keyword">for</span> j=0:2
+   J = num2str(j);
+   eval([<span class="string">'dpp'</span>,J,<span class="string">'=fnder(pp'</span>,J,<span class="string">');'</span>]);
+   eval([<span class="string">'ddpp'</span>,J,<span class="string">'=fnder(dpp'</span>,J,<span class="string">');'</span>]);
+   eval([<span class="string">'dd(1,1+'</span>,J,<span class="string">')=a*fnval(dpp'</span>,J,<span class="string">',e)+b*fnval(ddpp'</span>,J,<span class="string">',e);'</span>]);
+   eval([<span class="string">'dd(2,1+'</span>,J,<span class="string">')=fnval(fnder(ddpp'</span>,J,<span class="string">'),3);'</span>]);
+<span class="keyword">end</span>
+</pre><p>Given the values of <tt>lambda</tt> and <tt>mu</tt> for <tt>pp0</tt>, <tt>pp1</tt>, and <tt>pp2</tt>, we then solve for the coefficients that define the correct linear combination.</p><pre class="codeinput">d = dd(:,[1,3])\([c;14.6]-dd(:,2));
+s = fncmb(fncmb(pp0,d(1),pp2,d(2)),pp1);
+
+xxx = 0:.05:3;
+yyy = q(xxx);
+plot(xxx, yyy - fnval(s,xxx),<span class="string">'x'</span>)
+title(<span class="string">'Error in Spline Interpolant to y = x*(-1 + x*(-1+x*x/5))'</span>)
+</pre><img vspace="5" hspace="5" src="csapidem_18.png" alt=""> <p>For reassurance, we compare this error with the one obtained in complete cubic spline interpolation to this function:</p><pre class="codeinput">hold <span class="string">on</span>
+plot(xxx, yyy - fnval(csape(x,[-1,y,-7+(4/5)*27],<span class="string">'clamped'</span>),xxx),<span class="string">'o'</span>)
+hold <span class="string">off</span>
+legend({<span class="string">'Nonstandard conditions'</span> <span class="string">'Endslope conditions'</span>})
+</pre><img vspace="5" hspace="5" src="csapidem_19.png" alt=""> <p>The errors differ (and not by much) only near the end points, testifying to the fact that both <tt>pp0</tt> and <tt>pp2</tt> are sizable only near their respective end points.</p><p>As a final check, we verify that <tt>s</tt> satisfies the desired third derivative condition at 3.</p><pre class="codeinput">fnval(fnder(s,3),3)
+</pre><pre class="codeoutput">
+ans =
+
+   14.6000
+
+</pre><p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Cubic Spline Interpolation
+%
+% This demo illustrates how to use the |csapi| and |csape| commands from 
+% Curve Fitting Toolbox(TM) to construct cubic spline interpolants.
+
+%   Copyright 1987-2010 The MathWorks, Inc.
+%   $Revision: 1.1.6.3 $
+
+%%  The CSAPI Command
+% The command
+%
+%     values = csapi(x,y,xx)
+%
+% returns the values at |xx| of the cubic spline interpolant to the given data
+% (|x,y|), using the not-a-knot end condition. This interpolant is a
+% piecewise cubic function, with break sequence |x|, whose cubic pieces join
+% together to form a function with two continuous derivatives. The
+% "not-a-knot" end condition means that, at the first and last interior break,
+% even the third derivative is continuous (up to round-off error).
+
+%%
+% Specifying only two data points results in a straight line interpolant.
+x = [0 1];
+y = [2 0];
+xx = linspace(0,6,121);
+plot(xx,csapi(x,y,xx),'k-',x,y,'ro')
+title('Interpolant to Two Points')
+
+%%
+% Specifying three data points gives a parabola.
+x = [2 3 5];
+y = [1 0 4];
+plot(xx,csapi(x,y,xx),'k-',x,y,'ro')
+title('Interpolant to Three Points')
+
+%%
+% More generally, four or more data points give a cubic spline.
+x = [1 1.5 2 4.1 5];
+y = [1 -1 1 -1 1];
+plot(xx,csapi(x,y,xx),'k-',x,y,'ro')
+title('Cubic Spline Interpolant to Five Points')
+
+%% How to Check the Output of CSAPI
+% These look like nice interpolants, but how do we check that |csapi|
+% performs as advertised?
+%
+% We already saw that |csapi| interpolates, because we plotted the data points
+% and the interpolant went right through those points. But to be sure that we
+% get a cubic spline, it is best to start with data from a cubic spline of the
+% expected sort and check whether |csapi| _reproduces_ that cubic spline, i.e.,
+% gives back that cubic spline from which the data were taken.
+
+%% Example: The Truncated Power Function
+% One simple example of a cubic spline function to check against is the
+% truncated third power, i.e., the function
+%
+% $$f(x) = ((x - xi)_{+})^3,$$
+%
+% where |xi| is one of the breaks and the "+" subscript indicates the
+% _truncation function_, provided by the command |subplus|:
+help subplus
+
+%%
+% The truncated 3rd power is plotted below for the particular choice |xi| = |2|.
+% As expected, it is zero to the left of 2, and rises like (x-2)^3 to the right
+% of 2.
+plot(xx, subplus(xx-2).^3,'y','LineWidth',3)
+axis([0,6,-10,70])
+
+%%
+% Now we interpolate this particular cubic spline at the data sites 0:6, and
+% plot the interpolant on top of the spline, in black.
+x = 0:6;
+y = subplus(x-2).^3;
+values = csapi(x,y,xx);
+hold on
+plot(xx,values,'k',x,y,'ro')
+hold off
+title('Interpolant to ((x-2)_+)^3')
+
+%% The Interpolation Error
+% When comparing two functions, it is usually much more informative to plot
+% their difference.
+plot(xx, values - subplus(xx-2).^3)
+title('Error in Cubic Spline Interpolation to ((x-2)_+)^3')
+%%
+% To put the size of their difference into context, you can also compute the
+% maximum data value. This shows the error to be no worse than the inevitable
+% round-off.
+max_y = max(abs(y))
+
+%% A Truncated Power That Cannot be Reproduced
+% As a further test, we interpolate a truncated power whose |csapi|-produced
+% interpolant at the sites 0:6 cannot coincide with it. For example, the first
+% interior break of the interpolating spline is not really a knot since |csapi|
+% uses the "not-a-knot" condition, hence the interpolant has three continuous 
+% derivatives at that site. This implies that we should not be able to reproduce
+% the truncated 3rd power centered at that site since its third derivative
+% is discontinuous across that site.
+values = csapi(x,subplus(x-1).^3,xx);
+plot(xx, values - subplus(xx-1).^3)
+title('Error in Not-a-Knot Interpolant to ((x-1)_+)^3')
+%%
+% Since 1 is a first interior knot, it is not active for this interpolant.
+%
+% The difference is as large as .18, but decays rapidly as we move away from
+% 1. This illustrates that _cubic spline interpolation is essentially local_.
+
+%% Using the ppform Instead of Values
+% It is possible to retain the interpolating cubic spline in a form suitable
+% for subsequent evaluation, or for calculating its derivatives, or for other
+% manipulations. This is done by calling |csapi| in the form
+%
+%    pp = csapi(x,y)
+%
+% which returns the ppform of the interpolant. You can evaluate this form at
+% some new points |xx| by the command
+%
+%    values = fnval(pp,xx)
+%
+% You can differentiate the interpolant by the command
+%
+%    dpp = fnder(pp)
+%
+% or integrate it by the command
+%
+%    ipp = fnint(pp)
+%
+% which return the ppform of the derivative or the integral, respectively.
+
+%% Example: Differentiating and Integrating the Interpolant
+% To demonstrate differentiation of an interpolant, we plot the derivative
+% of this truncated power
+%
+% $$f'_2(x) = 3((x - 2)_{+})^2,$$
+
+%%
+% (again in yellow) and then, on top of it, the derivative of our interpolant
+% to the original truncated third power function (again in black).
+plot(xx,3*subplus(xx-2).^2,'y','LineWidth',3)
+pp = csapi(x,subplus(x-2).^3);
+dpp = fnder(pp);
+hold on
+plot(xx,fnval(dpp,xx),'k')
+hold off
+title('Derivative of Interpolant to ((x-2)_+)^3')
+
+%%
+% Again, the more informative comparison is to plot their difference, and as
+% before this is no bigger than round-off.
+plot(xx, fnval(dpp,xx) - 3*subplus(xx-2).^2)
+title('Error in Derivative of interpolant to ((x-2)_+)^3')
+
+%%
+% The second derivative of the truncated power is
+%
+% $$f''_2(x) = 6(x-2)_+$$
+%
+% A plot of the difference between this function and the second derivative of
+% the interpolant to the original function shows that there are now jumps, but
+% they are still within roundoff.
+ddpp = fnder(dpp);
+plot(xx, fnval(ddpp,xx) - 6*subplus(xx-2))
+title('Error in Second Derivative of Interpolant to ((x-2)_+)^3')
+
+%%
+% The integral of the truncated power is
+%
+% $$F_2(x) = ((x-2)_+)^4/4.$$
+%
+% A plot of the difference between this function and the integral of the
+% interpolant to the original function again shows that the errors are within
+% round-off.
+ipp = fnint(pp);
+plot(xx, fnval(ipp,xx) - subplus(xx-2).^4/4)
+title('Error in Integral of Interpolant to ((x-2)_+)^3')
+
+%% The CSAPE Command
+%
+% Like |csapi|, the |csape| command provides a cubic spline interpolant to
+% given data.  However, it permits various additional end conditions. Its
+% simplest version,
+%
+%    pp = csape(x,y)
+%
+% uses the Lagrange end condition, which is a common alternative to the
+% not-a-knot condition used by |csapi|.  |csape| does not directly return
+% values of the interpolant, but only its ppform.
+
+%%
+% For example, consider again interpolation to the function
+%
+% $$f_1(x) = ((x-1)_+)^3,$$
+%
+% which |csapi| fails to reproduce well. We plot the error of the not-a-knot
+% interpolant returned by |csapi| (in black), along with the error of the
+% interpolant obtained from |csape| (in red).
+exact = subplus(xx-1).^3;
+plot(xx, fnval(csapi(x,subplus(x-1).^3),xx) - exact,'k')
+hold on
+plot(xx, fnval(csape(x,subplus(x-1).^3),xx) - exact,'r')
+title('Error in Not-a-Knot vs. Lagrange End Conditions')
+legend({'Not-a-Knot' 'Lagrange'});
+hold off
+%%
+% There is not much difference between the two interpolants in this case.
+
+%% Other End Conditions: The `Natural' Spline Interpolant
+%
+% The |csape| command also provides ways to specify several other types of
+% end conditions for an interpolating cubic spline. For example, the command
+%
+%    pp = csape(x,y,'variational')
+%
+% uses the so-called `natural' end conditions. This means that the
+% second derivative is zero at the two extreme breaks.
+
+%%
+% To demonstrate, we apply `natural' cubic spline interpolation to the function
+%
+% $$f_2(x) = ((x-2)_+)^3,$$
+%
+% and plot the error. The code below computes the `natural' spline interpolant
+% with an alternative argument syntax that is equivalent to the 'variational'
+% string argument: using the string 'second' specifies that |csape| should set
+% the second derivative at the extreme data sites to the default value of 0.
+pp = csape(x,subplus(x-2).^3,'second');
+plot(xx, fnval(pp,xx) - subplus(xx-2).^3)
+title('Error in ''Natural'' Spline Interpolation to ((x-2)_+)^3')
+%%
+% Note the large error near the right end.  This is due to the fact that the
+% 'natural' end conditions implicitly insist on having a zero second
+% derivative there.
+
+%% Other End Conditions: Prescribing Second Derivatives
+% We can also explicitly use the correct second derivatives to get a small
+% error. First, we compute the correct second derivative values of the
+% truncated power at the endpoints.
+endcond = 6*subplus(x([1 end])-2);
+
+%%
+% Then we create the interpolant, specifying that second derivatives at the
+% endpoints are to be matched to the second derivative values we just
+% computed.  We do this by providing |endcond(1)| for the left endpoint
+% condition, and |endcond(2)| for the right, along with the data values.
+pp = csape(x,[endcond(1) subplus(x-2).^3 endcond(2)], 'second');
+plot(xx, fnval(pp,xx) - subplus(xx-2).^3,'r')
+title(['Error in Spline Interpolation to ((x-1)_+)^3'; ...
+       '  When Matching the 2nd Derivative at Ends  '])
+
+%% Other End Conditions: Prescribing Slopes
+% |csape| also permits specification of endpoint _slopes_. This is the
+% _clamped_ (or, _complete_) cubic spline interpolant.
+% The statement
+%
+%         pp = csape(x,[sl,y,sr],'clamped')
+%
+% creates the cubic spline interpolant to the data (|x|, |y|) that also has
+% slope |sl| at the leftmost data site and slope |sr| at the rightmost data
+% site.
+
+%% Other End Conditions: Mixed End Conditions
+% It is even possible to mix these conditions. For example, our much-exercised
+% truncated power function 
+%
+% $$f_1(x) = ((x-1)_+)^3$$
+%
+% has slope 0 at |x|=0 and second derivative 30 at |x|=6 (the last data site).
+%
+% Therefore, by matching the slope at the left end and the curvature at the
+% right, we expect no error in the resulting interpolant.
+pp = csape(x, [0 subplus(x-1).^3 30], [1 2]);
+plot(xx, fnval(pp,xx) - subplus(xx-1).^3)
+title(['Error in Spline Interpolation to ((x-1)_+)^3'; ...
+       '        with Mixed End Conditions.          '])
+
+%% Other End Conditions: Periodic Conditions
+% It is also possible to prescribe _periodic_ end conditions. For example, the
+% sine function is 2*pi-periodic and has the values |[0 -1 0 1 0]| at the
+% sites |(pi/2)*(-2:2)|. The difference, between the sine function and its
+% periodic cubic spline interpolant at these sites, is only 2 percent. Not
+% bad.
+x = (pi/2)*(-2:2);
+y = [0 -1 0 1 0];
+pp = csape(x,y, 'periodic' );
+xx = linspace(-pi,pi,201);
+plot(xx, sin(xx) - fnval(pp,xx), 'x')
+title('Error in Periodic Cubic Spline Interpolation to sin(x)')
+
+%% End Conditions Not Explicitly Covered by CSAPI or CSAPE
+% Any end condition not covered explicitly by |csapi| or |csape| can be
+% handled by constructing the interpolant with the |csape| default side
+% conditions, and then adding to it an appropriate scalar multiple of
+% an interpolant to zero values and some side conditions. If there are two
+% `nonstandard' side conditions to be satisfied, you may have to solve a
+% 2-by-2 linear system first.
+%
+% For example, suppose that you want to compute the cubic spline interpolant
+% |s| to the data
+x = 0:.25:3;
+q = @(x) x.*(-1 + x.*(-1+x.*x/5));
+y = q(x);
+%%
+% and enforce the condition
+%
+%    lambda(s) := a * (Ds)(e) + b * (D^2 s)(e) = c
+%
+% on the first and second derivatives of |s| at the point |e|.
+%%
+% The data were generated from a quartic polynomial that happens to satisfy
+% this side condition with specific parameters
+e = x(1);
+a = 2; b = -3; c = 4;
+
+%%
+% To construct the interpolant that satisfies this specific condition, we first
+% construct the interpolant with the default end conditions
+pp1 = csape(x,y);
+%%
+% and the first derivative of its first polynomial piece.
+dp1 = fnder(fnbrk(pp1,1));
+%%
+% In addition, we construct the cubic spline interpolant to zero data values,
+% specifying that it have a slope of 1 at |e|,
+pp0 = csape(x,[1,zeros(size(y)),0], [1,0]);
+%%
+% as well as constructing the first derivative of its first polynomial piece.
+dp0 = fnder(fnbrk(pp0,1));
+
+%%
+% Then we compute |lambda| for both |pp1| and |pp0|,
+lam1 = a*fnval(dp1,e) + b*fnval(fnder(dp1),e);
+lam0 = a*fnval(dp0,e) + b*fnval(fnder(dp0),e);
+%%
+% and construct the correct linear combination of |pp1| and |pp0| to get a
+% cubic spline
+%
+%    s := pp1 + ((c - lambda(pp1))/lambda(pp0)) * pp0
+%
+% that does satisfy the desired condition, as well as the default end
+% condition at the right endpoint. We form this linear combination with
+% the help of |fncmb|.
+s = fncmb(pp0,(c-lam1)/lam0,pp1);
+
+%%
+% A plot of the interpolation error shows that |s| fits the quartic polynomial
+% slightly better near |e| than the interpolant |pp1| with the default
+% conditions does.
+xx = (-.3):.05:.7; yy = q(xx);
+plot(xx, fnval(pp1,xx) - yy, 'x')
+hold on
+plot(xx, fnval(s,xx) - yy, 'o')
+hold off
+legend({'Default conditions' 'Nonstandard conditions'},'location','SE')
+
+%%
+% If we want to enforce the condition
+%
+%    mu(s) := (D^3 s)(3) = 14.6
+%
+% on the third derivative of the interpolant (the quartic satisfies this
+% condition), then we construct an additional cubic spline interpolating
+% to zero values, and with zero first derivative at the left endpoint, hence
+% certain to be independent from |pp0|.
+pp2 = csape(x,[0,zeros(size(y)),1],[0,1]);
+%%
+% Then we find the coefficients |d0| and |d2| in the linear combination
+%
+%    s := pp1 + d0*pp0 + d2*pp2
+%
+% that solves the linear system 
+%
+%    lambda(s) = c
+%    mu(s) = 14.6
+%
+% Note that both |pp0| and |pp2| vanish at all interpolation sites, hence |s|
+% will match the given data for any choice of |d0| and |d2|.
+
+%%
+% For amusement, we use the MATLAB(R) encoding facility to write a loop to
+% compute |lambda(pp_j)| and |mu(pp_j)|, for |j|=0:2.
+dd = zeros(2,3);
+for j=0:2
+   J = num2str(j);
+   eval(['dpp',J,'=fnder(pp',J,');']);
+   eval(['ddpp',J,'=fnder(dpp',J,');']);
+   eval(['dd(1,1+',J,')=a*fnval(dpp',J,',e)+b*fnval(ddpp',J,',e);']);
+   eval(['dd(2,1+',J,')=fnval(fnder(ddpp',J,'),3);']);
+end
+
+%%
+% Given the values of |lambda| and |mu| for |pp0|, |pp1|, and |pp2|, we then
+% solve for the coefficients that define the correct linear combination.
+d = dd(:,[1,3])\([c;14.6]-dd(:,2));
+s = fncmb(fncmb(pp0,d(1),pp2,d(2)),pp1);
+
+xxx = 0:.05:3;
+yyy = q(xxx);
+plot(xxx, yyy - fnval(s,xxx),'x')
+title('Error in Spline Interpolant to y = x*(-1 + x*(-1+x*x/5))')
+
+%%
+% For reassurance, we compare this error with the one obtained in complete cubic
+% spline interpolation to this function:
+hold on
+plot(xxx, yyy - fnval(csape(x,[-1,y,-7+(4/5)*27],'clamped'),xxx),'o')
+hold off
+legend({'Nonstandard conditions' 'Endslope conditions'})
+
+%%
+% The errors differ (and not by much) only near the end points, testifying
+% to the fact that both |pp0| and |pp2| are sizable only near their respective
+% end points.
+
+%%
+% As a final check, we verify that |s| satisfies the desired third derivative
+% condition at 3.
+fnval(fnder(s,3),3)
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

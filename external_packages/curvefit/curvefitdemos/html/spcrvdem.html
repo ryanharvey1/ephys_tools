@@ -1,0 +1,303 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Working with Spline Curves</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="spcrvdem.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit spcrvdem">Open spcrvdem.m in the Editor</a></div><div class="right"><a href="matlab:echodemo spcrvdem">Run in the Command Window</a></div></div><div class="content"><h1>Working with Spline Curves</h1><!--introduction--><p>This demo illustrates how to use the <tt>spmak</tt>, <tt>spcrv</tt>, <tt>cscvn</tt> and <tt>rscvn</tt> commands from Curve Fitting Toolbox&#8482; to generate spline curves.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">A Simple Spline Curve</a></li><li><a href="#2">A Word of Caution</a></li><li><a href="#5">A Remedy</a></li><li><a href="#6">The Area Enclosed By This Curve</a></li><li><a href="#9">Add Some Tangent Vectors</a></li><li><a href="#10">The Intersection of the Curve With a Straight Line</a></li><li><a href="#11">SPCRV: The Control Polygon and the Corresponding Spline Curve</a></li><li><a href="#13">Raising the Order</a></li><li><a href="#14">CSCVN</a></li><li><a href="#16">RSCVN</a></li></ul></div><h2>A Simple Spline Curve<a name="1"></a></h2><p>Curve Fitting Toolbox can handle <i>vector-valued</i> splines. A d-vector-valued univariate spline provides a curve in d-space. In this mode, <tt>d = 2</tt> is most common, as it gives plane curves.</p><p>Here is an example, in which a spline with 2-dimensional coefficients is constructed and plotted.</p><pre class="codeinput">knots = [1,1:9,9];
+curve = spmak( knots, repmat([ 0 0; 1 0; 1 1; 0 1 ], 2,1).' );
+
+t = linspace(2,8,121);
+values = fnval(curve,t);
+plot(values(1,:),values(2,:),<span class="string">'LineWidth'</span>,2);
+axis([-.4 1.4 -.2 1.2]), axis <span class="string">equal</span>
+title(<span class="string">'A Spline Curve'</span>);
+hold <span class="string">on</span>
+</pre><img vspace="5" hspace="5" src="spcrvdem_01.png" alt=""> <h2>A Word of Caution<a name="2"></a></h2><p>You may have noticed that this example did not use <tt>fnplt</tt> to plot the curve, but instead plotted some points on the curve obtained by <tt>fnval</tt>. Here is the code again:</p><pre>  t = linspace(2,8,121);
+  values = fnval(curve,t);
+  plot(values(1,:),values(2,:),'LineWidth',2)</pre><p>Using <tt>fnplt</tt> directly with this particular spline curve gives the red curve in the figure below.</p><pre class="codeinput">fnplt(curve,<span class="string">'r'</span>,.5);
+title(<span class="string">'The Full Spline Curve, in Red'</span>)
+</pre><img vspace="5" hspace="5" src="spcrvdem_02.png" alt=""> <p>The explanation?</p><p>The spline is of order 4, yet the end knots in the knot sequence</p><pre class="codeinput">knots
+</pre><pre class="codeoutput">
+knots =
+
+     1     1     2     3     4     5     6     7     8     9     9
+
+</pre><p>only have multiplicity 2. Therefore, all the B-splines of order 4 for this knot sequence are 0 at the endpoints of the basic interval. This makes the curve start and stop at (0,0).</p><h2>A Remedy<a name="5"></a></h2><p>Since, in this case, we are really interested only in the curve segment corresponding to the parameter interval [3 .. 7], we can use <tt>fnbrk</tt> to extract that part, and then have no difficulty plotting it, in yellow, with <tt>fnplt</tt>.</p><pre class="codeinput">mycv = fnbrk(curve,[3 7]);
+fnplt(mycv,<span class="string">'y'</span>,2.5);
+title(<span class="string">'The Spline Curve of Interest, in Yellow'</span>)
+</pre><img vspace="5" hspace="5" src="spcrvdem_03.png" alt=""> <h2>The Area Enclosed By This Curve<a name="6"></a></h2><p>Since you now have a spline, namely <tt>mycv</tt>, that describes the curve (and nothing else), you can easily compute the area enclosed by this closed curve, as follows.</p><pre class="codeinput">area = diff(fnval(fnint( <span class="keyword">...</span>
+       fncmb(fncmb(mycv,[0 1]),<span class="string">'*'</span>,fnder(fncmb(mycv,[1 0]))) <span class="keyword">...</span>
+                        ),fnbrk(mycv,<span class="string">'interval'</span>)))
+</pre><pre class="codeoutput">
+area =
+
+   -0.8333
+
+</pre><p>With a little effort, you can recognize this as the value of the integral</p><pre>  int y(t) d(x(t)) = int y(t) Dx(t) dt</pre><p>over the basic interval of the spline <tt>mycv</tt>, with <tt>(x(t),y(t)) := fnval(mycv,t)</tt> the point on the curve corresponding to the parameter value <tt>t</tt>. Here, <tt>fncmb(mycv,[1,0])</tt>, <tt>fncmb(mycv,[0,1])</tt> describe the two components of the spline curve, i.e., the scalar-valued splines <tt>x</tt> and <tt>y</tt>.</p><p>Also, the curve is roughly a circle with radius 1/2. Hence, you would expect an area of, roughly,</p><pre class="codeinput">disp(pi/4)
+</pre><pre class="codeoutput">    0.7854
+
+</pre><p>But why is the computed area <i>negative</i>? Because the area enclosed by the curve lies to the left as one travels on the curve with increasing <tt>t</tt>. To verify this, we draw some tangent vectors.</p><h2>Add Some Tangent Vectors<a name="9"></a></h2><p>We redraw the curve and also draw the tangent vector to the curve at some points.</p><pre class="codeinput">hold <span class="string">off</span>
+fnplt(mycv,<span class="string">'y'</span>,2.5); hold <span class="string">on</span>
+t = 3:.4:6.2;
+cv = fnval(curve, t);
+cdv = fnval(fnder(curve), t);
+quiver(cv(1,:),cv(2,:), cdv(1,:),cdv(2,:));
+title(<span class="string">'A Spline Curve With Some Tangents'</span>)
+axis([-.4 1.4 -.2 1.2]), axis <span class="string">equal</span>
+</pre><img vspace="5" hspace="5" src="spcrvdem_04.png" alt=""> <h2>The Intersection of the Curve With a Straight Line<a name="10"></a></h2><p>If you wanted to determine the points of intersection of this spline curve with the straight line <tt>y = x</tt>, the following code would give them to you, and plot the segment of that straight line inside the curve:</p><pre class="codeinput">cuts = fnval(mycv, <span class="keyword">...</span>
+    mean(fnzeros(fncmb(fncmb(mycv,[0,1]),<span class="string">'-'</span>,fncmb(mycv,[1,0])))));
+plot(cuts(1,:), cuts(2,:),<span class="string">'y'</span>,<span class="string">'LineWidth'</span>,2.5)
+hold <span class="string">off</span>
+title(<span class="string">'A Spline Curve With Some Tangents and a Cut Across'</span>)
+</pre><img vspace="5" hspace="5" src="spcrvdem_05.png" alt=""> <h2>SPCRV: The Control Polygon and the Corresponding Spline Curve<a name="11"></a></h2><p>Spline curves are used extensively in the generation of illustrations in which nothing more than a smooth curve of a certain roughly imagined shape is required. For this, Curve Fitting Toolbox contains a special command, <tt>spcrv</tt>, which can be used independently of the rest of the toolbox.</p><p>Given a sequence of points in the plane and, optionally, an order <tt>k</tt>, <tt>spcrv</tt> generates, by repeated midpoint knot insertion, the spline curve of order <tt>k</tt> whose control polygon is specified by the given sequence.</p><p>The figure below shows such a control polygon, and the corresponding spline curve of order 3.</p><pre class="codeinput">points = [0 0; 1 0; 1 1; 0 2; -1 1; -1 0; 0 -1; 0 -2].';
+values = spcrv(points,3);
+
+plot(points(1,:),points(2,:),<span class="string">'k'</span>);
+axis([-2 2.25 -2.1 2.2]);
+hold <span class="string">on</span>
+plot(values(1,:),values(2,:),<span class="string">'r'</span>,<span class="string">'LineWidth'</span>,1.5);
+legend({<span class="string">'Control Polygon'</span> <span class="string">'Quadratic Spline Curve'</span>},  <span class="string">'location'</span>,<span class="string">'SE'</span>);
+</pre><img vspace="5" hspace="5" src="spcrvdem_06.png" alt=""> <p>Notice that the curve touches each segment of the control polygon at its midpoint, and follows the shape outlined by the control polygon.</p><h2>Raising the Order<a name="13"></a></h2><p>Raising the order <tt>k</tt> will pull the curve away from the control polygon and make it smoother, but also shorter. Here, we have added the corresponding spline curve of order 4.</p><pre class="codeinput">value4 = spcrv(points,4);
+plot(value4(1,:),value4(2,:),<span class="string">'b'</span>,<span class="string">'LineWidth'</span>,2);
+legend({<span class="string">'Control Polygon'</span> <span class="string">'Quadratic Spline Curve'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Curve'</span>}, <span class="string">'location'</span>,<span class="string">'SE'</span>);
+</pre><img vspace="5" hspace="5" src="spcrvdem_07.png" alt=""> <h2>CSCVN<a name="14"></a></h2><p>On the other hand, to obtain an interpolating curve, you could use the <tt>cscvn</tt> command, which provides a parametric `natural' cubic spline curve.</p><pre class="codeinput">fnplt(cscvn(points), <span class="string">'g'</span>,1.5);
+legend({<span class="string">'Control Polygon'</span> <span class="string">'Quadratic Spline Curve'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Curve'</span> <span class="string">'Interpolating Spline Curve'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'SE'</span>);
+</pre><img vspace="5" hspace="5" src="spcrvdem_08.png" alt=""> <p>By adding the point (.95,-.05) near the second control point, (1,0), we can create an interpolating spline curve that turns faster there.</p><pre class="codeinput">np = size(points, 2);
+fnplt( cscvn([ points(:,1) [.95; -.05] points(:,2:np) ]), <span class="string">'m'</span>,1.5);
+plot(.95,-.05,<span class="string">'*'</span>);
+legend({<span class="string">'Control Polygon'</span> <span class="string">'Quadratic Spline Curve'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Curve'</span> <span class="string">'Interpolating Spline Curve'</span> <span class="keyword">...</span>
+        <span class="string">'Faster Turning Near (1,0)'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'SE'</span>);
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="spcrvdem_09.png" alt=""> <h2>RSCVN<a name="16"></a></h2><p>You can also obtain a tangent-continuous curve composed of circular arcs that passes through a given sequence of points in the plane and, optionally, is orthogonal to given normal directions at the points. The command <tt>rscvn</tt> provides such a curve.</p><p>For example, the following generates a circle</p><pre class="codeinput">c = rscvn([-1 1 -1;0 0 0],[1 1;0 0]);
+</pre><p>as its plot shows.</p><pre class="codeinput">fnplt(c);
+axis([-1.05 1.05 -1.05 1.05]), axis <span class="string">equal</span>, axis <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="spcrvdem_10.png" alt=""> <p><tt>c</tt> is a quadratic rational spline consisting of just two pieces, as the following commands make clear.</p><pre class="codeinput">[form, order, breaks] = fnbrk(c,<span class="string">'f'</span>,<span class="string">'o'</span>,<span class="string">'b'</span>)
+</pre><pre class="codeoutput">
+form =
+
+rBform
+
+
+order =
+
+     3
+
+
+breaks =
+
+     0     2     4
+
+</pre><p>It is easy to generate striking patterns with this tool using just a few data points. For example, here is a version of the design on the Bronze Triskele Medallion in the Ulster Museum in Belfast, supposedly done by pieces of circular arcs a long time ago.</p><pre class="codeinput">pp =[zeros(1,7); 5.4, 3, 6.9, 2.75, 2.5, .5, 5];
+alpha = 2*pi/3; ca = cos(alpha); sa = sin(alpha); c = [ca sa;-sa ca];
+d = [0 0 .05 -.05;1 -1 .98 .98]; d = [d c*d];
+yin = rscvn([pp(:,[7,1:3]),c*pp(:,3:4),pp(:,3)], d(:,[1 2 1 4 7 5 1]));
+fnplt(yin), hold <span class="string">on</span>, fnplt(fncmb(yin,c)), fnplt(fncmb(yin,c'))
+yang = rscvn([pp(:,6),-pp(:,6),pp(:,5),c*pp(:,4)],[d(:,[2 1 1]),c(:,2)]);
+fnplt(yang), fnplt(fncmb(yang,c)), fnplt(fncmb(yang,c'))
+axis([-7.2 7.2 -7.2 7.2]), axis <span class="string">equal</span>, axis <span class="string">off</span>, hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="spcrvdem_11.png" alt=""> <p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Working with Spline Curves
+% This demo illustrates how to use the |spmak|, |spcrv|, |cscvn| and |rscvn|
+% commands from Curve Fitting Toolbox(TM) to generate spline curves.
+
+%   Copyright 1987-2010 The MathWorks, Inc.
+%   $Revision: 1.1.6.3 $
+
+%% A Simple Spline Curve
+% Curve Fitting Toolbox can handle _vector-valued_ splines. A
+% d-vector-valued univariate spline provides a curve in d-space. In this
+% mode, |d = 2| is most common, as it gives plane curves.
+%
+% Here is an example, in which a spline with 2-dimensional coefficients is
+% constructed and plotted.
+knots = [1,1:9,9];
+curve = spmak( knots, repmat([ 0 0; 1 0; 1 1; 0 1 ], 2,1).' );
+
+t = linspace(2,8,121);
+values = fnval(curve,t);
+plot(values(1,:),values(2,:),'LineWidth',2);
+axis([-.4 1.4 -.2 1.2]), axis equal
+title('A Spline Curve');
+hold on
+
+%% A Word of Caution
+% You may have noticed that this example did not use |fnplt| to plot the
+% curve, but instead plotted some points on the curve obtained by |fnval|.
+% Here is the code again:
+%
+%    t = linspace(2,8,121);
+%    values = fnval(curve,t);
+%    plot(values(1,:),values(2,:),'LineWidth',2)
+%
+% Using |fnplt| directly with this particular spline curve gives the red curve
+% in the figure below.
+fnplt(curve,'r',.5);
+title('The Full Spline Curve, in Red')
+%%
+% The explanation?
+%
+% The spline is of order 4, yet the end knots in the knot sequence
+knots
+%%
+% only have multiplicity 2. Therefore, all the B-splines of order 4 for this
+% knot sequence are 0 at the endpoints of the basic interval. This makes the
+% curve start and stop at (0,0).
+
+%% A Remedy
+% Since, in this case, we are really interested only in the curve segment
+% corresponding to the parameter interval [3 .. 7], we can use |fnbrk| to
+% extract that part, and then have no difficulty plotting it, in yellow, with
+% |fnplt|.
+mycv = fnbrk(curve,[3 7]);
+fnplt(mycv,'y',2.5);
+title('The Spline Curve of Interest, in Yellow')
+
+%% The Area Enclosed By This Curve
+% Since you now have a spline, namely |mycv|, that describes the curve
+% (and nothing else), you can easily compute the area enclosed by this
+% closed curve, as follows.
+area = diff(fnval(fnint( ...
+       fncmb(fncmb(mycv,[0 1]),'*',fnder(fncmb(mycv,[1 0]))) ...
+                        ),fnbrk(mycv,'interval')))
+%%               
+% With a little effort, you can recognize this as the value of the
+% integral
+%
+%    int y(t) d(x(t)) = int y(t) Dx(t) dt
+%
+% over the basic interval of the spline |mycv|, with |(x(t),y(t)) :=
+% fnval(mycv,t)| the point on the curve corresponding to the parameter value
+% |t|. Here, |fncmb(mycv,[1,0])|, |fncmb(mycv,[0,1])| describe the two
+% components of the spline curve, i.e., the scalar-valued splines |x| and |y|.
+%
+% Also, the curve is roughly a circle with radius 1/2. Hence, you would
+% expect an area of, roughly, 
+disp(pi/4)
+%%
+% But why is the computed area _negative_? Because the area enclosed by the
+% curve lies to the left as one travels on the curve with increasing |t|.
+% To verify this, we draw some tangent vectors.
+
+%% Add Some Tangent Vectors
+% We redraw the curve and also draw the tangent vector to the curve at
+% some points.
+hold off
+fnplt(mycv,'y',2.5); hold on
+t = 3:.4:6.2;
+cv = fnval(curve, t);
+cdv = fnval(fnder(curve), t);
+quiver(cv(1,:),cv(2,:), cdv(1,:),cdv(2,:));
+title('A Spline Curve With Some Tangents')
+axis([-.4 1.4 -.2 1.2]), axis equal
+
+%% The Intersection of the Curve With a Straight Line
+% If you wanted to determine the points of intersection of this spline
+% curve with the straight line |y = x|, the following code would give them
+% to you, and plot the segment of that straight line inside the curve:
+cuts = fnval(mycv, ...
+    mean(fnzeros(fncmb(fncmb(mycv,[0,1]),'-',fncmb(mycv,[1,0])))));
+plot(cuts(1,:), cuts(2,:),'y','LineWidth',2.5)
+hold off
+title('A Spline Curve With Some Tangents and a Cut Across')
+
+%% SPCRV: The Control Polygon and the Corresponding Spline Curve
+% Spline curves are used extensively in the generation of illustrations in
+% which nothing more than a smooth curve of a certain roughly imagined
+% shape is required. For this, Curve Fitting Toolbox contains a special
+% command, |spcrv|, which can be used independently of the rest of the
+% toolbox.
+%
+% Given a sequence of points in the plane and, optionally, an order |k|,
+% |spcrv| generates, by repeated midpoint knot insertion, the spline curve of
+% order |k| whose control polygon is specified by the given sequence.
+%
+% The figure below shows such a control polygon, and the corresponding spline
+% curve of order 3.
+points = [0 0; 1 0; 1 1; 0 2; -1 1; -1 0; 0 -1; 0 -2].';
+values = spcrv(points,3);
+
+plot(points(1,:),points(2,:),'k');
+axis([-2 2.25 -2.1 2.2]);
+hold on
+plot(values(1,:),values(2,:),'r','LineWidth',1.5);
+legend({'Control Polygon' 'Quadratic Spline Curve'},  'location','SE');
+%%
+% Notice that the curve touches each segment of the control polygon at its
+% midpoint, and follows the shape outlined by the control polygon.
+
+%% Raising the Order
+% Raising the order |k| will pull the curve away from the control polygon and
+% make it smoother, but also shorter. Here, we have added the corresponding
+% spline curve of order 4.
+value4 = spcrv(points,4);
+plot(value4(1,:),value4(2,:),'b','LineWidth',2);
+legend({'Control Polygon' 'Quadratic Spline Curve' ...
+        'Cubic Spline Curve'}, 'location','SE');
+
+%% CSCVN
+% On the other hand, to obtain an interpolating curve, you could use the
+% |cscvn| command, which provides a parametric `natural' cubic spline curve.
+fnplt(cscvn(points), 'g',1.5);
+legend({'Control Polygon' 'Quadratic Spline Curve' ...
+        'Cubic Spline Curve' 'Interpolating Spline Curve'}, ...
+        'location','SE');
+
+%%
+% By adding the point (.95,-.05) near the second control point, (1,0), we
+% can create an interpolating spline curve that turns faster there.
+np = size(points, 2);
+fnplt( cscvn([ points(:,1) [.95; -.05] points(:,2:np) ]), 'm',1.5);
+plot(.95,-.05,'*');
+legend({'Control Polygon' 'Quadratic Spline Curve' ...
+        'Cubic Spline Curve' 'Interpolating Spline Curve' ...
+        'Faster Turning Near (1,0)'}, ...
+        'location','SE');
+hold off
+
+%% RSCVN
+% You can also obtain a tangent-continuous curve composed of circular arcs
+% that passes through a given sequence of points in the plane and, 
+% optionally, is orthogonal to given normal directions at the points. The
+% command |rscvn| provides such a curve.
+%
+% For example, the following generates a circle
+c = rscvn([-1 1 -1;0 0 0],[1 1;0 0]);
+%%
+% as its plot shows.
+fnplt(c);
+axis([-1.05 1.05 -1.05 1.05]), axis equal, axis off
+
+%%
+% |c| is a quadratic rational spline consisting of just two pieces,
+% as the following commands make clear.
+[form, order, breaks] = fnbrk(c,'f','o','b')
+
+%%
+% It is easy to generate striking patterns with this tool using just a few
+% data points. For example, here is a version of the design on the
+% Bronze Triskele Medallion in the Ulster Museum in Belfast, supposedly
+% done by pieces of circular arcs a long time ago.
+pp =[zeros(1,7); 5.4, 3, 6.9, 2.75, 2.5, .5, 5];
+alpha = 2*pi/3; ca = cos(alpha); sa = sin(alpha); c = [ca sa;-sa ca];
+d = [0 0 .05 -.05;1 -1 .98 .98]; d = [d c*d];
+yin = rscvn([pp(:,[7,1:3]),c*pp(:,3:4),pp(:,3)], d(:,[1 2 1 4 7 5 1]));
+fnplt(yin), hold on, fnplt(fncmb(yin,c)), fnplt(fncmb(yin,c'))
+yang = rscvn([pp(:,6),-pp(:,6),pp(:,5),c*pp(:,4)],[d(:,[2 1 1]),c(:,2)]);
+fnplt(yang), fnplt(fncmb(yang,c)), fnplt(fncmb(yang,c'))
+axis([-7.2 7.2 -7.2 7.2]), axis equal, axis off, hold off
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

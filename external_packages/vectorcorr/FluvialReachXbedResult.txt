@@ -1,0 +1,93 @@
+
+CORRELATION ANALYSIS FOR VECTORIAL DATA
+
+Compare channel and xbed orientations
+
+Name of input data file: FluvialReachXbedData.txt
+
+Data array contains 12 Rows and 5 Columns
+Azimuths input as Degrees
+Sample size: N = 12
+Significance level input: alfa = 0.050
+Number of trials used for resampling: 2500
+
+Variables     col.       Azim?
+             in data
+    X1          3         Yes     Reach Azim.
+    X2          4         Yes     Xbed VectMn
+
+File opened for output of job summary: FluvialReachXbedResult.txt
+====================================================
+
+----------------------------------------------------
+
+X1    col. 3    Reach Azim.
+
+     R-square =    82.466 
+     R-bar =   0.75675
+     VectorMean (deg) =  261.6
+     Kappa-hat =    2.4265
+     Kappa-hat (corrected for small-sample bias) = 1.8561
+     (Ref.: Fisher, 1993, p. 88 (4.41))
+
+
+
+X2    col. 4    Xbed VectMn
+
+     R-square =    88.071 
+     R-bar =   0.78205
+     VectorMean (deg) =  245.8
+     Kappa-hat =    2.6675
+     Kappa-hat (corrected for small-sample bias) = 2.0405
+     (Ref.: Fisher, 1993, p. 88 (4.41))
+
+
+==============================================
+
+Circular-circular correlation
+X1  Reach Azim.      X2  Xbed VectMn 
+
+   Sum of embedded (4-variate) multiple canonical correlations
+   Ref.: Mardia and Jupp, 2000, p. 248 - 249
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated sum correlations (Rsquared) =    1.49
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =   0.805
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   T-monotonic rank-correlation association
+   Note: Test is sensitive to ties in azimuth data
+   Refs.: Fisher, 1993, p. 148 - 149
+          Mardia and Jupp, 2000, p. 252
+   Large-sample approximation to test distribution
+     Estimated correlation (PIhatN) =   0.715
+     Test statistic =    7.8596
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =      2.46
+     Reject hypothesis of no association
+     NOTE: Test is approximate due to small sample
+
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (PIhatN) =   0.715
+     Significance level: alfa = 0.050
+     Test criteria (cutoffs) =  -0.311,  0.304
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+
+   T-linear circular-circular association,
+   assuming constant angular shift
+   Refs.: Fisher, 1993, p. 151-153
+          Mardia and Jupp, 2000, p. 250
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (rhoThat) =   0.927
+     Significance level: alfa = 0.050
+     Test criteria (cutoffs):   -0.52,  0.545
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+

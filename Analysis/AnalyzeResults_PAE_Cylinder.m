@@ -1,0 +1,263 @@
+% AnalyzeResults_PAE_Cylinder
+clear
+data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
+
+control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
+pae={'RH11','RH16','LS17','LS19','LE2813'};
+
+%% COMPILE GROUPS
+data.control.measures=[];
+data.control.id=[];
+for i=1:length(control)
+    data.control.measures=cat(1,data.control.measures,data.(control{i}).measures);
+    data.control.id=cat(1,data.control.id,data.(control{i}).id);
+end
+
+data.pae.measures=[];
+data.pae.id=[];
+for i=1:length(pae)
+    data.pae.measures=cat(1,data.pae.measures,data.(pae{i}).measures);
+    data.pae.id=cat(1,data.pae.id,data.(pae{i}).id);
+end
+
+%% COMPILE Cylinder data
+session=3;
+group1=data.control.measures(:,:,session);
+group2=data.pae.measures(:,:,session);
+group1id=data.control.id;
+group2id=data.pae.id;
+
+%% Delete rows with all nans (sessions without cylinder)
+to_delete=sum(isnan(group1),2)==size(group1,2);
+group1(to_delete,:)=[];
+group1id(to_delete,:)=[];
+
+to_delete=sum(isnan(group2),2)==size(group2,2);
+group2(to_delete,:)=[];
+group2id(to_delete,:)=[];
+
+%% DELETE MEASURES FOR OPEN ARENA
+varnames=data.varnames;
+% colstodelete=size(group1,1)==sum(isnan(group1));
+if session==3
+    colstodelete=contains(varnames,["DirectionalityIndex","Displacement","Cluster Grade",...
+        "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
+        "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
+        "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
+        "meanstability","spatialcorrelation"]);
+    varnames(colstodelete)=[];
+    group1(:,colstodelete)=[];
+    group2(:,colstodelete)=[];
+elseif session==4
+    colstodelete=contains(varnames,["DirectionalityIndex","Cluster Grade",...
+        "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
+        "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
+        "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
+        "meanstability","spatialcorrelation"]);
+    varnames(colstodelete)=[];
+    group1(:,colstodelete)=[];
+    group2(:,colstodelete)=[];
+    
+    %     group1(:,contains(varnames,'Displacement'))=abs(wrapTo180(group1(:,contains(varnames,'Displacement'))));
+    %     group2(:,contains(varnames,'Displacement'))=abs(wrapTo180(group2(:,contains(varnames,'Displacement'))));
+    
+end
+
+
+
+%% SPLIT BY REGION
+% load metadata files and extract region info
+cd D:\Projects\PAE_PlaceCell\AnimalMetadata
+
+rats=dir('*.mat');
+rats={rats.name};
+sess_region=[];
+sessionid=[];
+% mainpath='D:\Projects\PAE_PlaceCell\ProcessedData\';
+mainpath=[];
+
+for i=1:length(rats)
+    load(rats{i})
+    sess=fieldnames(AnimalMetadata.RecordingLogs);
+    for s=1:length(sess)
+        sess_region=[sess_region;{AnimalMetadata.AnimalName,sess{s},AnimalMetadata.RecordingLogs.(sess{s}).RecordingArea}];
+        sessionid=[sessionid;{[mainpath,AnimalMetadata.AnimalName,'_',sess{s}]}];
+    end
+end
+
+% create idx
+ca1idx=strcmp(sess_region(:,3), 'ca1');
+ca3idx=strcmp(sess_region(:,3), 'ca3');
+
+ca1=sessionid(ca1idx);
+ca3=sessionid(ca3idx);
+
+% split groups between regions
+% ca1
+group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:);
+group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:);
+group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:);
+group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:);
+
+% ca3
+group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:);
+group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:);
+group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:);
+group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:);
+
+
+
+[group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
+[group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
+[group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
+[group2ca3,group2ca3id]=placefieldfilter(group2ca3,group2ca3id,varnames);
+
+[uCA,~,~] = uniqueRowsCA(group1ca1id);
+disp([num2str(size(uCA,1)),' control ca1 place cells'])
+[uCA,~,~] = uniqueRowsCA(group2ca1id);
+disp([num2str(size(uCA,1)),' pae ca1 place cells'])
+
+[uCA,~,~] = uniqueRowsCA(group1ca3id);
+disp([num2str(size(uCA,1)),' control ca3 place cells'])
+[uCA,~,~] = uniqueRowsCA(group2ca3id);
+disp([num2str(size(uCA,1)),' pae ca3 place cells'])
+
+% visualizecells(uniqueRowsCA(group1ca1id),'sacca1')
+% visualizecells(uniqueRowsCA(group2ca1id),'paeca1')
+% visualizecells(uniqueRowsCA(group1ca3id),'sacca3')
+% visualizecells(uniqueRowsCA(group2ca3id),'paeca3')
+
+
+
+AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
+% AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
+
+%% phase precess
+phaseprecess=CDFplots(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
+    group2ca1(group2ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
+    {'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},2)
+
+fig=figure;fig.Color=[1 1 1];
+[h1,h2]=CoolHistogram(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
+    group2ca1(group2ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
+    20,varnames{contains(varnames,'PhcircLinCorr')})
+xlim([-.4 .4])
+
+print(gcf,'-dpng', '-r400',...
+    ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\cylinderPHprec.png'])
+
+group1ca1id(group1ca1(:,contains(varnames,'Phpval'))<.05 & group1ca1(:,contains(varnames,'PhcircLinCorr'))<-.2)
+
+group2ca1id(group2ca1(:,contains(varnames,'Phpval'))<.05 & group2ca1(:,contains(varnames,'PhcircLinCorr'))<-.2)
+
+visualizecells(group1ca1id(group1ca1(:,contains(varnames,'Phpval'))<.05 & group1ca1(:,contains(varnames,'PhcircLinCorr'))<-.01,:),'control')
+
+visualizecells(group2ca1id(group2ca1(:,contains(varnames,'Phpval'))<.05 & group2ca1(:,contains(varnames,'PhcircLinCorr'))<-.1,:),'pae')
+%%
+% visualizecells(group2ca1id)
+% 
+% plotexamples(group1ca1id,'control')
+% plotexamples(group2ca1id,'pae')
+
+
+
+function [group,groupid]=placefieldfilter(group,groupid,varnames)
+% 1) Minimum peak firing rate of 1 Hz,
+% 2) Minimum field width of 8 cm,
+% 3) Maximum field width of 80 cm,
+% 4) at least 10 trials with consistent behavior.
+% 5) at least 100 spikes
+
+groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
+    group(:,contains(varnames,'FieldWidth'))>=8 &...
+    group(:,contains(varnames,'FieldWidth'))<=40 &...
+    group(:,contains(varnames,'InformationContent'))>=.4 &...
+    group(:,contains(varnames,'nSpikes'))>=100,:);
+
+group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
+    group(:,contains(varnames,'FieldWidth'))>=8 &...
+    group(:,contains(varnames,'FieldWidth'))<=40 &...
+    group(:,contains(varnames,'InformationContent'))>=.4 &...
+    group(:,contains(varnames,'nSpikes'))>=100,:);
+end
+
+function plotexamples(groupid,group)
+
+fig=figure; fig.Color=[1 1 1];
+for i=1:size(groupid,1)
+    data=load(groupid{i,1});
+
+%         p=postprocessFigures(data,{groupid{i,2},str2double(groupid(i,3))});
+    
+    cells=find(contains(data.spikesID.TetrodeNum,groupid{i,2}) & ismember(data.spikesID.CellNum,str2double(groupid{i,3})))';
+    subplot(3,1,1)
+    
+    [data_video_spk,~]=createframes_w_spikebinary(data,3-1,cells);
+    plot(data_video_spk(:,2),data_video_spk(:,3),'LineWidth',1,'color','k');
+    hold on; axis off
+    scatter(data_video_spk(data_video_spk(:,6)==1,2),data_video_spk(data_video_spk(:,6)==1,3),10,'r','filled');
+    box off; axis image
+    title(['nSpikes ',num2str(sum(data_video_spk(:,6)==1))]);
+    set(gca,'FontSize',20)
+    
+    subplot(3,1,2)
+    ax = gca;
+    SmoothRateMap=data.ratemap{cells,3};
+    imAlpha=ones(size(SmoothRateMap));
+    imAlpha(isnan(SmoothRateMap))=0;
+    imagesc(SmoothRateMap,'AlphaData',imAlpha);
+    axis xy; axis off; hold on; box off; axis image;
+    colormap(ax,jet(255))
+    %                 title([num2str(round(max(max(SmoothRateMap)),2)),' Hz']);
+    title(sprintf('IC %4.2f, %1.0fHz',...
+        data.measures(cells,contains(data.varnames,["InformationContent","PeakRate"]),3)))
+        set(gca,'FontSize',20)
+
+    subplot(3,1,3)
+    y=data.thetaautocorr{cells,3};
+    plot(y,'LineWidth',2, 'color','k');
+    axis tight
+    hold on;box off; axis off;axis square
+    title(sprintf('Theta %4.1f',...
+        data.measures(cells,contains(data.varnames,'thetaindex'),3)))
+        set(gca,'FontSize',20)
+
+        set(gcf,'Position',[2 42 273 924])
+
+        print(gcf,'-dpng', '-r400',...
+        ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\',group,...
+        filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
+    close all
+end
+
+end
+
+
+function visualizecells(groupid,group)
+cd('D:\Projects\PAE_PlaceCell\ProcessedData')
+for i=1:length(groupid)
+    data=load(groupid{i,1});
+    try
+        p=postprocessFigures(data,{groupid{i,2},str2double(groupid(i,3))});
+        pause(.001)
+    catch
+    end
+    %     set(gcf, 'Position', get(0, 'Screensize'));
+    
+    set(gcf,'units','normalized','outerposition',[0 0 1 1])
+    %
+    %     print(gcf,'-dpng', '-r400',...
+    %         ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2018\CellExamples\cylinder\',group,...
+    %         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
+    
+%     print(gcf,'-dpng', '-r400',...
+%         ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\pae',...
+%         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
+    
+        print(gcf,'-dpng', '-r400',...
+        ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\phaseprecess\',group,...
+        filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
+    
+    close all
+end
+end

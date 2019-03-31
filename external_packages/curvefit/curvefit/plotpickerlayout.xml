@@ -1,0 +1,72 @@
+<plotpicker version="1.0"
+resourcepath="com.mathworks.toolbox.curvefit.resources.RES_PlotPicker">
+<category name="resources:prod.category">
+<plotaction ID="sfitsurface" description="resources:sfitsurface.description" function="plot" rule="resources:sfitsurface.rule" largeicon="/com/mathworks/toolbox/curvefit/resources/surf-surf.gif"
+visibility = "@(args) commonplotfunc('defaultshow','sfitsurface',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','sfitsurface',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','sfitsurface',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="sfitpredfunc" description="resources:sfitpredfunc.descripion" function="plot" rule="resources:sfitpredfunc.rule" 
+largeicon="/com/mathworks/toolbox/curvefit/resources/surf-predfunc.png"
+visibility = "@(args) commonplotfunc('defaultshow','sfitpredfunc',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','sfitpredfunc',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','sfitpredfunc',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="sfitpredobs" description="resources:sfitpredobs.description" function="plot" rule="resources:sfitpredobs.rule" 
+largeicon="/com/mathworks/toolbox/curvefit/resources/surf-predfunc.png"
+visibility = "@(args) commonplotfunc('defaultshow','sfitpredobs',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','sfitpredobs',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','sfitpredobs',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="sfitresiduals" description="resources:sfitresiduals.description" function="plot" rule="resources:sfitresiduals.rule" largeicon="/com/mathworks/toolbox/curvefit/resources/surf-residual.png"
+visibility = "@(args) commonplotfunc('defaultshow','sfitresiduals',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','sfitresiduals',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','sfitresiduals',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="sfitcontour" description="resources:sfitcontour.description" function="plot" rule="resources:sfitcontour.rule" largeicon="/com/mathworks/toolbox/curvefit/resources/surf-contour.png"
+visibility = "@(args) commonplotfunc('defaultshow','sfitcontour',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','sfitcontour',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','sfitcontour',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitfit" description="resources:cfitfit.description" shortdescription="resources:cfitfit.shortdescription" function="plot" methodof="cfit" rule="resources:cfitfit.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-fit.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitfit',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitfit',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitfit',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitpredfunc" description="resources:cfitpredfunc.description" shortdescription="resources:cfitpredfunc.shortdescription" function="plot" methodof="cfit"  rule="resources:cfitpredfunc.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-predfunc.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitpredfunc',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitpredfunc',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitpredfunc',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitpredobs" description="resources:cfitpredobs.description"
+shortdescription="resources:cfitpredobs.shortdescription" function="plot" methodof="cfit" rule="resources:cfitpredobs.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-predobs.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitpredobs',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitpredobs',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitpredobs',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitresiduals" description="resources:cfitresiduals.description" function="plot" rule="resources:cfitresiduals.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-residuals.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitresiduals',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitresiduals',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitresiduals',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitstresiduals" description="resources:cfitstresiduals.description" function="plot" rule="resources:cfitstresiduals.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-residuals.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitresiduals',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitstresiduals',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitstresiduals',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitderiv1" description="resources:cfitderiv1.description" shortdescription="resources:cfitderiv1.shortdescription" function="plot" methodof="cfit" rule="resources:cfitderiv1.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-deriv1.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitderiv1',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitderiv1',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitderiv1',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitderiv2" description="resources:cfitderiv2.description" shortdescription="resources:cfitderiv2.shortdescription" function="plot" methodof="cfit" rule="resources:cfitderiv2.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-deriv2.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitderiv2',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitderiv2',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitderiv2',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cfitintegral" description="resources:cfitintegral.description" shortdescription="resources:cfitintegral.shortdescription" function="plot" methodof="cfit" rule="resources:cfitintegral.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/curve-integral.png"
+visibility = "@(args) commonplotfunc('defaultshow','cfitintegral',[],args)" 
+labelfcn="@(varNames,varVals) commonplotfunc('defaultlabel','cfitintegral',varNames,varVals)" action="@(varNames) commonplotfunc('defaultdisplay','cfitintegral',varNames)" producthelp="curvefit" refpagepath="plot.html">
+</plotaction>
+<plotaction ID="cftool" description="resources:cftool.description" function="cftool" rule="resources:cftool.rule"
+largeicon="/com/mathworks/toolbox/curvefit/resources/cftool.png"
+visibility = "@(args) commonplotfunc('defaultshow','cftool',[],args)" action="@(varNames) commonplotfunc('defaultdisplay','cftool',varNames)">
+</plotaction>
+</category>
+</plotpicker> 

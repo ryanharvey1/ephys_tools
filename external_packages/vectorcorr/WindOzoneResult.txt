@@ -1,0 +1,92 @@
+
+CORRELATION ANALYSIS FOR VECTORIAL DATA
+
+Ozone concentration and wind direction
+
+Name of input data file: WindOzoneData.txt
+
+Data array contains 19 Rows and 2 Columns
+Azimuths input as Degrees
+Sample size: N = 19
+Significance level input: alfa = 0.050
+Number of trials used for resampling: 2500
+
+Variables     col.       Azim?
+             in data
+    X1          1         No      Ozone Concentration
+    X2          2         Yes     Wind direction     
+
+File opened for output of job summary: WindOzoneResult.txt
+====================================================
+
+----------------------------------------------------
+
+X1    col. 1    Ozone Concentration
+     Mean =    51.205
+     Variance =    862.77
+     Standard deviation =    29.373 
+
+
+X2    col. 2    Wind direction     
+
+     R-square =    96.516 
+     R-bar =   0.51707
+     VectorMean (deg) =   16.7
+     Kappa-hat =    1.2139
+     Kappa-hat (corrected for small-sample bias) = 1.1272
+     (Ref.: Fisher, 1993, p. 88 (4.41))
+
+
+==============================================
+
+Linear-circular correlation
+X1  Ozone Concentration      X2  Wind direction      
+
+   Mean(X) = function(Theta)
+   Embedded (bivariate) correlation
+   Ref.: Mardia and Jupp, 2000, p. 245-246
+         Fisher, 1993, p. 145
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (R2xa) =   0.522
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =   0.318
+     Reject hypothesis of no association
+
+    -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   C-Association
+   Distribution-free rank correlation
+   Note: Test is sensitive to ties in X or Theta data
+   Refs.: Mardia and Jupp, 2000, p. 246-248
+          Fisher, 1993, p. 140-141
+   Large-sample approximation to test distribution
+     Estimated correlation (Dn) =   0.403
+     Test statistic (Un) =    7.1554
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =    5.7848
+     Reject hypothesis of no association
+
+   Test distribution is based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (Dn) =   0.403
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =   0.322
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   Linear-circular relation:  Mean(Theta) = function(X)
+   converted to circular-circular model
+   Uses T-linear association, assuming constant angular shift
+   Refs.: Fisher, 1993, p. 151-153, 161
+          Mardia and Jupp, 2000, p. 250
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (rhoThat) =   0.384
+     Significance level: alfa = 0.050
+     Test criteria (cutoffs):  -0.296,  0.294
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+

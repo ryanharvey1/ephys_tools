@@ -1,0 +1,207 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Example</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-28"><meta name="DC.source" content="Example.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Examples</a></li><li><a href="#2">Minimalist example</a></li><li><a href="#3">Example with options</a></li><li><a href="#4">Dealing with outliers</a></li><li><a href="#5">polarPcolor without colorbar</a></li><li><a href="#6">Different geometry 1</a></li><li><a href="#7">Different geometry 2</a></li></ul></div><h2>Examples<a name="1"></a></h2><p>The following examples illustrate the application of the function polarPcolor</p><pre class="codeinput">clearvars;close <span class="string">all</span>;clc;
+</pre><h2>Minimalist example<a name="2"></a></h2><p>Assuming that a remote sensor is measuring the wind field for a radial distance ranging from 50 to 1000 m. The scanning azimuth is oriented from North (0 deg) to North-North-East ( 80 deg):</p><pre class="codeinput">R = linspace(50,1000,100)./1000; <span class="comment">% (distance in km)</span>
+Az = linspace(0,80,100); <span class="comment">% in degrees</span>
+[~,~,windSpeed] = peaks(100); <span class="comment">% radial wind speed</span>
+figure
+[h,c]=polarPcolor(R,Az,windSpeed)
+</pre><pre class="codeoutput">
+h = 
+
+  Surface with properties:
+
+       EdgeColor: 'none'
+       LineStyle: '-'
+       FaceColor: 'flat'
+    FaceLighting: 'flat'
+       FaceAlpha: 1
+           XData: [100x100 double]
+           YData: [100x100 double]
+           ZData: [100x100 double]
+           CData: [100x100 double]
+
+  Use GET to show all properties
+
+
+c = 
+
+  ColorBar with properties:
+
+    Location: 'westoutside'
+      Limits: [-5.3237 6.8662]
+    FontSize: 9
+    Position: [0.1772 0.1095 0.0476 0.8167]
+       Units: 'normalized'
+
+  Use GET to show all properties
+
+</pre><img vspace="5" hspace="5" src="Example_01.png" alt=""> <h2>Example with options<a name="3"></a></h2><pre>We want to have 4 circles and 7 spokes, and to give a label to the
+radial coordinate</pre><pre class="codeinput">figure
+[~,c]=polarPcolor(R,Az,windSpeed,<span class="string">'labelR'</span>,<span class="string">'r (km)'</span>,<span class="string">'Ncircles'</span>,4,<span class="string">'Nspokes'</span>,7);
+ylabel(c,<span class="string">' radial wind speed (m/s)'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_02.png" alt=""> <h2>Dealing with outliers<a name="4"></a></h2><p>We introduce outliers in the wind velocity data. These outliers are represented as wind speed sample with a value of 100 m/s. These corresponds to unrealistic data that need to be ignored. To avoid bad scaling of the colorbar, the function polarPcolor uses the function caxis combined to the function quantile to keep the colorbar properly scaled: caxis([quantile(Z(:),0.01),quantile(Z(:),0.99)])</p><pre class="codeinput">windSpeed(1:10:end,1:20:end)=100;
+
+figure
+[~,c]=polarPcolor(R,Az,windSpeed);
+ylabel(c,<span class="string">' radial wind speed (m/s)'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_03.png" alt=""> <h2>polarPcolor without colorbar<a name="5"></a></h2><p>The colorbar is activated by default. It is possible to remove it by using the option 'colBar'. When the colorbar is desactivated, the outliers are not "removed" and bad scaling is clearly visible:</p><pre class="codeinput">figure
+polarPcolor(R,Az,windSpeed,<span class="string">'colBar'</span>,0) ;
+</pre><img vspace="5" hspace="5" src="Example_04.png" alt=""> <h2>Different geometry 1<a name="6"></a></h2><pre class="codeinput">N = 360;
+R = linspace(0,1000,N)./1000; <span class="comment">% (distance in km)</span>
+Az = linspace(0,360,N); <span class="comment">% in degrees</span>
+[~,~,windSpeed] = peaks(N); <span class="comment">% radial wind speed</span>
+figure
+[~,c]= polarPcolor(R,Az,windSpeed);
+ylabel(c,<span class="string">' radial wind speed (m/s)'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_05.png" alt=""> <h2>Different geometry 2<a name="7"></a></h2><pre class="codeinput">N = 360;
+R = linspace(500,1000,N)./1000; <span class="comment">% (distance in km)</span>
+Az = linspace(0,270,N); <span class="comment">% in degrees</span>
+[~,~,windSpeed] = peaks(N); <span class="comment">% radial wind speed</span>
+figure
+[~,c]= polarPcolor(R,Az,windSpeed,<span class="string">'Ncircles'</span>,3);
+location = <span class="string">'NorthOutside'</span>;
+ylabel(c,<span class="string">' radial wind speed (m/s)'</span>);
+set(c,<span class="string">'location'</span>,location);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_06.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Examples
+% The following examples illustrate the application of the function 
+% polarPcolor
+clearvars;close all;clc;
+
+%% Minimalist example
+% Assuming that a remote sensor is measuring the wind field for a radial
+% distance ranging from 50 to 1000 m. The scanning azimuth is oriented from
+% North (0 deg) to North-North-East ( 80 deg):
+R = linspace(50,1000,100)./1000; % (distance in km)
+Az = linspace(0,80,100); % in degrees
+[~,~,windSpeed] = peaks(100); % radial wind speed
+figure
+[h,c]=polarPcolor(R,Az,windSpeed)
+
+%% Example with options
+%  We want to have 4 circles and 7 spokes, and to give a label to the
+%  radial coordinate
+
+figure
+[~,c]=polarPcolor(R,Az,windSpeed,'labelR','r (km)','Ncircles',4,'Nspokes',7);
+ylabel(c,' radial wind speed (m/s)');
+set(gcf,'color','w')
+%% Dealing with outliers
+% We introduce outliers in the wind velocity data. These outliers
+% are represented as wind speed sample with a value of 100 m/s. These
+% corresponds to unrealistic data that need to be ignored. To avoid bad
+% scaling of the colorbar, the function polarPcolor uses the function caxis
+% combined to the function quantile to keep the colorbar properly scaled:
+% caxis([quantile(Z(:),0.01),quantile(Z(:),0.99)])
+
+windSpeed(1:10:end,1:20:end)=100;
+
+figure
+[~,c]=polarPcolor(R,Az,windSpeed);
+ylabel(c,' radial wind speed (m/s)');
+set(gcf,'color','w')
+
+%% polarPcolor without colorbar
+% The colorbar is activated by default. It is possible to remove it by 
+% using the option 'colBar'. When the colorbar is desactivated, the
+% outliers are not "removed" and bad scaling is clearly visible:
+
+figure
+polarPcolor(R,Az,windSpeed,'colBar',0) ;
+
+
+%% Different geometry 1
+N = 360;
+R = linspace(0,1000,N)./1000; % (distance in km)
+Az = linspace(0,360,N); % in degrees
+[~,~,windSpeed] = peaks(N); % radial wind speed
+figure
+[~,c]= polarPcolor(R,Az,windSpeed);
+ylabel(c,' radial wind speed (m/s)');
+set(gcf,'color','w')
+%% Different geometry 2
+N = 360;
+R = linspace(500,1000,N)./1000; % (distance in km)
+Az = linspace(0,270,N); % in degrees
+[~,~,windSpeed] = peaks(N); % radial wind speed
+figure
+[~,c]= polarPcolor(R,Az,windSpeed,'Ncircles',3);
+location = 'NorthOutside';
+ylabel(c,' radial wind speed (m/s)');
+set(c,'location',location);
+set(gcf,'color','w')
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,62 @@
+function weights = ComputeCrossCorrPrediction(preTrain,postTrain,sPost,rg,binT,varargin)
+
+% Finds the optimal gaussian window (s.d. and time-lag) that integrates pre-synaptic spikes to
+% predict post synaptic spike train.
+%
+%  USAGE
+%
+%    weights = ComputeCrossCorrPrediction(preTrain,postTrain,sPost,rg,binT,r,binT)
+%
+%    preTrain       pre-synaptic unsmoothed binned spike train from training set
+%    postTrain      post-synaptic unsmoothed binned spike train from training set
+%    sPost          post-synaptic spikeTrain
+%    rg             time vector of the binned spike trains
+%    binT           bin size
+%
+%    <options>      optional list of property-value pairs (see table below)
+%
+%    =========================================================================
+%     Properties    Values
+%    -------------------------------------------------------------------------
+%     'nSamples'            number of samples (default = 40)
+%     'nFeatures'           number of features (default = 3)
+%     'peakSampleIndex'     position of peak (default = 16)
+%    =========================================================================
+%
+%    Dependencies: crossCorrModel_Likelihood, SpkTrainLogLikelihood
+
+% Copyright (C) 2016 Adrien Peyrache
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+
+if ~isempty(varargin)
+    weights0 = varargin{1};
+else
+    weights0 = [0 1];
+end
+
+%Average firing rate
+r = mean(postTrain)/binT;
+
+L = @(x)-SpkTrainValuation(sPost,crossCorrModel_Intensity(preTrain,postTrain,x)/binT,rg,r);
+%weights = simulannealbnd(L,weights0,[-50 0],[50 100]);
+
+%return
+%L = @(x)-SpkTrainLogLikelihood(postTest,crossCorrModel_Intensity(preTrain,postTrain,preTest,x)*binT) + fixedTerm;
+
+problem.objective       = L;
+problem.options         = optimoptions('fmincon','display','off');
+problem.solver          = 'fmincon';
+problem.x0              = weights0;
+problem.lb              = [-50 1];
+problem.ub              = [50 100];
+
+problem.ObjectiveLimit  = 1e-10;
+
+%weights = fminunc(problem);
+warning off
+weights = fmincon(problem);
+warning on

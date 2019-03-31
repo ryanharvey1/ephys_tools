@@ -1,0 +1,231 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>How to Choose Knots</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="pckkntdm.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit pckkntdm">Open pckkntdm.m in the Editor</a></div><div class="right"><a href="matlab:echodemo pckkntdm">Run in the Command Window</a></div></div><div class="content"><h1>How to Choose Knots</h1><!--introduction--><p>This demo illustrates how to use the <tt>optknt</tt> and <tt>newknt</tt> commands from Curve Fitting Toolbox&#8482;.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Sample Data</a></li><li><a href="#3">General Considerations</a></li><li><a href="#4">Optimal Knots</a></li><li><a href="#5">Trying OPTKNT</a></li><li><a href="#7">What Happened?</a></li><li><a href="#8">Knot Choice for Least Squares Approximation</a></li><li><a href="#9">Least Squares Approximation with Uniform Knot Sequence</a></li><li><a href="#11">Using NEWKNT to Improve the Knot Distribution</a></li></ul></div><h2>Sample Data<a name="1"></a></h2><p>Here are some sample data, much used for testing spline approximation with variable knots, the so-called Titanium Heat Data.  They record some property of titanium measured as a function of temperature.</p><pre class="codeinput">[xx,yy] = titanium;
+plot(xx,yy,<span class="string">'x'</span>);
+axis([500 1100 .55 2.25]);
+title(<span class="string">'The Titanium Heat Data'</span>);
+hold <span class="string">on</span>
+</pre><img vspace="5" hspace="5" src="pckkntdm_01.png" alt=""> <p>Notice the rather sharp peak. We'll use these data to illustrate some methods for knot selection.</p><p>First, we pick a few data points from these somewhat rough data.  We will interpolate using this subset, then compare results to the full dataset.</p><pre class="codeinput">pick = [1 5 11 21 27 29 31 33 35 40 45 49];
+tau = xx(pick);
+y = yy(pick);
+plot(tau,y,<span class="string">'ro'</span>);
+legend({<span class="string">'Full Dataset'</span> <span class="string">'Subsampled Data'</span>}, <span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><img vspace="5" hspace="5" src="pckkntdm_02.png" alt=""> <h2>General Considerations<a name="3"></a></h2><p>A spline of order <tt>k</tt> with <tt>n+k</tt> knots has <tt>n</tt> degrees of freedom.  Since we have 12 data sites, <tt>tau(1) &lt; ... &lt; tau(12)</tt>, a fit with a cubic spline, i.e., a fourth order spline, requires a knot sequence <tt>t</tt> of length 12+4.</p><p>Moreover, the knot sequence <tt>t</tt> must satisfy the <i>Schoenberg-Whitney conditions</i>, i.e., must be such that the i-th data site lies in the support of the i-th B-spline, i.e.,</p><pre>  t(i) &lt; tau(i) &lt; t(i+k)   for all i,</pre><p>with equality allowed only in case of a knot of multiplicity <tt>k</tt>.</p><p>One way to choose a knot sequence satisfying all these conditions is as the optimal knots, of Gaffney/Powell and Micchelli/Rivlin/Winograd.</p><h2>Optimal Knots<a name="4"></a></h2><p>In <i>optimal</i> spline interpolation, to values at sites</p><pre>  tau(1), ..., tau(n)</pre><p>say, the knots are chosen so as to minimize the constant in a standard error formula. Specifically, the first and the last data site are chosen as k-fold knots. The remaining <tt>n-k</tt> knots are supplied by <tt>optknt</tt>.</p><p>Here is the beginning of the help from <tt>optknt</tt>:</p><p>OPTKNT Optimal knot distribution.</p><pre> OPTKNT(TAU,K)  returns an `optimal' knot sequence for
+ interpolation at data sites TAU(1), ..., TAU(n) by splines of
+ order K. TAU must be an increasing sequence, but this is not
+ checked.</pre><pre> OPTKNT(TAU,K,MAXITER) specifies the number MAXITER of iterations
+ to be tried, the default being 10.</pre><pre> The interior knots of this knot sequence are the n-K
+ sign-changes in any absolutely constant function h ~= 0 that
+ satisfies</pre><pre>        integral{ f(x)h(x) : TAU(1) &lt; x &lt; TAU(n) } = 0</pre><pre> for all splines f of order K with knot sequence TAU.</pre><h2>Trying OPTKNT<a name="5"></a></h2><p>We try using <tt>optknt</tt> for interpolation on our example, interpolating by cubic splines to data</p><pre>  (tau(i), y(i)),   for i = 1, ..., n.</pre><pre class="codeinput">k = 4;
+osp = spapi( optknt(tau,k), tau,y);
+
+fnplt(osp,<span class="string">'r'</span>);
+hl = legend({<span class="string">'Full Dataset'</span> <span class="string">'Subsampled Data'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Interpolant Using Optimal knots'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'NW'</span>);
+set(hl,<span class="string">'Position'</span>,get(hl,<span class="string">'Position'</span>)-[.14,0,0,0]);
+</pre><img vspace="5" hspace="5" src="pckkntdm_03.png" alt=""> <p>This is a bit disconcerting!</p><p>Here, marked by stars, are also the interior optimal knots:</p><pre class="codeinput">xi = fnbrk(osp,<span class="string">'knots'</span>); xi([1:k end+1-(1:k)]) = [];
+plot(xi,repmat(1.4, size(xi)),<span class="string">'*'</span>);
+hl = legend({<span class="string">'Full Dataset'</span> <span class="string">'Subsampled Data'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Interpolant Using Optimal knots'</span> <span class="keyword">...</span>
+        <span class="string">'Optimal Knots'</span>}, <span class="string">'location'</span>,<span class="string">'NW'</span>);
+set(hl,<span class="string">'Position'</span>,get(hl,<span class="string">'Position'</span>)-[.14,0,0,0]);
+</pre><img vspace="5" hspace="5" src="pckkntdm_04.png" alt=""> <h2>What Happened?<a name="7"></a></h2><p>The knot choice for optimal interpolation is designed to make the maximum over <i>all</i> functions <tt>f</tt> of the ratio</p><pre>  norm(f - If) / norm(D^k f)</pre><p>as small as possible, where the numerator is the norm of the interpolation error, <tt>f - If</tt>, and the denominator is the norm of the <tt>k</tt>-th derivative of the interpolant, <tt>D^k f</tt>.  Since our data imply that <tt>D^k f</tt> is rather large, the interpolation error near the flat part of the data is of acceptable size for such an `optimal' scheme.</p><p>Actually, for these data, the ordinary cubic spline interpolant provided by <tt>csapi</tt> does quite well:</p><pre class="codeinput">cs = csapi(tau,y);
+fnplt(cs,<span class="string">'g'</span>,2);
+hl = legend({<span class="string">'Full Dataset'</span> <span class="string">'Subsampled Data'</span> <span class="keyword">...</span>
+        <span class="string">'Cubic Spline Interpolant Using Optimal knots'</span> <span class="keyword">...</span>
+        <span class="string">'Optimal Knots'</span> <span class="string">'Cubic Spline Interpolant Using CSAPI'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'NW'</span>);
+set(hl,<span class="string">'Position'</span>,get(hl,<span class="string">'Position'</span>)-[.14,0,0,0]);
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="pckkntdm_05.png" alt=""> <h2>Knot Choice for Least Squares Approximation<a name="8"></a></h2><p>Knots must be selected when doing least-squares approximation by splines. One approach is to use equally-spaced knots to begin with, then use <tt>newknt</tt> with the approximation obtained for a better knot distribution.</p><p>The next sections illustrate these steps with the full titanium heat data set.</p><h2>Least Squares Approximation with Uniform Knot Sequence<a name="9"></a></h2><p>We start with a uniform knot sequence.</p><pre class="codeinput">unif = linspace(xx(1), xx(end), 2+fix(length(xx)/4));
+sp = spap2(augknt(unif, k), k, xx, yy);
+plot(xx,yy,<span class="string">'x'</span>);
+hold <span class="string">on</span>
+fnplt(sp,<span class="string">'r'</span>);
+axis([500 1100 .55 2.25]);
+title(<span class="string">'The Titanium Heat Data'</span>);
+hl = legend({<span class="string">'Full Dataset'</span> <span class="keyword">...</span>
+        <span class="string">'Least Squares Cubic Spline Using Uniform Knots'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'NW'</span>);
+set(hl,<span class="string">'Position'</span>,get(hl,<span class="string">'Position'</span>)-[.14,0,0,0]);
+</pre><img vspace="5" hspace="5" src="pckkntdm_06.png" alt=""> <p>This is not at all satisfactory. So we use <tt>newknt</tt> for a spline approximation of the same order and with the same number of polynomial pieces, but the breaks better distributed.</p><h2>Using NEWKNT to Improve the Knot Distribution<a name="11"></a></h2><pre class="codeinput">spgood = spap2(newknt(sp), k, xx,yy);
+fnplt(spgood,<span class="string">'g'</span>,1.5);
+hl = legend({<span class="string">'Full Dataset'</span> <span class="keyword">...</span>
+        <span class="string">'Least Squares Cubic Spline Using Uniform Knots'</span> <span class="keyword">...</span>
+        <span class="string">'Least Squares Cubic Spline Using NEWKNT'</span>}, <span class="keyword">...</span>
+        <span class="string">'location'</span>,<span class="string">'NW'</span>);
+set(hl,<span class="string">'Position'</span>,get(hl,<span class="string">'Position'</span>)-[.14,0,0,0]);
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="pckkntdm_07.png" alt=""> <p>This is quite good. Incidentally, even one interior knot fewer would not have sufficed in this case.</p><p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% How to Choose Knots
+% This demo illustrates how to use the |optknt| and |newknt| commands from
+% Curve Fitting Toolbox(TM).
+
+%   Copyright 1987-2010 The MathWorks, Inc.
+%   $Revision: 1.1.6.3 $
+
+%% Sample Data
+% Here are some sample data, much used for testing spline approximation
+% with variable knots, the so-called Titanium Heat Data.  They record some
+% property of titanium measured as a function of temperature.
+[xx,yy] = titanium;
+plot(xx,yy,'x');
+axis([500 1100 .55 2.25]);
+title('The Titanium Heat Data');
+hold on
+%%
+% Notice the rather sharp peak. We'll use these data to illustrate some
+% methods for knot selection.
+%
+% First, we pick a few data points from these somewhat rough data.  We will
+% interpolate using this subset, then compare results to the full dataset.
+pick = [1 5 11 21 27 29 31 33 35 40 45 49];
+tau = xx(pick);
+y = yy(pick);
+plot(tau,y,'ro');
+legend({'Full Dataset' 'Subsampled Data'}, 'location','NW');
+
+%% General Considerations
+% A spline of order |k| with |n+k| knots has |n| degrees of freedom.  Since
+% we have 12 data sites, |tau(1) < ... < tau(12)|, a fit with a cubic spline,
+% i.e., a fourth order spline, requires a knot sequence |t| of length 12+4.
+%
+% Moreover, the knot sequence |t| must satisfy the _Schoenberg-Whitney
+% conditions_, i.e., must be such that the i-th data site lies in the support
+% of the i-th B-spline, i.e.,
+%
+%    t(i) < tau(i) < t(i+k)   for all i,
+%
+% with equality allowed only in case of a knot of multiplicity |k|.
+%
+% One way to choose a knot sequence satisfying all these conditions is
+% as the optimal knots, of Gaffney/Powell and Micchelli/Rivlin/Winograd.
+
+%% Optimal Knots
+% In _optimal_ spline interpolation, to values at sites
+%
+%    tau(1), ..., tau(n)
+%
+% say, the knots are chosen so as to minimize the constant in a standard
+% error formula. Specifically, the first and the last data site are chosen
+% as k-fold knots. The remaining |n-k| knots are supplied by |optknt|.
+%
+% Here is the beginning of the help from |optknt|:
+%
+% OPTKNT Optimal knot distribution.
+%
+%   OPTKNT(TAU,K)  returns an `optimal' knot sequence for
+%   interpolation at data sites TAU(1), ..., TAU(n) by splines of
+%   order K. TAU must be an increasing sequence, but this is not
+%   checked.
+%
+%   OPTKNT(TAU,K,MAXITER) specifies the number MAXITER of iterations
+%   to be tried, the default being 10.
+%
+%   The interior knots of this knot sequence are the n-K
+%   sign-changes in any absolutely constant function h ~= 0 that
+%   satisfies
+%
+%          integral{ f(x)h(x) : TAU(1) < x < TAU(n) } = 0
+%
+%   for all splines f of order K with knot sequence TAU.
+
+%% Trying OPTKNT
+% We try using |optknt| for interpolation on our example, interpolating by
+% cubic splines to data
+%
+%    (tau(i), y(i)),   for i = 1, ..., n.
+k = 4;
+osp = spapi( optknt(tau,k), tau,y);
+
+fnplt(osp,'r');
+hl = legend({'Full Dataset' 'Subsampled Data' ...
+        'Cubic Spline Interpolant Using Optimal knots'}, ...
+        'location','NW');
+set(hl,'Position',get(hl,'Position')-[.14,0,0,0]);
+%%
+% This is a bit disconcerting!
+%
+% Here, marked by stars, are also the interior optimal knots:
+xi = fnbrk(osp,'knots'); xi([1:k end+1-(1:k)]) = [];
+plot(xi,repmat(1.4, size(xi)),'*');
+hl = legend({'Full Dataset' 'Subsampled Data' ...
+        'Cubic Spline Interpolant Using Optimal knots' ...
+        'Optimal Knots'}, 'location','NW');
+set(hl,'Position',get(hl,'Position')-[.14,0,0,0]);
+
+%% What Happened?
+% The knot choice for optimal interpolation is designed to make the
+% maximum over _all_ functions |f| of the ratio
+%
+%    norm(f - If) / norm(D^k f)
+%
+% as small as possible, where the numerator is the norm of the interpolation
+% error, |f - If|, and the denominator is the norm of the |k|-th derivative of
+% the interpolant, |D^k f|.  Since our data imply that |D^k f| is rather
+% large, the interpolation error near the flat part of the data is of
+% acceptable size for such an `optimal' scheme.
+%
+% Actually, for these data, the ordinary cubic spline interpolant provided by
+% |csapi| does quite well:
+cs = csapi(tau,y);
+fnplt(cs,'g',2);
+hl = legend({'Full Dataset' 'Subsampled Data' ...
+        'Cubic Spline Interpolant Using Optimal knots' ...
+        'Optimal Knots' 'Cubic Spline Interpolant Using CSAPI'}, ...
+        'location','NW');
+set(hl,'Position',get(hl,'Position')-[.14,0,0,0]);
+hold off
+
+%% Knot Choice for Least Squares Approximation
+% Knots must be selected when doing least-squares approximation by splines.
+% One approach is to use equally-spaced knots to begin with, then use |newknt|
+% with the approximation obtained for a better knot distribution.
+%
+% The next sections illustrate these steps with the full titanium heat data set.
+
+%% Least Squares Approximation with Uniform Knot Sequence
+% We start with a uniform knot sequence.
+unif = linspace(xx(1), xx(end), 2+fix(length(xx)/4));
+sp = spap2(augknt(unif, k), k, xx, yy);
+plot(xx,yy,'x');
+hold on
+fnplt(sp,'r');
+axis([500 1100 .55 2.25]);
+title('The Titanium Heat Data');
+hl = legend({'Full Dataset' ...
+        'Least Squares Cubic Spline Using Uniform Knots'}, ...
+        'location','NW');
+set(hl,'Position',get(hl,'Position')-[.14,0,0,0]);    
+%%
+% This is not at all satisfactory. So we use |newknt| for a spline approximation
+% of the same order and with the same number of polynomial pieces, but the 
+% breaks better distributed.
+
+%% Using NEWKNT to Improve the Knot Distribution
+spgood = spap2(newknt(sp), k, xx,yy);
+fnplt(spgood,'g',1.5);
+hl = legend({'Full Dataset' ...
+        'Least Squares Cubic Spline Using Uniform Knots' ...
+        'Least Squares Cubic Spline Using NEWKNT'}, ...
+        'location','NW');
+set(hl,'Position',get(hl,'Position')-[.14,0,0,0]);
+hold off
+%%
+% This is quite good. Incidentally, even one interior knot fewer would not have
+% sufficed in this case.
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

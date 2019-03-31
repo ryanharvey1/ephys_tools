@@ -1,0 +1,626 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns:p="urn:schemas-microsoft-com:office:powerpoint"
+xmlns:oa="urn:schemas-microsoft-com:office:activation"
+xmlns:st1="urn:schemas-microsoft-com:office:smarttags"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 10">
+<meta name=Originator content="Microsoft Word 10">
+<link rel=File-List href="session%20class%20doc_files/filelist.xml">
+<title>SESSION session class constructor:</title>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="PersonName"/>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Peter Lipa</o:Author>
+  <o:LastAuthor>Peter Lipa</o:LastAuthor>
+  <o:Revision>2</o:Revision>
+  <o:TotalTime>77</o:TotalTime>
+  <o:Created>2004-07-01T22:49:00Z</o:Created>
+  <o:LastSaved>2004-07-01T22:49:00Z</o:LastSaved>
+  <o:Pages>1</o:Pages>
+  <o:Words>1076</o:Words>
+  <o:Characters>6139</o:Characters>
+  <o:Company>NSMA</o:Company>
+  <o:Lines>51</o:Lines>
+  <o:Paragraphs>14</o:Paragraphs>
+  <o:CharactersWithSpaces>7201</o:CharactersWithSpaces>
+  <o:Version>10.3501</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:Compatibility>
+   <w:BreakWrappedTables/>
+   <w:SnapToGridInCell/>
+   <w:WrapTextWithPunct/>
+   <w:UseAsianBreakRules/>
+  </w:Compatibility>
+  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+ </w:WordDocument>
+</xml><![endif]--><!--[if !mso]><object
+ classid="clsid:38481807-CA0E-42D2-BF39-B33AF135CC4D" id=ieooui></object>
+<style>
+st1\:*{behavior:url(#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+h1
+	{mso-style-next:Normal;
+	margin-top:12.0pt;
+	margin-right:0in;
+	margin-bottom:3.0pt;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	font-size:16.0pt;
+	font-family:Arial;
+	mso-font-kerning:16.0pt;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;
+	text-underline:single;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;
+	text-underline:single;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in .5in .5in 27.0pt;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ @list l0
+	{mso-list-id:202250716;
+	mso-list-type:hybrid;
+	mso-list-template-ids:177784812 67698705 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l0:level1
+	{mso-level-text:"%1\)";
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;}
+@list l1
+	{mso-list-id:479540333;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1506329424 970250122 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l1:level1
+	{mso-level-number-format:alpha-upper;
+	mso-level-text:"%1\)";
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;}
+@list l2
+	{mso-list-id:728963302;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-425403194 67698705 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l2:level1
+	{mso-level-text:"%1\)";
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */
+ table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-parent:"";
+	mso-padding-alt:0in 5.4pt 0in 5.4pt;
+	mso-para-margin:0in;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+</style>
+<![endif]-->
+</head>
+
+<body lang=EN-US link=blue vlink=purple style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<h1 align=center style='text-align:center'><u>Session Class<o:p></o:p></u></h1>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal align=center style='text-align:center'>( contact <st1:PersonName>Peter
+ Lipa</st1:PersonName> for bugs and improvement requests)</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal>Purpose: to abstract and unify a series of cheetah recording
+sessions and to make analysis <st1:PersonName>sc</st1:PersonName>ripts more
+portable.</p>
+
+<p class=MsoNormal>It facilitates loops over sessions, groups of sessions,
+animals and groups of animals.</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal>This is work in development and ideas and user input is most
+welcome.</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.5in;text-indent:-.25in;mso-list:l1 level1 lfo1;
+tab-stops:list .5in'><![if !supportLists]><span style='mso-list:Ignore'>A)<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp; </span></span><![endif]>Prepare
+a .m file defining one struct per session:</p>
+
+<p class=MsoNormal style='margin-left:.5in'>function sessList = SessionList()</p>
+
+<p class=MsoNormal style='margin-left:.5in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.5in'>%Enter the list of session de<st1:PersonName>sc</st1:PersonName>riptions</p>
+
+<p class=MsoNormal style='margin-left:.5in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.5in'>sessList = {};</p>
+
+<p class=MsoNormal style='margin-left:.5in'>dataDir = 'T:\CPP1\JessicasData\';<span
+style='mso-spacerun:yes'>                  </span>% don't forget the '\' at the
+end</p>
+
+<p class=MsoNormal style='margin-left:.5in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.5in'>%------------------------------------------------------------</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.animal = '7508';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.name = '01';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.group = 'CPP';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.split = 0;</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.tfiledir = [dataDir
+'CPP_Data\7508\7508_01\tfiles'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.tfileglob = 'TT*.t';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>tfileprefix = 'TT_';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.sameTTfmt = [tfileprefix '##'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.sleep1 =
+[14969140.37,20969140.37];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.maze1<span
+style='mso-spacerun:yes'>  </span>= [21569140.37,39569140.37];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.sleep2 =
+[41952304.4,47952304.4];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.other = '';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>sessList{end+1} = session(s);</p>
+
+<p class=MsoNormal style='margin-left:.5in'>%------------------------------------------------------------</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.animal = '6318';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.name = '06';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.group = 'Saline';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.split = 1;</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.tfiledir = [dataDir
+'CPP\6318_06\tfiles'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.tfileglob = '';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>tfileprefix = '6318_9_6_tt';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.sameTTfmt = [tfileprefix '%%'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.sleep1 = [tfileprefix
+'*_tsleep1.*'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.maze1 = [tfileprefix
+'*_tmaze1.*'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.epochs.sleep2 = [tfileprefix
+'*_tsleep2.*'];</p>
+
+<p class=MsoNormal style='margin-left:.5in'>s.other = '';</p>
+
+<p class=MsoNormal style='margin-left:.5in'>sessList{end+1} = session(s);</p>
+
+<p class=MsoNormal style='margin-left:.5in'>%------------------------------------------------------------</p>
+
+<p class=MsoNormal style='margin-left:.5in'>etc….</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.5in;text-indent:-.25in;mso-list:l1 level1 lfo1;
+tab-stops:list .5in'><![if !supportLists]><span style='mso-list:Ignore'>B)<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp; </span></span><![endif]>usage
+in analysis program:</p>
+
+<p class=MsoNormal style='margin-left:.25in;text-indent:.25in'>% load the
+session list</p>
+
+<p class=MsoNormal style='margin-left:.25in;text-indent:.25in'>sessList =
+SessionList02;</p>
+
+<p class=MsoNormal style='margin-left:.25in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.25in;text-indent:.25in'>%prepare the
+list of rats and sessions</p>
+
+<p class=MsoNormal style='margin-left:.25in;text-indent:.25in'>sessGroup =
+SessionListFilter(sessList,'group','CPP');</p>
+
+<p class=MsoNormal style='margin-left:.25in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='mso-tab-count:1'>      </span>%
+get list of t-files<o:p></o:p></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>tfiles_S1{isess} =<span
+style='mso-spacerun:yes'>  </span>getTFileList(ses,'sleep1');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>tfiles_B{isess}<span
+style='mso-spacerun:yes'>  </span>=<span style='mso-spacerun:yes'> 
+</span>getTFileList(ses,'maze1');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>tfiles_S2{isess} =<span
+style='mso-spacerun:yes'>  </span>getTFileList(ses,'sleep2');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>       </span>% get S-Matrix per epoch<span
+style='mso-spacerun:yes'>        </span><o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>SS1 = getSpikeMatrix(ses,'sleep1');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>SB<span style='mso-spacerun:yes'> 
+</span>= getSpikeMatrix(ses,'maze1');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>SS2 = getSpikeMatrix(ses,'sleep2');<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span><o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-tab-count:1'>      </span>% get Same-TT-File<span
+style='mso-spacerun:yes'>  </span>mask<span style='mso-spacerun:yes'> 
+</span>matrix <o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:.25in'><span style='font-size:11.0pt'><span
+style='mso-spacerun:yes'>        </span>sameTT = getSameNTrodeMatrix(ses);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'>------------------------------------------------------------------------------------------------------------------------------------<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'>HELP on<span
+style='mso-spacerun:yes'>  </span>SESSION class constructor:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>ses = session()<span
+style='mso-spacerun:yes'>   </span>or<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>ses = session(s)<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>Class holding all info associated with a
+recording session<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>designed to aid in analysis routines that loop
+over list of <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>sessions and need to build t-file lists and
+corresponding S-matrices <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>(=: cellarrays of spiketimes of each cell) per
+session epoch.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'> </span>s ... either a session object or a struct with
+fields (omitted fields are set by default to an empty string):<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.animal<span
+style='mso-spacerun:yes'>    </span>... animal (rat) ID<span
+style='mso-spacerun:yes'>  </span>(string)<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.name<span
+style='mso-spacerun:yes'>      </span>... session name (string)<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>  </span><span
+style='mso-spacerun:yes'>     </span>s.group<span style='mso-spacerun:yes'>    
+</span>... session group (string or cell array of strings)<span
+style='mso-spacerun:yes'>  </span>(e.g treatment, cell type, recording system
+number,...);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>a session can be member
+of several session groups listed in the cell array of groups, e.g.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>               </span><span
+style='mso-spacerun:yes'>        </span>{'CPP','pyramidal','SystemD'}; one can
+then build session lists based on membersip in the animal and<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>group categories.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.split<span
+style='mso-spacerun:yes'>     </span>... 0/1 (false/true) flag, de</span><st1:PersonName><span
+ style='font-size:10.0pt'>sc</span></st1:PersonName><span style='font-size:
+10.0pt'>ribing if session is split into separate tfiles for each epoch;<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>for split sessions, the
+epochs field holds tfileglob strings de</span><st1:PersonName><span
+ style='font-size:10.0pt'>sc</span></st1:PersonName><span style='font-size:
+10.0pt'>ribing the tfiles for each epoch<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>instead of the epoch
+start/end timestamps<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.tfiledir<span
+style='mso-spacerun:yes'>  </span>... path to tfile directory (string or
+cellarray of strings); in case of a cellarray of strings all<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>direcories in the list
+are searched for tfiles sequentially.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>Subdirectories of the
+dirs in the list are NOT searched!<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.tfileglob ... glob string or cell
+array of stings defining all tfiles in tfiledir for this session <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>(string with a wildcard
+char *, e.g. 'rat8972_ses01_cell*.t);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>in case of a cellarray
+of strings, all strings are globbed sequentially and appended to the <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>tfile list.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>s.tfileglob is only used
+for non-split sessions! split session require the tfileglob strings<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>to be given per epoch
+(see s.epochs). <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.sameTTfmt ... format of the string
+identifying the tetrode number in the tfile name:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>e.g.:<span
+style='mso-spacerun:yes'>   </span>'6401_Dec_8_tt%%' where the chars up to the
+%% are the same for all cells and %%<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                                </span>denotes the
+position of the tetrode number in the string.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.epochs<span
+style='mso-spacerun:yes'>    </span>... an epochs struct, one field for each
+epoch, holding a vector with epoch start and end timestamps<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>in case of continuous
+sessions, e.g.:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.sleep1 =
+[ts1,ts2]<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.maze<span
+style='mso-spacerun:yes'>   </span>= [ts3,ts4]<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.sleep2 =
+[ts5,ts6]<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>or a tfileglob string or
+a cell array of glob strings e.g :<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.sleep1 = '6401_Dec_8_tt*_sleep1.*'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.maze =
+{'6401_Dec_8_tt*_maze1.*','6401_Dec_8_tt*_run1.*'}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.epochs.sleep2 =
+'6401_Dec_8_tt*_sleep2.*'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>The S-matrices for each
+epoch are built from the tfile lists resulting from these glob strings.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>The number of epochs and
+their names are user definable, but should be consitent within an analysis<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>sequence.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>       </span>s.other<span
+style='mso-spacerun:yes'>     </span>... a user defined struct holding extra
+info associated with this session that an analysis routine might want:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>e.g. filenames of eeg
+files, tracker position files, ripple times file, etc...:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                       </span>for example:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.other.posfile =
+'VT1.pa</span><st1:PersonName><span style='font-size:10.0pt'>sc</span></st1:PersonName><span
+style='font-size:10.0pt'>ci'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                          </span>s.other.posfiledir =
+'c:\data\myana\rat6812\ses01'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>  </span>The following fields are computed in
+constructor from the info given above:<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>      </span>s.tfilenames ... a cell array of strings
+with the names of the all the tfiles found in with<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                         </span>s.tfileglob (in
+split=0 case) or s.epochs (in split=1 case) for all epochs.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>                         </span>Only the filename.ext
+is given in the list, NOT the full path.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><span
+style='mso-spacerun:yes'>      </span>s.tfilefullnames ... same as above,
+however the full path is returned (e.g. C:\data\mytfile.t)<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<div style='border:none;border-bottom:solid windowtext 1.0pt;mso-border-bottom-alt:
+solid windowtext .75pt;padding:0in 0in 1.0pt 0in'>
+
+<p class=MsoNormal style='border:none;mso-border-bottom-alt:solid windowtext .75pt;
+padding:0in;mso-padding-alt:0in 0in 1.0pt 0in'><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+</div>
+
+<p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal>EXAMPLE:</p>
+
+<p class=MsoNormal>A full working example is in the example analysis
+folder<span style='mso-spacerun:yes'>  </span><a
+href="../../Analyses/Reactivation_CPP-Saline">Analyses\Reactivation_CPP-Saline</a>:</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal>1) cd into the folder:</p>
+
+<p class=MsoNormal style='text-indent:.5in'>&gt;&gt; cd Z:\Matlab2\NSMA_Toolbox\Analyses\Reactivation_CPP-Saline\Analysis</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal>2) put the analysis code directory on your matlab path:</p>
+
+<p class=MsoNormal style='text-indent:.5in'>&gt;&gt; addpath([pwd '\code'])</p>
+
+<p class=MsoNormal style='text-indent:.5in'>&gt;&gt; path</p>
+
+<p class=MsoNormal style='text-indent:.5in'><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal><span style='mso-tab-count:2'>                        </span>MATLABPATH</p>
+
+<p class=MsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\Analyses\Reactivation_CPP-Saline\Analysis\code</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\Classes</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\MathStats</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\IO</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\Analysis</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\Utils</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox\Neuralynx</p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>Z:\Matlab2\NSMA_Toolbox</p>
+
+<p class=MsoNormal style='text-indent:.5in'>…..<o:p></o:p></p>
+
+<p class=MsoNormal>3) edit (if you want to change parameters) and run Jessica_RunEV_<st1:PersonName>sc</st1:PersonName>ript.m:</p>
+
+<p class=MsoNormal style='text-indent:.5in'>&gt;&gt;<span
+style='mso-spacerun:yes'>  </span>Jessica_RunEV_<st1:PersonName>sc</st1:PersonName>ript<o:p></o:p></p>
+
+</div>
+
+</body>
+
+</html>

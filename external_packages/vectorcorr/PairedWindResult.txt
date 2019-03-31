@@ -1,0 +1,96 @@
+
+CORRELATION ANALYSIS FOR VECTORIAL DATA
+
+Paired wind directions
+
+Name of input data file: PairedWindData.txt
+
+Data array contains 21 Rows and 2 Columns
+Azimuths input as Degrees
+Sample size: N = 21
+Significance level input: alfa = 0.050
+Number of trials used for resampling: 2500
+
+Variables     col.       Azim?
+             in data
+    X1          1         Yes     Direction, 6 a.m. 
+    X2          2         Yes     Direction, 12 noon
+
+File opened for output of job summary: PairedWindResult.txt
+====================================================
+
+----------------------------------------------------
+
+X1    col. 1    Direction, 6 a.m. 
+
+     R-square =    29.171 
+     R-bar =   0.25719
+     VectorMean (deg) =  287.0
+     Kappa-hat =    0.5324
+
+
+X2    col. 2    Direction, 12 noon
+
+     R-square =    2.0938 
+     R-bar =  0.068905
+     VectorMean (deg) =   32.8
+     Kappa-hat =   0.13813
+
+==============================================
+
+Circular-circular correlation
+X1  Direction, 6 a.m.       X2  Direction, 12 noon 
+
+   Sum of embedded (4-variate) multiple canonical correlations
+   Ref.: Mardia and Jupp, 2000, p. 248 - 249
+   Large-sample approximation
+     Estimated sum correlations (Rsquared) =    0.439
+     Test statistic =    9.2202
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =    9.4877
+     Cannot reject hypothesis of no association
+     P-value = 0.0558
+     NOTE: Test and P-value approximate (small N)
+
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated sum correlations (Rsquared) =   0.439
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =   0.458
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   T-monotonic rank-correlation association
+   Note: Test is sensitive to ties in azimuth data
+   Refs.: Fisher, 1993, p. 148 - 149
+          Mardia and Jupp, 2000, p. 252
+   Large-sample approximation to test distribution
+     Estimated correlation (PIhatN) =    0.24
+     Test statistic =    4.8076
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =    2.3955
+     Reject hypothesis of no association
+     NOTE: Test is approximate due to small sample
+
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (PIhatN) =    0.24
+     Significance level: alfa = 0.050
+     Test criteria (cutoffs) =  -0.152,  0.152
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+
+   T-linear circular-circular association,
+   assuming constant angular shift
+   Refs.: Fisher, 1993, p. 151-153
+          Mardia and Jupp, 2000, p. 250
+   Test distribution based on resampling
+   Ref.: Fisher, 1993, p. 214 - 218
+     Estimated correlation (rhoThat) =   0.191
+     Significance level: alfa = 0.050
+     Test criteria (cutoffs):  -0.136,  0.145
+     Reject hypothesis of no association
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+

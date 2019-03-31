@@ -1,0 +1,17 @@
+function [angVel,epClock,epAnti] = HeadVelocity(ang)
+
+% USAGE
+%     [ang,GoodRanges] = HeadDirectionWhl(fbasename)
+%     
+% Adrien Peyrache 2011
+
+[ang,GoodRanges] = HeadDirection_Wrapper(fbasename);
+
+da = diff(Data(ang));
+da(da<-pi) = da(da<-pi)+2*pi;
+da(da>pi) = da(da>pi)-2*pi;
+angVel = gausssmooth(da,15);
+
+sa = std(angVel);
+angVelM = angVel
+epClock = 

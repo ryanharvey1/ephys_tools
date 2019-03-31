@@ -1,0 +1,166 @@
+
+CORRELATION ANALYSIS FOR VECTORIAL DATA
+
+Analysis of transport of gravels, S. Maryland
+
+Name of input data file: UplandGravelsCorrelData.txt
+
+Data array contains 63 Rows and 4 Columns
+Azimuths input as Degrees
+Sample size: N = 63
+Significance level input: alfa = 0.050
+
+Variables     col.       Azim?
+             in data
+    X1          1         No      Gravel Size   
+    X2          2         No      Qtzite Content
+    X3          4         Yes     Xbed Azim.    
+
+File opened for output of job summary: UplandGravelsCorrelResult.txt
+====================================================
+
+----------------------------------------------------
+
+X1    col. 1    Gravel Size   
+     Mean =   0.34127
+     Variance = 0.0085597
+     Standard deviation =  0.092518 
+
+
+X2    col. 2    Qtzite Content
+     Mean =    21.921
+     Variance =    49.042
+     Standard deviation =     7.003 
+
+
+X3    col. 4    Xbed Azim.    
+
+     R-square =      1880 
+     R-bar =   0.68823
+     VectorMean (deg) =  123.7
+     Kappa-hat =    1.9433
+
+==============================================
+
+Linear-linear correlation
+X1  Gravel Size         X2  Qtzite Content 
+
+   Product-moment correlation
+     Estimated correlation (r) =   0.699
+     Test statistic t =     7.64
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =       2
+     Reject hypothesis of zero correlation
+
+----------------------------------------------
+
+Linear-circular correlation
+X1  Gravel Size         X3  Xbed Azim.     
+
+   Mean(X) = function(Theta)
+   Embedded (bivariate) correlation
+   Ref.: Mardia and Jupp, 2000, p. 245-246
+         Fisher, 1993, p. 145
+    Large-sample approximation to test distribution
+     Estimated correlation (R2xa) =   0.377
+     Test statistic =    36.374
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =    3.1504
+     Reject hypothesis of no association
+     P-value = 0.0000
+     NOTE: Test and P-value approximate (small N)
+    -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   C-Association
+   Distribution-free rank correlation
+   Note: Test is sensitive to ties in X or Theta data
+   Refs.: Mardia and Jupp, 2000, p. 246-248
+          Fisher, 1993, p. 140-141
+   Large-sample approximation to test distribution
+     Estimated correlation (Dn) =   0.369
+     Test statistic (Un) =    22.572
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =         6
+     Reject hypothesis of no association
+     P-value =       1
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   Linear-circular relation:  Mean(Theta) = function(X)
+   converted to circular-circular model
+   Uses T-linear association, assuming constant angular shift
+   Refs.: Fisher, 1993, p. 151-153, 161
+          Mardia and Jupp, 2000, p. 250
+   Large-sample approximation to test distribution
+     Estimated correlation (rhoThat) =   0.518
+     Assume either distribution has vector-length R = 0
+         Test statistic =    32.651
+         Significance level: alfa = 0.050
+         Test criterion (cutoff) =    2.9957
+         Reject hypothesis of no association
+         P-value = 6.604e-015
+     No assumption of zero-length vector in either distribution
+         Test statistic (Z) =  0.012079
+         Significance level: alfa = 0.050
+         Test criterion (cutoff) =      1.96
+         Cannot reject hypothesis of no association
+         P-value =  0.9904
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+
+----------------------------------------------
+
+Linear-circular correlation
+X2  Qtzite Content      X3  Xbed Azim.     
+
+   Mean(X) = function(Theta)
+   Embedded (bivariate) correlation
+   Ref.: Mardia and Jupp, 2000, p. 245-246
+         Fisher, 1993, p. 145
+    Large-sample approximation to test distribution
+     Estimated correlation (R2xa) =   0.393
+     Test statistic =    38.891
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =    3.1504
+     Reject hypothesis of no association
+     P-value = 0.0000
+     NOTE: Test and P-value approximate (small N)
+    -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   C-Association
+   Distribution-free rank correlation
+   Note: Test is sensitive to ties in X or Theta data
+   Refs.: Mardia and Jupp, 2000, p. 246-248
+          Fisher, 1993, p. 140-141
+   Large-sample approximation to test distribution
+     Estimated correlation (Dn) =   0.427
+     Test statistic (Un) =    26.063
+     Significance level: alfa = 0.050
+     Test criterion (cutoff) =         6
+     Reject hypothesis of no association
+     P-value =       1
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+
+   Linear-circular relation:  Mean(Theta) = function(X)
+   converted to circular-circular model
+   Uses T-linear association, assuming constant angular shift
+   Refs.: Fisher, 1993, p. 151-153, 161
+          Mardia and Jupp, 2000, p. 250
+   Large-sample approximation to test distribution
+     Estimated correlation (rhoThat) =   0.398
+     Assume either distribution has vector-length R = 0
+         Test statistic =    25.101
+         Significance level: alfa = 0.050
+         Test criterion (cutoff) =    2.9957
+         Reject hypothesis of no association
+         P-value = 1.255e-011
+     No assumption of zero-length vector in either distribution
+         Test statistic (Z) = 0.0019703
+         Significance level: alfa = 0.050
+         Test criterion (cutoff) =      1.96
+         Cannot reject hypothesis of no association
+         P-value =  0.9984
+
+     -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - 
+

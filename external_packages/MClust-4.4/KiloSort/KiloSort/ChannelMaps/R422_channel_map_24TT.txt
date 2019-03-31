@@ -1,0 +1,98 @@
+% Channel map for R422's 24 TTs
+%
+% The mapping from intan port/channels to TT numbers
+%
+% Customize this file for your rat
+%
+% This map assumes 32-channel Intan RHD2132 amplifier boards are plugged 
+% into the Neuralynx TTIB Omnetics connectors like so:
+%   
+%   ST  --------    ST  ==> PORT A  (TTs 1-8)
+%   1   chipside    2   ==> MISO 1
+%
+%   ST  --------    ST  ==> PORT A  (TTs 9-16)
+%   4   chipside    3   ==> MISO 2
+%
+%   ST  --------    ST  ==> PORT B  (TTs 17-24)
+%   5   chipside    6   ==> MISO 2
+
+% Sampling frequency
+fs = 30000; %30kHz
+
+% List of tetrode numbers
+tets = 1:24;
+
+% Mapping from tetrodes to Intan channels
+% So if you want data for TT t, chan c, 
+% get amp-port(t,c)-channel_map(t,c).dat
+channel_map = [ ... 
+    24 25 26 27; ...% TT 1 (1.1  1.2  1.3  1.4)  PORT A (HS 1)
+    28 29 30 31; ...% TT 2
+    0 1 2 3; ...    % TT 3
+    4 5 6 7; ...    % TT 4
+    23 22 21 20; ...% TT 5
+    19 18 17 16; ...% TT 6
+    15 14 13 12; ...% TT 7
+    11 10 9 8; ...  % TT 8
+    40 41 42 43; ...% TT 9 - (HS 2)
+    44 45 46 47; ...% TT 10
+    48 49 50 51; ...% TT 11
+    52 53 54 55; ...% TT 12
+    39 38 37 36; ...% TT 13
+    35 34 33 32; ...% TT 14
+    63 62 61 60; ...% TT 15
+    59 58 57 56; ...% TT 16
+    56 57 58 59; ...% TT 17 - PORT B (HS 3)
+    60 61 62 63; ...% TT 18
+    32 33 34 35; ...% TT 19
+    36 37 38 39; ...% TT 20
+    55 54 53 52; ...% TT 21
+    51 50 49 48; ...% TT 22
+    47 46 45 44; ...% TT 23
+    43 42 41 40];   % TT 24
+
+% Intan port for each channel
+port = [ ...
+    'A' 'A' 'A' 'A'; ... % TT 1
+    'A' 'A' 'A' 'A'; ... % TT 2
+    'A' 'A' 'A' 'A'; ... % TT 3
+    'A' 'A' 'A' 'A'; ... % TT 4
+    'A' 'A' 'A' 'A'; ... % TT 5
+    'A' 'A' 'A' 'A'; ... % TT 6
+    'A' 'A' 'A' 'A'; ... % TT 7
+    'A' 'A' 'A' 'A'; ... % TT 8
+    'A' 'A' 'A' 'A'; ... % TT 9
+    'A' 'A' 'A' 'A'; ... % TT 10
+    'A' 'A' 'A' 'A'; ... % TT 11
+    'A' 'A' 'A' 'A'; ... % TT 12
+    'A' 'A' 'A' 'A'; ... % TT 13
+    'A' 'A' 'A' 'A'; ... % TT 14
+    'A' 'A' 'A' 'A'; ... % TT 15
+    'A' 'A' 'A' 'A'; ... % TT 16
+    'B' 'B' 'B' 'B'; ... % TT 17
+    'B' 'B' 'B' 'B'; ... % TT 18
+    'B' 'B' 'B' 'B'; ... % TT 19
+    'B' 'B' 'B' 'B'; ... % TT 20
+    'B' 'B' 'B' 'B'; ... % TT 21
+    'B' 'B' 'B' 'B'; ... % TT 22
+    'B' 'B' 'B' 'B'; ... % TT 23
+    'B' 'B' 'B' 'B'];    % TT 24
+
+% What "shank" (Tetrode) each channel belongs to
+shank = ones(24,4).*(1:24)';
+
+% Headstage of each channel
+headstage = [ones(8,4); 2*ones(8,4); 3*ones(8,4)]; 
+
+% X-locations of sites
+xcoords = zeros(24,4);
+
+% Y-locations of sites
+ycoords = ones(24,4).*(1:24)';
+ycoords = ycoords + repmat(0.025*[-1 0 1 2], 24, 1);
+
+% Valid / Dead channels
+% Set to false channels which were dead
+connected = true(size(channel_map)); %default is none are dead
+connected(15:17,:) = false; %TT15-17 were dead
+

@@ -1,0 +1,15 @@
+Rocktown channel SS - reach trends and Xbed azimuths
+Siemers, 1976, J. Sed. Petr., p. 97-123 - Table 4
+Seg  Length  ReachAzim  XbedVectMn N
+1    6.0     312        280        34
+2    3.5     238        220        78
+3    3.5     310        285        51
+4    1.0     249        235        12
+5    2.5     183        192        10
+6    0.5     271        279        13
+7    4.5     332        325        66
+8    2.0     226        225        10
+10   4.0     246        216        59
+11   1.5     259        252        13
+12   2.5     220        188        48
+13   3.5     294        263        26

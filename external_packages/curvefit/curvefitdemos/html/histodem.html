@@ -1,0 +1,110 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Smoothing a Histogram</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="histodem.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit histodem">Open histodem.m in the Editor</a></div><div class="right"><a href="matlab:echodemo histodem">Run in the Command Window</a></div></div><div class="content"><h1>Smoothing a Histogram</h1><!--introduction--><!--/introduction--><p>Here is a histogram of some random values that might represent data that were collected on some measurement.</p><pre class="codeinput">y = randn(1,5001);
+hist(y);
+</pre><img vspace="5" hspace="5" src="histodem_01.png" alt=""> <p>We would like to derive from this histogram a smoother approximation to the underlying distribution. We do this by constructing a spline function <tt>f</tt> whose average value over each bar interval equals the height of that bar.</p><p>If <tt>h</tt> is the height of one of these bars, and its left and right edges are at <tt>L</tt> and <tt>R</tt>, then we want the spline <tt>f</tt> to satisfy</p><pre>  integral {f(x) : L &lt; x &lt; R}/(R - L) = h,</pre><p>or, with <tt>F</tt> the indefinite integral of <tt>f</tt>, i.e., <tt>DF = f</tt>,</p><pre>  F(R) - F(L)  =  h*(R - L).</pre><pre class="codeinput">[heights,centers] = hist(y);
+hold <span class="string">on</span>
+set(gca,<span class="string">'XTickLabel'</span>,[])
+n = length(centers);
+w = centers(2)-centers(1);
+t = linspace(centers(1)-w/2,centers(end)+w/2,n+1);
+p = fix(n/2);
+fill(t([p p p+1 p+1]),[0 heights([p p]),0],<span class="string">'w'</span>)
+plot(centers([p p]),[0 heights(p)],<span class="string">'r:'</span>)
+h = text(centers(p)-.2,heights(p)/2,<span class="string">'   h'</span>);
+dep = -70;tL = text(t(p),dep,<span class="string">'L'</span>);
+tR = text(t(p+1),dep,<span class="string">'R'</span>);
+hold <span class="string">off</span>
+</pre><img vspace="5" hspace="5" src="histodem_02.png" alt=""> <p>So, with <tt>n</tt> the number of bars, <tt>t(i)</tt> the left edge of the <tt>i</tt>-th bar, <tt>dt(i)</tt> its width, and <tt>h(i)</tt> its height, we want</p><pre>  F(t(i+1)) - F(t(i)) = h(i) * dt(i), for i = 1:n,</pre><p>or, setting arbitrarily <tt>F(t(1))</tt> = 0,</p><pre>  F(t(i)) = sum {h(j)*dt(j) : j=1:i-1}, for i = 1:n+1.</pre><pre class="codeinput">dt = diff(t);
+Fvals = cumsum([0,heights.*dt]);
+</pre><p>Add to this the two end conditions <tt>DF(t(1)) = 0 = DF(t(n+1))</tt>, and we have all the data we need to get <tt>F</tt> as a complete cubic spline interpolant.</p><pre class="codeinput">F = spline(t, [0, Fvals, 0]);
+</pre><p>The two extra zero values in the second argument indicate the zero endslope conditions.</p><p>Finally, the derivative, <tt>f = DF</tt>, of the spline <tt>F</tt> is the smoothed version of the histogram.</p><pre class="codeinput">DF = fnder(F);  <span class="comment">% computes its first derivative</span>
+set(h,<span class="string">'String'</span>,<span class="string">'h(i)'</span>)
+set(tL,<span class="string">'String'</span>,<span class="string">'t(i)'</span>)
+set(tR,<span class="string">'String'</span>,<span class="string">'t(i+1)'</span>)
+hold <span class="string">on</span>
+fnplt(DF, <span class="string">'r'</span>, 2)
+hold <span class="string">off</span>
+ylims = ylim; ylim([0,ylims(2)]);
+</pre><img vspace="5" hspace="5" src="histodem_03.png" alt=""> <p class="footer">Copyright 1987-2008 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Smoothing a Histogram
+
+% Copyright 1987-2008 The MathWorks, Inc.
+% $Revision: 1.1.6.1 $  $Date: 2010/02/08 22:30:36 $
+
+%%
+% Here is a histogram of some random values that might represent data that
+% were collected on some measurement.
+y = randn(1,5001);
+hist(y);
+%%
+% We would like to derive from this histogram a smoother approximation to the
+% underlying distribution. We do this by constructing a spline function |f|
+% whose average value over each bar interval equals the height of that bar.
+
+%%
+% If |h| is the height of one of these bars, and its left and right edges
+% are at |L| and |R|, then we want the spline |f| to satisfy
+%
+%    integral {f(x) : L < x < R}/(R - L) = h,
+%
+% or, with |F| the indefinite integral of |f|, i.e., |DF = f|,
+%
+%    F(R) - F(L)  =  h*(R - L).
+[heights,centers] = hist(y);
+hold on
+set(gca,'XTickLabel',[])
+n = length(centers);
+w = centers(2)-centers(1);
+t = linspace(centers(1)-w/2,centers(end)+w/2,n+1);
+p = fix(n/2);
+fill(t([p p p+1 p+1]),[0 heights([p p]),0],'w')
+plot(centers([p p]),[0 heights(p)],'r:')
+h = text(centers(p)-.2,heights(p)/2,'   h');
+dep = -70;tL = text(t(p),dep,'L');
+tR = text(t(p+1),dep,'R');
+hold off
+
+%%
+% So, with |n| the number of bars, |t(i)| the left edge of the |i|-th bar,
+% |dt(i)| its width, and |h(i)| its height, we want
+%
+%    F(t(i+1)) - F(t(i)) = h(i) * dt(i), for i = 1:n,
+%
+% or, setting arbitrarily |F(t(1))| = 0,
+%
+%    F(t(i)) = sum {h(j)*dt(j) : j=1:i-1}, for i = 1:n+1.
+dt = diff(t);
+Fvals = cumsum([0,heights.*dt]);
+%%
+% Add to this the two end conditions |DF(t(1)) = 0 = DF(t(n+1))|, and we have
+% all the data we need to get |F| as a complete cubic spline interpolant.
+F = spline(t, [0, Fvals, 0]);
+%%
+% The two extra zero values in the second argument indicate the zero endslope
+% conditions.
+%
+% Finally, the derivative, |f = DF|, of the spline |F| is the smoothed version
+% of the histogram.
+DF = fnder(F);  % computes its first derivative
+set(h,'String','h(i)')
+set(tL,'String','t(i)')
+set(tR,'String','t(i+1)')
+hold on
+fnplt(DF, 'r', 2)
+hold off
+ylims = ylim; ylim([0,ylims(2)]);
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

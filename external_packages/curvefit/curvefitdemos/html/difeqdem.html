@@ -1,0 +1,479 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Solving a Nonlinear ODE with a Boundary Layer by Collocation</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="difeqdem.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit difeqdem">Open difeqdem.m in the Editor</a></div><div class="right"><a href="matlab:echodemo difeqdem">Run in the Command Window</a></div></div><div class="content"><h1>Solving a Nonlinear ODE with a Boundary Layer by Collocation</h1><!--introduction--><p>This demo illustrates how to use spline commands from Curve Fitting Toolbox&#8482; in a nontrivial application.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">The Problem</a></li><li><a href="#2">The Approximation Space</a></li><li><a href="#5">Discretization</a></li><li><a href="#7">The Numerical Problem</a></li><li><a href="#8">Linearization</a></li><li><a href="#9">Linear System to be Solved</a></li><li><a href="#12">Need Initial Guess for Y</a></li><li><a href="#14">Iteration</a></li><li><a href="#17">Getting Ready for a Smaller Epsilon</a></li><li><a href="#18">Collocation Sites for New Breaks</a></li><li><a href="#20">Initial Guess</a></li><li><a href="#21">Iteration with Smaller Epsilon</a></li><li><a href="#22">Very Small Epsilon</a></li><li><a href="#23">Plot the Breaks Used for Smallest Epsilon</a></li><li><a href="#24">Plot Residual for Smallest Epsilon</a></li></ul></div><h2>The Problem<a name="1"></a></h2><p>We consider the nonlinear singularly perturbed problem</p><pre>  epsilon D^2g(x) + (g(x))^2 = 1  on [0..1]
+                Dg(0) = g(1) = 0.</pre><p>This problem is already quite difficult for <tt>epsilon = .001</tt>, so we choose a modest</p><pre class="codeinput">epsilon = .1;
+</pre><h2>The Approximation Space<a name="2"></a></h2><p>We seek an approximate solution by collocation from C^1 piecewise cubics with a specified break sequence <tt>breaks</tt>, hence want the order <tt>k</tt> to be 4.</p><pre class="codeinput">breaks = (0:4)/4;
+k = 4;
+</pre><p>We obtain the corresponding knot sequence as</p><pre class="codeinput">knots = augknt(breaks,k,2)
+</pre><pre class="codeoutput">
+knots =
+
+  Columns 1 through 7
+
+         0         0         0         0    0.2500    0.2500    0.5000
+
+  Columns 8 through 14
+
+    0.5000    0.7500    0.7500    1.0000    1.0000    1.0000    1.0000
+
+</pre><p>Whatever the choice of order and knots, the corresponding spline space has dimension</p><pre class="codeinput">n = length(knots) - k
+</pre><pre class="codeoutput">
+n =
+
+    10
+
+</pre><h2>Discretization<a name="5"></a></h2><p>The number of degrees of freedom, 10, fits nicely with the fact that we expect to collocate at two sites per polynomial piece, for a total of 8 conditions, bringing us to 10 conditions altogether once we add the two side conditions.</p><p>We choose two Gauss sites for each interval. For the `standard' interval [-1/2 .. 1/2] of unit length, these are the two sites</p><pre class="codeinput">gauss = .5773502692*[-1/2; 1/2];
+</pre><p>From this, we obtain the whole collection of collocation sites by</p><pre class="codeinput">ninterv = length(breaks)-1;
+temp = (breaks(2:ninterv+1)+breaks(1:ninterv))/2;
+temp = temp([1 1],:) + gauss*diff(breaks);
+colsites = temp(:).';
+</pre><h2>The Numerical Problem<a name="7"></a></h2><p>The numerical problem we want to solve is to find a piecewise polynomial (or <i>pp</i>) <tt>y</tt> of the given order, and with the given knots, that satisfies the nonlinear system</p><pre>                       Dy(0)  =  0
+  (y(x))^2 + epsilon D^2y(x)  =  1   for x in colsites
+                        y(1)  =  0</pre><h2>Linearization<a name="8"></a></h2><p>If <tt>y</tt> is our current approximation to the solution, then the linear problem for the better (?) solution <tt>z</tt> by Newton's method reads</p><pre>                         Dz(0)  =  0
+  w_0(x)z(x) + epsilon D^2z(x)  =  b(x)   for x in colsites
+                          z(1)  =  0</pre><p>with <tt>w_0(x) := 2y(x)</tt> and <tt>b(x) := (y(x))^2 + 1</tt>.</p><p>In fact, by choosing <tt>w_0(1) := 1</tt>, <tt>w_1(0) := 1</tt>, and</p><pre>  w_2(x) := epsilon,  w_1(x) := 0   for x in colsites</pre><p>and choosing all other values of <tt>w_0</tt>, <tt>w_1</tt>, <tt>w_2</tt>, and <tt>b</tt> not yet specified to be zero, we can give our system the uniform shape</p><pre>  w_0(x)z(x) + w_1(x)Dz(x) + w_2(x)D^2z(x) = b(x)   for x in sites</pre><p>where</p><pre class="codeinput">sites = [0,colsites,1];
+</pre><h2>Linear System to be Solved<a name="9"></a></h2><p>This system converts into one for the B-spline coefficients of its solution <tt>z</tt>. For this, we need the zeroth, first, and second derivative at every <tt>x</tt> in <tt>sites</tt> and for every relevant B-spline. These values are supplied by the <tt>spcol</tt> command.</p><p>Here is the essential part of the documentation for <tt>spcol</tt>:</p><pre>SPCOL B-spline collocation matrix.</pre><pre>   COLLOC = SPCOL(KNOTS,K,TAU) is the matrix</pre><pre>      [ D^m(i)B_j(TAU(i)) : i=1:length(TAU), j=1:length(KNOTS)-K ],</pre><pre>   with  D^m(i)B_j  the m(i)-fold derivative of B_j,
+   B_j  the j-th B-spline of order K for the knot sequence KNOTS,
+   TAU a sequence of sites,
+   both KNOTS and TAU are assumed to be nondecreasing, and
+   m(i) is the integer #{ j&lt;i : TAU(j) = TAU(i) }, i.e., the
+   'cumulative' multiplicity of TAU(i) in TAU.</pre><p>We use <tt>spcol</tt> to supply the matrix</p><pre class="codeinput">colmat = spcol(knots,k, brk2knt(sites,3));
+</pre><p>with <tt>brk2knt</tt> used here to triple each entry of <tt>sites</tt>, and thus we get in <tt>colmat</tt>, for each <tt>x</tt> in <tt>sites</tt>, the value and the first and second derivatives at <tt>x</tt> of all the relevant B-splines.</p><p>From this, we get the collocation matrix by combining the row triple associated with <tt>x</tt> using the weights <tt>w_0(x), w_1(x), w_2(x)</tt> to get the row corresponding to <tt>x</tt> of the matrix of our linear system.</p><h2>Need Initial Guess for Y<a name="12"></a></h2><p>We also need a current approximation <tt>y</tt> from our spline space. Initially, we get it by interpolating some reasonable initial guess from our pp space at <tt>sites</tt>. For that guess, we use the parabola</p><pre>  x^2 - 1</pre><p>which does satisfy the end conditions and lies in our spline space. We obtain its B-form by interpolation at <tt>sites</tt>. We select the relevant interpolation matrix from the full matrix <tt>colmat</tt>. Here it is, in several cautious steps:</p><pre class="codeinput">intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+coefs = intmat\[0 colsites.*colsites-1 0].';
+y = spmak(knots,coefs.');
+</pre><p>We plot the result, to be sure -- it should be exactly <tt>x^2-1</tt>.</p><pre class="codeinput">fnplt(y,<span class="string">'g'</span>);
+legend(<span class="string">'Initial Guess (x^2-1)'</span>,<span class="string">'location'</span>,<span class="string">'NW'</span>);
+axis([-0.01 1.01 -1.01 0.01]);
+hold <span class="string">on</span>
+</pre><img vspace="5" hspace="5" src="difeqdem_01.png" alt=""> <h2>Iteration<a name="14"></a></h2><p>We can now complete the construction and solution of the linear system for the improved approximate solution <tt>z</tt> from our current guess <tt>y</tt>. In fact, with the initial guess <tt>y</tt> available, we now set up an iteration, to be terminated when the change <tt>z-y</tt> is less than a specified tolerance.</p><pre class="codeinput">tolerance = 6.e-9;
+</pre><p>The max-norms of the change <tt>z-y</tt> at each iteration are shown as output below, and the figure shows each of the iterates.</p><pre class="codeinput"><span class="keyword">while</span> 1
+   vtau = fnval(y,colsites);
+   weights=[0 1 0;
+            [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+            1 0 0];
+   colloc = zeros(n,n);
+   <span class="keyword">for</span> j=1:n
+      colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+   <span class="keyword">end</span>
+   coefs = colloc\[0 vtau.*vtau+1 0].';
+   z = spmak(knots,coefs.');
+   fnplt(z,<span class="string">'k'</span>);
+   maxdif = max(max(abs(z.coefs-y.coefs)));
+   fprintf(<span class="string">'maxdif = %g\n'</span>,maxdif)
+   <span class="keyword">if</span> (maxdif&lt;tolerance), <span class="keyword">break</span>, <span class="keyword">end</span>
+
+   <span class="comment">% now reiterate</span>
+   y = z;
+<span class="keyword">end</span>
+legend({<span class="string">'Initial Guess (x^2-1)'</span> <span class="string">'Iterates'</span>},<span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><pre class="codeoutput">maxdif = 0.206695
+maxdif = 0.01207
+maxdif = 3.95151e-005
+maxdif = 4.43216e-010
+</pre><img vspace="5" hspace="5" src="difeqdem_02.png" alt=""> <p>That looks like quadratic convergence, as expected from a Newton iteration.</p><h2>Getting Ready for a Smaller Epsilon<a name="17"></a></h2><p>If we now decrease <tt>epsilon</tt>, we create more of a boundary layer near the right endpoint, and this calls for a nonuniform mesh. We use <tt>newknt</tt> to construct an appropriate (finer) mesh from the current approximation.</p><pre class="codeinput">knots = newknt(z, ninterv+1); breaks = knt2brk(knots);
+knots = augknt(breaks,4,2);
+n = length(knots)-k;
+</pre><h2>Collocation Sites for New Breaks<a name="18"></a></h2><p>Next, we get the collocation sites corresponding to the new <tt>breaks</tt></p><pre class="codeinput">ninterv = length(breaks)-1;
+temp = ((breaks(2:ninterv+1)+breaks(1:ninterv))/2);
+temp = temp([1 1], :) + gauss*diff(breaks);
+colsites = temp(:).';
+sites = [0,colsites,1];
+</pre><p>and then the new collocation matrix.</p><pre class="codeinput">colmat = spcol(knots,k, brk2knt(sites,3));
+</pre><h2>Initial Guess<a name="20"></a></h2><p>We obtain the initial guess <tt>y</tt> as the interpolant from the current spline space to the computed solution <tt>z</tt>. We plot the resulting interpolant to be sure -- it should be close to our current solution.</p><pre class="codeinput">intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+y = spmak(knots,[0 fnval(z,colsites) 0]/intmat.');
+fnplt(y,<span class="string">'c'</span>);
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([6 5 1]),{<span class="string">'Initial Guess (x^2-1)'</span> <span class="string">'Iterates'</span> <span class="keyword">...</span>
+                   <span class="string">'New Initial Guess for New Value of epsilon'</span>}, <span class="keyword">...</span>
+                   <span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><img vspace="5" hspace="5" src="difeqdem_03.png" alt=""> <h2>Iteration with Smaller Epsilon<a name="21"></a></h2><p>Now we divide <tt>epsilon</tt> by 3 and repeat the above iteration. Convergence is again quadratic.</p><pre class="codeinput">epsilon = epsilon/3;
+<span class="keyword">while</span> 1
+   vtau = fnval(y,colsites);
+   weights=[0 1 0;
+            [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+            1 0 0];
+   colloc = zeros(n,n);
+   <span class="keyword">for</span> j=1:n
+      colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+   <span class="keyword">end</span>
+   coefs = colloc\[0 vtau.*vtau+1 0].';
+   z = spmak(knots,coefs.');
+   fnplt(z,<span class="string">'b'</span>);
+   maxdif = max(max(abs(z.coefs-y.coefs)));
+   fprintf(<span class="string">'maxdif = %g\n'</span>,maxdif)
+   <span class="keyword">if</span> (maxdif&lt;tolerance), <span class="keyword">break</span>, <span class="keyword">end</span>
+
+   <span class="comment">% now reiterate</span>
+   y = z;
+<span class="keyword">end</span>
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([10 9 5 4]), <span class="keyword">...</span>
+       {<span class="string">'Initial Guess (x^2-1) for epsilon = .1'</span> <span class="string">'Iterates'</span> <span class="keyword">...</span>
+        sprintf(<span class="string">'Initial Guess for epsilon = %.3f'</span>,epsilon) <span class="keyword">...</span>
+        <span class="string">'Iterates'</span>}, <span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><pre class="codeoutput">maxdif = 0.237937
+maxdif = 0.0184488
+maxdif = 0.000120467
+maxdif = 4.78116e-009
+</pre><img vspace="5" hspace="5" src="difeqdem_04.png" alt=""> <h2>Very Small Epsilon<a name="22"></a></h2><p>For a much smaller <tt>epsilon</tt>, we merely repeat these calculations, dividing <tt>epsilon</tt> by 3 each time.</p><pre class="codeinput"><span class="keyword">for</span> ee = 1:4
+   knots = newknt(z, ninterv+1); breaks = knt2brk(knots);
+   knots = augknt(breaks,4,2); n = length(knots)-k;
+
+   ninterv = length(breaks)-1;
+   temp = ((breaks(2:ninterv+1)+breaks(1:ninterv))/2);
+   temp = temp([1 1], :) + gauss*diff(breaks);
+   colsites = temp(:).';
+   sites = [0,colsites,1];
+
+   colmat = spcol(knots,k, brk2knt(sites,3));
+
+   intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+   y = spmak(knots,[0 fnval(z,colsites) 0]/intmat.');
+   fnplt(y,<span class="string">'c'</span>)
+
+   epsilon = epsilon/3;
+   <span class="keyword">while</span> 1
+      vtau = fnval(y,colsites);
+      weights=[0 1 0;
+               [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+               1 0 0];
+      colloc = zeros(n,n);
+      <span class="keyword">for</span> j=1:n
+       colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+      <span class="keyword">end</span>
+      coefs = colloc\[0 vtau.*vtau+1 0].';
+      z = spmak(knots,coefs.');
+      fnplt(z,<span class="string">'b'</span>);
+      maxdif = max(max(abs(z.coefs-y.coefs)));
+      <span class="keyword">if</span> (maxdif&lt;tolerance), <span class="keyword">break</span>, <span class="keyword">end</span>
+
+      <span class="comment">% now reiterate</span>
+      y = z;
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([30 29 25 24]), <span class="keyword">...</span>
+       {<span class="string">'Initial Guess (x^2-1) for epsilon = .1'</span> <span class="string">'Iterates'</span> <span class="keyword">...</span>
+        <span class="string">'Initial Guesses for epsilon = .1/3^j, j=1:5'</span> <span class="keyword">...</span>
+        <span class="string">'Iterates'</span>},<span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><img vspace="5" hspace="5" src="difeqdem_05.png" alt=""> <h2>Plot the Breaks Used for Smallest Epsilon<a name="23"></a></h2><p>Here is the final distribution of <tt>breaks</tt>, showing <tt>newknt</tt> to have worked well in this case.</p><pre class="codeinput">breaks = fnbrk(fn2fm(z,<span class="string">'pp'</span>),<span class="string">'b'</span>);
+bb = repmat(breaks,3,1); cc = repmat([0;-1;NaN],1,length(breaks));
+plot(bb(:),cc(:),<span class="string">'r'</span>);
+hold <span class="string">off</span>
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([31 30 26 25 1]), <span class="keyword">...</span>
+       {<span class="string">'Initial Guess (x^2-1) for epsilon = .1'</span> <span class="string">'Iterates'</span> <span class="keyword">...</span>
+        <span class="string">'Initial Guesses for epsilon = .1/3^j, j=1:5'</span> <span class="keyword">...</span>
+        <span class="string">'Iterates'</span> <span class="string">'Breaks for epsilon = .1/3^5'</span>},<span class="string">'location'</span>,<span class="string">'NW'</span>);
+</pre><img vspace="5" hspace="5" src="difeqdem_06.png" alt=""> <h2>Plot Residual for Smallest Epsilon<a name="24"></a></h2><p>Recall that we are solving the ODE</p><pre>  epsilon D^2g(x) + (g(x))^2 = 1  on [0..1]</pre><p>As a check, we compute and plot the residual for the computed solution for the smallest epsilon. This, too, looks satisfactory.</p><pre class="codeinput">xx = linspace(0,1,201);
+plot(xx, 1 - epsilon*fnval(fnder(z,2),xx) - (fnval(z,xx)).^2)
+title(<span class="string">'Residual for the Computed Solution for Smallest epsilon'</span>);
+</pre><img vspace="5" hspace="5" src="difeqdem_07.png" alt=""> <p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Solving a Nonlinear ODE with a Boundary Layer by Collocation
+% This demo illustrates how to use spline commands from Curve Fitting
+% Toolbox(TM) in a nontrivial application.
+
+% Copyright 1987-2010 The MathWorks, Inc.
+% $Revision: 1.1.6.3 $
+
+%% The Problem
+% We consider the nonlinear singularly perturbed problem
+%
+%    epsilon D^2g(x) + (g(x))^2 = 1  on [0..1]
+%                  Dg(0) = g(1) = 0.
+%
+% This problem is already quite difficult for |epsilon = .001|, so we choose a
+% modest
+epsilon = .1;
+
+%% The Approximation Space
+% We seek an approximate solution by collocation from C^1 piecewise cubics
+% with a specified break sequence |breaks|, hence want the order |k| to be
+% 4.
+breaks = (0:4)/4;
+k = 4;
+%%
+% We obtain the corresponding knot sequence as
+knots = augknt(breaks,k,2)
+
+%%
+% Whatever the choice of order and knots, the corresponding spline space has
+% dimension
+n = length(knots) - k
+
+%% Discretization
+% The number of degrees of freedom, 10, fits nicely with the fact that we
+% expect to collocate at two sites per polynomial piece, for a total of 8
+% conditions, bringing us to 10 conditions altogether once we add the two side
+% conditions.
+%
+% We choose two Gauss sites for each interval. For the `standard' interval
+% [-1/2 .. 1/2] of unit length, these are the two sites
+gauss = .5773502692*[-1/2; 1/2];
+%%
+% From this, we obtain the whole collection of collocation sites by
+ninterv = length(breaks)-1;
+temp = (breaks(2:ninterv+1)+breaks(1:ninterv))/2;
+temp = temp([1 1],:) + gauss*diff(breaks);
+colsites = temp(:).';
+
+%% The Numerical Problem
+% The numerical problem we want to solve is to find a piecewise polynomial (or
+% _pp_) |y| of the given order, and with the given knots, that satisfies the
+% nonlinear system
+%
+%                         Dy(0)  =  0
+%    (y(x))^2 + epsilon D^2y(x)  =  1   for x in colsites
+%                          y(1)  =  0
+
+%% Linearization
+% If |y| is our current approximation to the solution, then the linear
+% problem for the better (?) solution |z| by Newton's method reads
+%
+%                           Dz(0)  =  0
+%    w_0(x)z(x) + epsilon D^2z(x)  =  b(x)   for x in colsites
+%                            z(1)  =  0
+%
+% with |w_0(x) := 2y(x)| and |b(x) := (y(x))^2 + 1|.
+%
+% In fact, by choosing |w_0(1) := 1|, |w_1(0) := 1|, and
+%
+%    w_2(x) := epsilon,  w_1(x) := 0   for x in colsites
+%
+% and choosing all other values of |w_0|, |w_1|, |w_2|, and |b| not yet specified
+% to be zero, we can give our system the uniform shape
+%
+%    w_0(x)z(x) + w_1(x)Dz(x) + w_2(x)D^2z(x) = b(x)   for x in sites
+%
+% where
+sites = [0,colsites,1];
+
+%% Linear System to be Solved
+% This system converts into one for the B-spline coefficients of its solution
+% |z|. For this, we need the zeroth, first, and second derivative at every |x|
+% in |sites| and for every relevant B-spline. These values are supplied by the
+% |spcol| command.
+%
+% Here is the essential part of the documentation for |spcol|:
+%
+%  SPCOL B-spline collocation matrix.
+%
+%     COLLOC = SPCOL(KNOTS,K,TAU) is the matrix
+%
+%        [ D^m(i)B_j(TAU(i)) : i=1:length(TAU), j=1:length(KNOTS)-K ],
+%
+%     with  D^m(i)B_j  the m(i)-fold derivative of B_j,
+%     B_j  the j-th B-spline of order K for the knot sequence KNOTS,
+%     TAU a sequence of sites,
+%     both KNOTS and TAU are assumed to be nondecreasing, and
+%     m(i) is the integer #{ j<i : TAU(j) = TAU(i) }, i.e., the
+%     'cumulative' multiplicity of TAU(i) in TAU.
+
+%%
+% We use |spcol| to supply the matrix
+colmat = spcol(knots,k, brk2knt(sites,3));
+%%
+% with |brk2knt| used here to triple each entry of |sites|, and thus we get
+% in |colmat|, for each |x| in |sites|, the value and the first and second
+% derivatives at |x| of all the relevant B-splines.
+%
+% From this, we get the collocation matrix by combining the row triple
+% associated with |x| using the weights |w_0(x), w_1(x), w_2(x)| to get the
+% row corresponding to |x| of the matrix of our linear system.
+
+
+%% Need Initial Guess for Y
+% We also need a current approximation |y| from our spline space. Initially,
+% we get it by interpolating some reasonable initial guess from our pp space
+% at |sites|. For that guess, we use the parabola
+%
+%    x^2 - 1
+%
+% which does satisfy the end conditions and lies in our spline space. We obtain
+% its B-form by interpolation at |sites|. We select the relevant interpolation
+% matrix from the full matrix |colmat|. Here it is, in several cautious steps:
+intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+coefs = intmat\[0 colsites.*colsites-1 0].';
+y = spmak(knots,coefs.');
+%%
+% We plot the result, to be sure REPLACE_WITH_DASH_DASH it should be exactly |x^2-1|.
+fnplt(y,'g');
+legend('Initial Guess (x^2-1)','location','NW');
+axis([-0.01 1.01 -1.01 0.01]);
+hold on
+
+%% Iteration
+% We can now complete the construction and solution of the linear system for
+% the improved approximate solution |z| from our current guess |y|. In fact,
+% with the initial guess |y| available, we now set up an iteration, to be
+% terminated when the change |z-y| is less than a specified tolerance.
+tolerance = 6.e-9;
+
+%%
+% The max-norms of the change |z-y| at each iteration are shown as output
+% below, and the figure shows each of the iterates.
+while 1
+   vtau = fnval(y,colsites);
+   weights=[0 1 0;
+            [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+            1 0 0];
+   colloc = zeros(n,n);
+   for j=1:n
+      colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+   end
+   coefs = colloc\[0 vtau.*vtau+1 0].';
+   z = spmak(knots,coefs.');
+   fnplt(z,'k');
+   maxdif = max(max(abs(z.coefs-y.coefs))); 
+   fprintf('maxdif = %g\n',maxdif)
+   if (maxdif<tolerance), break, end
+   
+   % now reiterate
+   y = z;
+end
+legend({'Initial Guess (x^2-1)' 'Iterates'},'location','NW');
+%%
+% That looks like quadratic convergence, as expected from a Newton iteration.
+
+%% Getting Ready for a Smaller Epsilon
+% If we now decrease |epsilon|, we create more of a boundary layer near the
+% right endpoint, and this calls for a nonuniform mesh. We use |newknt| to
+% construct an appropriate (finer) mesh from the current approximation.
+knots = newknt(z, ninterv+1); breaks = knt2brk(knots);
+knots = augknt(breaks,4,2);
+n = length(knots)-k;
+
+%% Collocation Sites for New Breaks
+% Next, we get the collocation sites corresponding to the new |breaks|
+ninterv = length(breaks)-1;
+temp = ((breaks(2:ninterv+1)+breaks(1:ninterv))/2);
+temp = temp([1 1], :) + gauss*diff(breaks);
+colsites = temp(:).';
+sites = [0,colsites,1];
+%%
+% and then the new collocation matrix.
+colmat = spcol(knots,k, brk2knt(sites,3));
+
+%% Initial Guess
+% We obtain the initial guess |y| as the interpolant from the current spline
+% space to the computed solution |z|. We plot the resulting interpolant to be
+% sure REPLACE_WITH_DASH_DASH it should be close to our current solution.
+intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+y = spmak(knots,[0 fnval(z,colsites) 0]/intmat.');
+fnplt(y,'c');
+h = get(gca,'Children');
+legend(h([6 5 1]),{'Initial Guess (x^2-1)' 'Iterates' ...
+                   'New Initial Guess for New Value of epsilon'}, ...
+                   'location','NW');
+
+%% Iteration with Smaller Epsilon
+% Now we divide |epsilon| by 3 and repeat the above iteration. Convergence is
+% again quadratic.
+epsilon = epsilon/3;
+while 1
+   vtau = fnval(y,colsites);
+   weights=[0 1 0;
+            [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+            1 0 0];
+   colloc = zeros(n,n);
+   for j=1:n
+      colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+   end
+   coefs = colloc\[0 vtau.*vtau+1 0].';
+   z = spmak(knots,coefs.');
+   fnplt(z,'b');
+   maxdif = max(max(abs(z.coefs-y.coefs)));
+   fprintf('maxdif = %g\n',maxdif)
+   if (maxdif<tolerance), break, end
+   
+   % now reiterate
+   y = z;
+end
+h = get(gca,'Children');
+legend(h([10 9 5 4]), ...
+       {'Initial Guess (x^2-1) for epsilon = .1' 'Iterates' ...
+        sprintf('Initial Guess for epsilon = %.3f',epsilon) ...
+        'Iterates'}, 'location','NW');
+
+%% Very Small Epsilon
+% For a much smaller |epsilon|, we merely repeat these calculations, dividing
+% |epsilon| by 3 each time.
+for ee = 1:4
+   knots = newknt(z, ninterv+1); breaks = knt2brk(knots);
+   knots = augknt(breaks,4,2); n = length(knots)-k;
+
+   ninterv = length(breaks)-1;
+   temp = ((breaks(2:ninterv+1)+breaks(1:ninterv))/2);
+   temp = temp([1 1], :) + gauss*diff(breaks);
+   colsites = temp(:).';
+   sites = [0,colsites,1];
+
+   colmat = spcol(knots,k, brk2knt(sites,3));
+
+   intmat = colmat([2 1+(1:(n-2))*3,1+(n-1)*3],:);
+   y = spmak(knots,[0 fnval(z,colsites) 0]/intmat.');
+   fnplt(y,'c')
+
+   epsilon = epsilon/3;
+   while 1
+      vtau = fnval(y,colsites);
+      weights=[0 1 0;
+               [2*vtau.' zeros(n-2,1) repmat(epsilon,n-2,1)];
+               1 0 0];
+      colloc = zeros(n,n);
+      for j=1:n
+       colloc(j,:) = weights(j,:)*colmat(3*(j-1)+(1:3),:);
+      end
+      coefs = colloc\[0 vtau.*vtau+1 0].';
+      z = spmak(knots,coefs.');
+      fnplt(z,'b');
+      maxdif = max(max(abs(z.coefs-y.coefs)));
+      if (maxdif<tolerance), break, end
+      
+      % now reiterate
+      y = z;
+   end
+end
+h = get(gca,'Children');
+legend(h([30 29 25 24]), ...
+       {'Initial Guess (x^2-1) for epsilon = .1' 'Iterates' ...
+        'Initial Guesses for epsilon = .1/3^j, j=1:5' ...
+        'Iterates'},'location','NW');
+
+%% Plot the Breaks Used for Smallest Epsilon
+% Here is the final distribution of |breaks|, showing |newknt| to have worked well
+% in this case.
+breaks = fnbrk(fn2fm(z,'pp'),'b');
+bb = repmat(breaks,3,1); cc = repmat([0;-1;NaN],1,length(breaks));
+plot(bb(:),cc(:),'r');
+hold off
+h = get(gca,'Children');
+legend(h([31 30 26 25 1]), ...
+       {'Initial Guess (x^2-1) for epsilon = .1' 'Iterates' ...
+        'Initial Guesses for epsilon = .1/3^j, j=1:5' ...
+        'Iterates' 'Breaks for epsilon = .1/3^5'},'location','NW');
+
+%% Plot Residual for Smallest Epsilon
+% Recall that we are solving the ODE
+%
+%    epsilon D^2g(x) + (g(x))^2 = 1  on [0..1]
+%
+% As a check, we compute and plot the residual for the computed solution for
+% the smallest epsilon. This, too, looks satisfactory.
+xx = linspace(0,1,201);
+plot(xx, 1 - epsilon*fnval(fnder(z,2),xx) - (fnval(z,xx)).^2)
+title('Residual for the Computed Solution for Smallest epsilon');
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,110 @@
+function [L,weights] = CrossValidationCrossCorrPrediction_Cells(qPre,qPost,sPost,binT,ep)
+
+% [L,weights] = CrossValidationCrossCorrPrediction_Cells(qPre,qPost,sPost,ep)
+% 
+% computes the loglikelihood prediction of an ensemble of target spike trains given another ensemble of (predictor) spike trains
+% The prediction is built upon a Generalized Linear Model. The algorithm
+% searches for the optimal gaussian window that best predict the spike
+% trains of the target cells given another neuron.
+% 
+% INPUTS:
+%     qPre:     a binned spike train matrix of the predictive cells (could be smoothed)
+%     qPost:    the binned spike train of the target cells, same bins and same smoothing
+%     sPost:    tsdArray of target cell spike trains
+%     ep:       an intervalset objet of the epoch during which the prediction is built
+%     
+% OUTPUTS:
+%     L:        information rate (bit/s)
+%     params:   a 3D matrix giving, for each pair, the optimal delay and
+%               s.d. of the integration window
+%
+%  Dependencies: TStoolbox, ComputeCrossCorrPrediction (and dependencies
+%  therein)
+
+% Copyright (C) 2016 Adrien Peyrache
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+
+
+
+% Parameters:
+nbEp        = 2; %Number of cross-validations
+nbParams    = 2; %number of parameters, here average and s.d.
+
+epV = regIntervals(ep,nbEp);
+fprintf('Launching Cross-validated Cross-Corr info\n')
+
+dQpre       = Data(qPre);
+nbCpre      = size(dQpre,2);
+dQpost      = Data(qPost);
+nbCpost     = size(dQpost,2);
+
+rg = Range(qPre);
+dt = median(diff(rg));
+
+L = NaN(nbEp,nbCpost,nbCpre);
+
+weights = zeros(nbCpost,nbCpre,nbEp,2);
+
+for ii=1:nbEp
+    fprintf('.')
+    
+    ix = (1:nbEp);
+    ix(ii)=[];
+    testEp = epV{ii};
+    trainingEp = epV{ix(1)};
+    for jj=1:nbEp-2
+        trainingEp = union(trainingEp,epV{ix(jj)});
+        trainingEp = mergeCloseIntervals(trainingEp,1);
+    end
+    
+    for posC=1:nbCpost
+        qpost       = tsd(Range(qPost),dQpost(:,posC));
+        postTrain   = (Data(Restrict(qpost,trainingEp)));
+        postTest    = (Data(Restrict(qpost,testEp)));
+        
+        for preC=1:nbCpre
+            qpre        = tsd(Range(qPost),dQpre(:,preC));
+            preTrain   = (Data(Restrict(qpre,trainingEp)));
+            preTest    = (Data(Restrict(qpre,testEp)));
+            
+            if any(dQpre(:,preC)>0) && any(dQpost(:,posC)>0)
+            
+            %% Determines the optimal gaussian integration window
+            warning off
+            if ii==1
+                keyboard
+                tic,w   = ComputeCrossCorrPrediction(preTrain,postTrain,preTest,postTest,binT);toc
+            else
+                %Use previous weights as initial conditions to improve speed
+                %w0  = squeeze(nanmean(weights(posC,preC,1:ii-1,:),3));
+                w   = ComputeCrossCorrPrediction(preTrain,postTrain,preTest,postTest,binT);
+            end
+            warning on
+            
+            weights(posC,preC,ii,:) = w(:)';
+             
+            %% Compute the optimal log-likelihood          
+            r   = rate(sPost{posC},trainingEp);
+            
+            warning off
+            Lf  = SpkTrainLogLikelihood(postTest,crossCorrModel_Intensity(preTrain,postTrain,preTest,w)*binT);
+            L0  = SpkTrainLogLikelihood(postTest,repmat(r*binT,[size(postTest,1) 1]));
+            warning on
+            L(ii,posC,preC) = Lf-L0;
+            end
+        end
+    end
+end
+
+fprintf('done\n')
+keyboard
+L = nansum(L);
+L = L/tot_length(ep,'s');
+%L = L(:);
+
+weights = squeeze(mean(weights,3));
+

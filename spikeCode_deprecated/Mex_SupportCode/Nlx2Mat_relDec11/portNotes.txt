@@ -1,0 +1,40 @@
+#CFILES="Nlx_Code.cpp TimeBuf.cpp TimeEventBuf.cpp FileDataBucket.cpp GeneralOperations.cpp ProcessorSpike.cpp ProcessorEV.cpp ProcessorCSC.cpp ProcessorVT.cpp TimeCSCBuf.cpp TimeMClustTSBuf.cpp TimeSEBuf.cpp TimeSTBuf.cpp TimeTSBuf.cpp TimeTTBuf.cpp TimeVideoBuf.cpp"
+#g++ $CFLAGS -I$INCLMATLAB $CFILES
+
+
+ProcessorCSC.cpp:	if( mGeneralOps.GetInputParameters(prhs, nlhs, mFilename, mFieldSelections, MaxFields, mHeaderSelected, mExtractionMode, mModeParameters, mNumModeParameters) != Nlx2MatOK ) { return; }
+ProcessorCSC.cpp:		if( mGeneralOps.LoadHeader(plhs, nlhs-1, mHeader ) != Nlx2MatOK ) { return; }
+ProcessorEV.cpp:	if( mGeneralOps.GetInputParameters(prhs, nlhs, mFilename, mFieldSelections, MaxFields, mHeaderSelected, mExtractionMode, mModeParameters, mNumModeParameters) != Nlx2MatOK ) { return; }
+ProcessorEV.cpp:		if( mGeneralOps.LoadHeader(plhs, nlhs-1, mHeader ) != Nlx2MatOK ) { return; }
+ProcessorSpike.cpp:	if( mGeneralOps.GetInputParameters(prhs, nlhs, mFilename, mFieldSelections, MaxFields, mHeaderSelected, mExtractionMode, mModeParameters, mNumModeParameters) != Nlx2MatOK ) { return; }
+ProcessorSpike.cpp:		if( mGeneralOps.LoadHeader(plhs, nlhs-1, mHeader ) != Nlx2MatOK ) { return; }
+ProcessorVT.cpp:	if( mGeneralOps.GetInputParameters(prhs, nlhs, mFilename, mFieldSelections, MaxFields, mHeaderSelected, mExtractionMode, mModeParameters, mNumModeParameters) != Nlx2MatOK ) { return; }
+ProcessorVT.cpp:		if( mGeneralOps.LoadHeader(plhs, nlhs-1, mHeader ) != Nlx2MatOK ) { return; }
+
+
+
+
+diffs:
+
+Nlx_DataTypes -> same, no need to change.
+
+
+Nlx_Code   -> same, but CFile vs std::fstream
+
+
+converted CFile to std::fstream with minor changes necessary.
+
+
+needs
+
+MinInputParametersMat2Nlx
+OpenFileMat2Nlx
+
+Nlx2MatOK
+
+
+GetInputParametersMat2Nlx
+
+GetInputNumericArrayPtr
+
+

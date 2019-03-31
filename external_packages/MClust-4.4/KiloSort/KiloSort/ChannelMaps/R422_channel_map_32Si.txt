@@ -1,0 +1,47 @@
+% Channel map for R422's 32-site Silicon Probe
+%
+% The mapping from intan port/channels to TT numbers
+%
+% Customize this file for your rat
+%
+% This map assumes a 32-channel Intan RHD2132 amplifier board is plugged 
+% into a Cambridge Neurotechnologies Chronic 32-channel silicon probe with 
+% parallel sites, such that the omnetics connector text side is the same 
+% side as the chip-side of the Intan amplifier, and that this 32-chan probe
+% is plugged into Intan Port B MISO 1.
+
+% Sampling frequency
+fs = 30000; %30kHz
+
+% Mapping from Si Probe channels to Intan channels
+% So if you want data for site i, get amp-port(i)-channel_map(i).dat
+channel_map = [ ... 
+    24 23 25 22 26 21 27 20 28 19 29 18 30 17 31 16; ... % shank 1
+    0 15 1 14 2 13 3 12 4 11 5 10 6 9 7 8]'; % shank 2
+
+% Intan port for each channel
+port = [ ...
+    repmat('B', 1, 16); ... % shank 1
+    repmat('B', 1, 16)]'; % shank 2
+
+% What shank each channel belongs to
+shank = ones(16,2).*(1:2);
+
+% Headstage of each channel
+headstage = ones(16,2); 
+
+% X-locations of sites
+xcoords = [ ... 
+    125-22.5*[1 0 1 1 1 1 1 0 0 1 0 1 0 0 0 0]; ... % shank 1
+    -125-22.5*[0 0 0 0 0 1 0 1 1 0 1 1 1 1 1 0]]'; % shank 2
+
+% Y-locations of sites
+ycoords = [ ... 
+    -12.5*[9 8 1 5 3 15 13 14 12 7 0 11 4 10 2 6]; ... % shank 1
+    -12.5*[2 6 4 10 0 11 12 7 13 14 3 15 1 5 9 8]]'; % shank 2
+
+% Valid / Dead channels
+% Set to false channels which were dead
+connected = true(size(channel_map)); %default is none are dead
+
+

@@ -1,0 +1,332 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Construction of a Chebyshev Spline</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2011-07-08"><meta name="DC.source" content="chebdem.m"><link rel="stylesheet" type="text/css" href="../../../matlab/helptools/private/style.css"></head><body><div class="header"><div class="left"><a href="matlab:edit chebdem">Open chebdem.m in the Editor</a></div><div class="right"><a href="matlab:echodemo chebdem">Run in the Command Window</a></div></div><div class="content"><h1>Construction of a Chebyshev Spline</h1><!--introduction--><p>This demo illustrates how to use commands from Curve Fitting Toolbox&#8482; spline functions in a nontrivial application.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Chebyshev (a.k.a. Equioscillating) Spline Defined</a></li><li><a href="#3">Choice of Spline Space</a></li><li><a href="#5">Initial Guess</a></li><li><a href="#7">Iteration</a></li><li><a href="#14">End of First Iteration Step</a></li><li><a href="#17">Use of Chebyshev-Demko Points</a></li></ul></div><h2>Chebyshev (a.k.a. Equioscillating) Spline Defined<a name="1"></a></h2><p>By definition, for given knot sequence <tt>t</tt> of length <tt>n+k</tt>, <tt>C = C_{t,k}</tt> is the unique element of <tt>S_{t,k}</tt> of max-norm 1 that maximally oscillates on the interval <tt>[t_k .. t_{n+1}]</tt> and is positive near <tt>t_{n+1}</tt>. This means that there is a unique strictly increasing <tt>tau</tt> of length <tt>n</tt> so that the function <tt>C</tt> in <tt>S_{k,t}</tt> given by</p><pre>  C(tau(i)) = (-1)^{n-i},</pre><p>for all <tt>i</tt>, has max-norm 1 on <tt>[t_k .. t_{n+1}]</tt>. This implies that</p><pre>  tau(1) = t_k,
+  tau(n) = t_{n+1},</pre><p>and that</p><pre>  t_i &lt; tau(i) &lt; t_{k+i},</pre><p>for all <tt>i</tt>.  In fact,</p><pre>  t_{i+1} &lt;= tau(i) &lt;= t_{i+k-1},</pre><p>for all <tt>i</tt>. This brings up the point that the knot sequence <tt>t</tt> is assumed to make such an inequality possible, which turns out to be equivalent to having all the elements of <tt>S_{k,t}</tt> continuous.</p><pre class="codeinput">t = augknt([0 1 1.1 3 5 5.5 7 7.1 7.2 8], 4 );
+[tau,C] = chbpnt(t,4);
+xx = sort([linspace(0,8,201),tau]);
+plot(xx,fnval(C,xx),<span class="string">'LineWidth'</span>,2);
+hold <span class="string">on</span>
+breaks = knt2brk(t); bbb = repmat(breaks,3,1);
+sss = repmat([1;-1;NaN],1,length(breaks));
+plot(bbb(:), sss(:),<span class="string">'r'</span>);
+hold <span class="string">off</span>
+ylim([-2 2]);
+title(<span class="string">'The Chebyshev Spline for a Particular Knot Sequence'</span>);
+legend({<span class="string">'Chebyshev Spline'</span> <span class="string">'Knots'</span>});
+</pre><img vspace="5" hspace="5" src="chebdem_01.png" alt=""> <p>In short, the Chebyshev spline <tt>C</tt> looks just like the Chebyshev polynomial. It performs similar functions. For example, its extrema <tt>tau</tt> are particularly good sites to interpolate at from <tt>S_{k,t}</tt> since the norm of the resulting projector is about as small as can be.</p><pre class="codeinput">hold <span class="string">on</span>
+plot(tau,zeros(size(tau)),<span class="string">'k+'</span>);
+hold <span class="string">off</span>
+legend({<span class="string">'Chebyshev Spline'</span> <span class="string">'Knots'</span> <span class="string">'Extrema'</span>});
+</pre><img vspace="5" hspace="5" src="chebdem_02.png" alt=""> <h2>Choice of Spline Space<a name="3"></a></h2><p>In this example, we try to construct <tt>C</tt> for a given spline space.</p><p>We deal with cubic splines with simple interior knots, specified by</p><pre class="codeinput">k = 4;
+breaks = [0 1 1.1 3 5 5.5 7 7.1 7.2 8];
+t = augknt(breaks, k)
+</pre><pre class="codeoutput">
+t =
+
+  Columns 1 through 7
+
+         0         0         0         0    1.0000    1.1000    3.0000
+
+  Columns 8 through 14
+
+    5.0000    5.5000    7.0000    7.1000    7.2000    8.0000    8.0000
+
+  Columns 15 through 16
+
+    8.0000    8.0000
+
+</pre><p>thus getting a spline space of dimension</p><pre class="codeinput">n = length(t)-k
+</pre><pre class="codeoutput">
+n =
+
+    12
+
+</pre><h2>Initial Guess<a name="5"></a></h2><p>As our initial guess for the <tt>tau</tt>, we use the knot averages</p><pre>  tau(i) = (t_{i+1} + ... + t_{i+k-1})/(k-1)</pre><p>recommended as good interpolation site choices, and plot the resulting first approximation to <tt>C</tt>.</p><pre class="codeinput">tau = aveknt(t,k)
+</pre><pre class="codeoutput">
+tau =
+
+  Columns 1 through 7
+
+         0    0.3333    0.7000    1.7000    3.0333    4.5000    5.8333
+
+  Columns 8 through 12
+
+    6.5333    7.1000    7.4333    7.7333    8.0000
+
+</pre><pre class="codeinput">b = (-ones(1,n)).^(n-1:-1:0);
+c = spapi(t,tau,b);
+plot(breaks([1 end]),[1 1],<span class="string">'k'</span>, breaks([1 end]),[-1 -1],<span class="string">'k'</span>);
+hold <span class="string">on</span>
+fnplt(c,<span class="string">'r'</span>,1);
+hold <span class="string">off</span>
+ylim([-2 2]);
+title(<span class="string">'First Approximation to an Equioscillating Spline'</span>);
+</pre><img vspace="5" hspace="5" src="chebdem_03.png" alt=""> <h2>Iteration<a name="7"></a></h2><p>For the complete leveling, we use the Remez algorithm. This means that we construct a new <tt>tau</tt> as the extrema of our current approximation, <tt>c</tt>, to <tt>C</tt> and try again.</p><p>Finding these extrema is itself an iterative process, namely, for finding the zeros of the derivative <tt>Dc</tt> of our current approximation <tt>c</tt>.</p><pre class="codeinput">Dc = fnder(c);
+</pre><p>We take the zeros of the control polygon of <tt>Dc</tt> as our first guess for the zeros of <tt>Dc</tt>.  This control polygon has the vertices <tt>(tstar(i),coefs(i))</tt>, where <tt>coefs</tt> are the coefficients of <tt>Dc</tt>, and <tt>tstar</tt> the knot averages.</p><pre class="codeinput">[knots,coefs,np,kp] = fnbrk(Dc, <span class="string">'knots'</span>, <span class="string">'coefs'</span>, <span class="string">'n'</span>, <span class="string">'order'</span>);
+tstar = aveknt(knots,kp);
+</pre><p>Since the control polygon is piecewise linear, its zeros are easy to compute. Here are those zeros.</p><pre class="codeinput">npp = 1:np-1;
+guess = tstar(npp) - coefs(npp).*(diff(tstar)./diff(coefs));
+fnplt(Dc,<span class="string">'r'</span>);
+hold <span class="string">on</span>
+plot(tstar,coefs,<span class="string">'k.:'</span>);
+plot(guess,zeros(1,np-1),<span class="string">'o'</span>);
+hold <span class="string">off</span>
+title(<span class="string">'First Derivative of the Approximation'</span>);
+legend({<span class="string">'Dc'</span> <span class="string">'Control Polygon'</span> <span class="string">'Zeros of Control Polygon'</span>});
+</pre><img vspace="5" hspace="5" src="chebdem_04.png" alt=""> <p>This provides a very good first guess for the actual zeros of <tt>Dc</tt>.</p><p>Now we evaluate <tt>Dc</tt> at both these sets of sites.</p><pre class="codeinput">sites = [guess; tau(2:n-1)];
+values = fnval(Dc,sites);
+</pre><p>Then we use two steps of the secant method, getting iterates <tt>sites(3,:)</tt> and <tt>sites(4,:)</tt>, with <tt>values(3,:)</tt> and <tt>values(4,:)</tt> the corresponding values of <tt>Dc</tt>.</p><pre class="codeinput">sites(3:4,:) = 0;
+values(3:4,:) = 0;
+<span class="keyword">for</span> j = 2:3
+   rows = [j,j-1]; Dcd = diff(values(rows,:));
+   Dcd(Dcd==0) = 1; <span class="comment">% guard against division by zero</span>
+   sites(j+1,:) = sites(j,:)-values(j,:).*(diff(sites(rows,:))./Dcd);
+   values(j+1,:) = fnval(Dc,sites(j+1,:));
+<span class="keyword">end</span>
+</pre><p>We take the last iterate as the computed zeros of <tt>Dc</tt>, i.e., the extrema of our current approximation, <tt>c</tt>.  This is our new guess for <tt>tau</tt>.</p><pre class="codeinput">tau = [tau(1) sites(4,:) tau(n)]
+</pre><pre class="codeoutput">
+tau =
+
+  Columns 1 through 7
+
+         0    0.2759    0.9082    1.7437    3.0779    4.5532    5.5823
+
+  Columns 8 through 12
+
+    6.5843    7.0809    7.3448    7.7899    8.0000
+
+</pre><pre class="codeinput">plot(breaks([1 end]),[1 1],<span class="string">'k'</span>, breaks([1 end]),[-1 -1],<span class="string">'k'</span>);
+hold <span class="string">on</span>
+fnplt(c,<span class="string">'r'</span>,1);
+plot(guess,zeros(1,np-1),<span class="string">'o'</span>);
+plot(tau(2:n-1),zeros(1,n-2),<span class="string">'x'</span>);
+hold <span class="string">off</span>
+title(<span class="string">'First Approximation to an Equioscillating Spline'</span>);
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([3 1 2]),{<span class="string">'Approximation'</span> <span class="string">'Extrema'</span> <span class="keyword">...</span>
+                   <span class="string">'Zeros of First Derivative''s Control Polygon'</span>});
+axis([0 8 -2 2]);
+</pre><img vspace="5" hspace="5" src="chebdem_05.png" alt=""> <h2>End of First Iteration Step<a name="14"></a></h2><p>We compute the resulting new approximation to the Chebyshev spline using the new guess for <tt>tau</tt>.</p><pre class="codeinput">cnew = spapi(t,tau,b);
+</pre><p>The new approximation is more nearly an equioscillating spline.</p><pre class="codeinput">plot(breaks([1 end]),[1 1],<span class="string">'k'</span>, breaks([1 end]),[-1 -1],<span class="string">'k'</span>);
+hold <span class="string">on</span>
+fnplt(c,<span class="string">'r'</span>,1);
+fnplt(cnew, <span class="string">'k'</span>, 1);
+hold <span class="string">off</span>
+h = get(gca,<span class="string">'Children'</span>);
+legend(h([2 1]),{<span class="string">'First Approximation'</span> <span class="string">'Updated Approximation'</span>});
+axis([0 8 -2 2]);
+</pre><img vspace="5" hspace="5" src="chebdem_06.png" alt=""> <p>If this is not close enough, simply try again, starting from this new <tt>tau</tt>. For this particular example, the next iteration already provides the Chebyshev spline to graphic accuracy.</p><h2>Use of Chebyshev-Demko Points<a name="17"></a></h2><p>The Chebyshev spline for a given spline space <tt>S_{k,t}</tt>, along with its extrema, are available as optional outputs from the <tt>chbpnt</tt> command in the toolbox. These extrema were proposed as good interpolation sites by Steven Demko, hence are now called the Chebyshev-Demko sites. This section shows an example of their use.</p><p>If you have decided to approximate the square-root function on the interval <tt>[0 .. 1]</tt> by cubic splines with knot sequence</p><pre class="codeinput">k = 4;
+n = 10;
+t = augknt(((0:n)/n).^8,k);
+</pre><p>then a good approximation to the square-root function from that specific spline space is given by</p><pre class="codeinput">tau = chbpnt(t,k);
+sp = spapi(t,tau,sqrt(tau));
+</pre><p>as is evidenced by the near equi-oscillation of the error.</p><pre class="codeinput">xx = linspace(0,1,301);
+plot(xx, fnval(sp,xx)-sqrt(xx));
+title(<span class="string">'The Error in Interpolant to Sqrt at Chebyshev-Demko Sites.'</span>);
+</pre><img vspace="5" hspace="5" src="chebdem_07.png" alt=""> <p class="footer">Copyright 1987-2010 The MathWorks, Inc.<br>
+          Published with MATLAB&reg; 7.13</p><p class="footer" id="trademarks">MATLAB and Simulink are registered trademarks of The MathWorks, Inc.  Please see <a href="http://www.mathworks.com/trademarks">www.mathworks.com/trademarks</a> for a list of other trademarks owned by The MathWorks, Inc.  Other product or brand names are trademarks or registered trademarks of their respective owners.</p></div><!--
+##### SOURCE BEGIN #####
+%% Construction of a Chebyshev Spline
+% This demo illustrates how to use commands from Curve Fitting Toolbox(TM)
+% spline functions in a nontrivial application.
+
+% Copyright 1987-2010 The MathWorks, Inc.
+% $Revision: 1.1.6.4 $
+
+%% Chebyshev (a.k.a. Equioscillating) Spline Defined
+% By definition, for given knot sequence |t| of length |n+k|, |C = C_{t,k}| is
+% the unique element of |S_{t,k}| of max-norm 1 that maximally oscillates on
+% the interval |[t_k .. t_{n+1}]| and is positive near |t_{n+1}|. This means
+% that there is a unique strictly increasing |tau| of length |n| so that the
+% function |C| in |S_{k,t}| given by
+%
+%    C(tau(i)) = (-1)^{n-i},
+%
+% for all |i|, has max-norm 1 on |[t_k .. t_{n+1}]|. This implies that
+%
+%    tau(1) = t_k,
+%    tau(n) = t_{n+1},
+%
+% and that
+%
+%    t_i < tau(i) < t_{k+i},
+%
+% for all |i|.  In fact,
+%
+%    t_{i+1} <= tau(i) <= t_{i+k-1},
+%
+% for all |i|. This brings up the point that the knot sequence |t| is assumed
+% to make such an inequality possible, which turns out to be equivalent to 
+% having all the elements of |S_{k,t}| continuous.
+t = augknt([0 1 1.1 3 5 5.5 7 7.1 7.2 8], 4 );
+[tau,C] = chbpnt(t,4);
+xx = sort([linspace(0,8,201),tau]);
+plot(xx,fnval(C,xx),'LineWidth',2);
+hold on
+breaks = knt2brk(t); bbb = repmat(breaks,3,1);
+sss = repmat([1;-1;NaN],1,length(breaks));
+plot(bbb(:), sss(:),'r');
+hold off
+ylim([-2 2]);
+title('The Chebyshev Spline for a Particular Knot Sequence');
+legend({'Chebyshev Spline' 'Knots'});
+
+%%
+% In short, the Chebyshev spline |C| looks just like the Chebyshev polynomial.
+% It performs similar functions. For example, its extrema |tau| are
+% particularly good sites to interpolate at from |S_{k,t}| since the norm of
+% the resulting projector is about as small as can be.
+hold on
+plot(tau,zeros(size(tau)),'k+');
+hold off
+legend({'Chebyshev Spline' 'Knots' 'Extrema'});
+
+%% Choice of Spline Space
+% In this example, we try to construct |C| for a given spline space.
+%
+% We deal with cubic splines with simple interior knots, specified by
+k = 4;
+breaks = [0 1 1.1 3 5 5.5 7 7.1 7.2 8];
+t = augknt(breaks, k)
+%%
+% thus getting a spline space of dimension
+n = length(t)-k
+
+%% Initial Guess
+% As our initial guess for the |tau|, we use the knot averages
+%
+%    tau(i) = (t_{i+1} + ... + t_{i+k-1})/(k-1)
+%
+% recommended as good interpolation site choices, and plot the resulting first
+% approximation to |C|.
+
+tau = aveknt(t,k)
+%%
+b = (-ones(1,n)).^(n-1:-1:0);
+c = spapi(t,tau,b);
+plot(breaks([1 end]),[1 1],'k', breaks([1 end]),[-1 -1],'k');
+hold on
+fnplt(c,'r',1);
+hold off
+ylim([-2 2]);
+title('First Approximation to an Equioscillating Spline');
+
+%% Iteration
+% For the complete leveling, we use the Remez algorithm. This means that we
+% construct a new |tau| as the extrema of our current approximation, |c|, to
+% |C| and try again.
+%
+% Finding these extrema is itself an iterative process, namely, for finding
+% the zeros of the derivative |Dc| of our current approximation |c|.
+Dc = fnder(c);
+%%
+% We take the zeros of the control polygon of |Dc| as our first guess for the
+% zeros of |Dc|.  This control polygon has the vertices |(tstar(i),coefs(i))|,
+% where |coefs| are the coefficients of |Dc|, and |tstar| the knot averages.
+[knots,coefs,np,kp] = fnbrk(Dc, 'knots', 'coefs', 'n', 'order');
+tstar = aveknt(knots,kp);
+
+%%
+% Since the control polygon is piecewise linear, its zeros are easy to
+% compute. Here are those zeros.
+npp = 1:np-1;
+guess = tstar(npp) - coefs(npp).*(diff(tstar)./diff(coefs));
+fnplt(Dc,'r');
+hold on
+plot(tstar,coefs,'k.:');
+plot(guess,zeros(1,np-1),'o');
+hold off
+title('First Derivative of the Approximation');
+legend({'Dc' 'Control Polygon' 'Zeros of Control Polygon'});
+
+%%
+% This provides a very good first guess for the actual zeros of |Dc|.
+%
+% Now we evaluate |Dc| at both these sets of sites.
+sites = [guess; tau(2:n-1)];
+values = fnval(Dc,sites);
+%%
+% Then we use two steps of the secant method, getting iterates |sites(3,:)| and
+% |sites(4,:)|, with |values(3,:)| and |values(4,:)| the corresponding values of
+% |Dc|.
+sites(3:4,:) = 0;
+values(3:4,:) = 0;
+for j = 2:3
+   rows = [j,j-1]; Dcd = diff(values(rows,:));
+   Dcd(Dcd==0) = 1; % guard against division by zero
+   sites(j+1,:) = sites(j,:)-values(j,:).*(diff(sites(rows,:))./Dcd);
+   values(j+1,:) = fnval(Dc,sites(j+1,:));
+end
+%%
+% We take the last iterate as the computed zeros of |Dc|, i.e., the extrema of 
+% our current approximation, |c|.  This is our new guess for |tau|.
+tau = [tau(1) sites(4,:) tau(n)]
+%%
+plot(breaks([1 end]),[1 1],'k', breaks([1 end]),[-1 -1],'k');
+hold on
+fnplt(c,'r',1);
+plot(guess,zeros(1,np-1),'o');
+plot(tau(2:n-1),zeros(1,n-2),'x');
+hold off
+title('First Approximation to an Equioscillating Spline');
+h = get(gca,'Children');
+legend(h([3 1 2]),{'Approximation' 'Extrema' ...
+                   'Zeros of First Derivative''s Control Polygon'});
+axis([0 8 -2 2]);
+
+%% End of First Iteration Step
+% We compute the resulting new approximation to the Chebyshev spline using the
+% new guess for |tau|.
+cnew = spapi(t,tau,b);
+%%
+% The new approximation is more nearly an equioscillating spline.
+plot(breaks([1 end]),[1 1],'k', breaks([1 end]),[-1 -1],'k');
+hold on
+fnplt(c,'r',1);
+fnplt(cnew, 'k', 1);
+hold off
+h = get(gca,'Children');
+legend(h([2 1]),{'First Approximation' 'Updated Approximation'});
+axis([0 8 -2 2]);
+
+%%
+% If this is not close enough, simply try again, starting from this new |tau|.
+% For this particular example, the next iteration already provides the
+% Chebyshev spline to graphic accuracy.
+
+
+%% Use of Chebyshev-Demko Points
+% The Chebyshev spline for a given spline space |S_{k,t}|, along with its
+% extrema, are available as optional outputs from the |chbpnt| command in the
+% toolbox. These extrema were proposed as good interpolation sites by Steven
+% Demko, hence are now called the Chebyshev-Demko sites. This section shows an
+% example of their use.
+%
+% If you have decided to approximate the square-root function on the interval
+% |[0 .. 1]| by cubic splines with knot sequence
+k = 4;
+n = 10;
+t = augknt(((0:n)/n).^8,k);
+
+%%
+% then a good approximation to the square-root function from that specific
+% spline space is given by
+tau = chbpnt(t,k);
+sp = spapi(t,tau,sqrt(tau));
+%%
+% as is evidenced by the near equi-oscillation of the error.
+xx = linspace(0,1,301);
+plot(xx, fnval(sp,xx)-sqrt(xx));
+title('The Error in Interpolant to Sqrt at Chebyshev-Demko Sites.');
+
+
+displayEndOfDemoMessage(mfilename)
+
+##### SOURCE END #####
+--></body></html>
