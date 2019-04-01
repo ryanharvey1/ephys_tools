@@ -356,7 +356,6 @@ classdef place_cell_analysis
             % edited April 25th 2018;
             % edited Dec 2nd 2018: to accept multiple fields
             %
-            % ADD FMA TO PATH
             
             ThPrecess.phaselock.Rlength=NaN;
             ThPrecess.phaselock.Pval=NaN;

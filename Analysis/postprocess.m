@@ -599,16 +599,11 @@ for event=1:size(data.events,2)
 end
 clearvars -except data figures
 
-% save mat file to temp file
-if contains(data.session_path,'G:')
-    save(['G:\HPCatn\ProcessedData\',data.rat,'_',data.sessionID],'-struct','data','-v7.3')
-elseif contains(data.session_path,'HPCatn')
-    save(['D:\Projects\HPCatn\ProcessedData\',data.rat,'_',data.sessionID],'-struct','data','-v7.3')
-elseif contains(data.session_path,'PAE')
-    save(['D:\Projects\PAE_PlaceCell\ProcessedData\',data.rat,'_',data.sessionID],'-struct','data','-v7.3')
-elseif contains(data.session_path,'ClarkP30')
-    save(['F:\ClarkP30_Recordings\ProcessedData\',data.rat,'_',data.sessionID],'-struct','data','-v7.3')
-end
+% save mat file to processed data folder
+processedpath=strsplit(data.session_path,filesep);
+processedpath(end-2:end)=[];
+save(fullfile(strjoin(processedpath,filesep),'ProcessedData',[data.rat,'_',data.sessionID]),'-struct','data','-v7.3')
+
 % -------------------------------CREATING PLOTS----------------------------
 if figures==1
     close all
