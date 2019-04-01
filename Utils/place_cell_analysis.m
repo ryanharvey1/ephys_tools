@@ -356,11 +356,6 @@ classdef place_cell_analysis
             % edited April 25th 2018;
             % edited Dec 2nd 2018: to accept multiple fields
             %
-            % ADD FMA TO PATH
-            com=which('place_cell_anaysis');
-            com=strsplit(com,filesep);
-            basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-            addpath(genpath([basedir,filesep, 'buzcode', filesep, 'externalPackages', filesep, 'FMAToolbox']))
             
             ThPrecess.phaselock.Rlength=NaN;
             ThPrecess.phaselock.Pval=NaN;
@@ -400,10 +395,7 @@ classdef place_cell_analysis
             
             % PLOT
             % figure;
-            % PlotPhasePrecession(data,stats)
-            % REMOVE FMA
-            rmpath(genpath([basedir,filesep, 'buzcode', filesep, 'externalPackages', filesep, 'FMAToolbox']))
-            
+            % PlotPhasePrecession(data,stats)            
             spks_VEL_working = interp1(phase(:,1),phase(:,2),spks_VEL(:,1)','linear');
             
             % COMPUTE PHASE LOCKING
