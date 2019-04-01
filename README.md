@@ -1,6 +1,6 @@
 # ephys_tools
 
-Ephys toolbox for the Bclark Lab 
+Ephys toolbox for the B Clark Lab 
 
 Ryan Harvey
 
