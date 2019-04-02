@@ -85,9 +85,12 @@ nTT = length(fcTT);
 kkFN = cell(nTT,1); nKKfiles = ones(nTT,1); nKKFeatures = nan(nTT,1);
 SubSetRate = ones(nTT,1);
 for iTT = 1:nTT	  % for each tetrode
-	
+	% Automatically check channel validity (Ryan H 2019)
+    FD=squeeze(max(Nlx2MatSpike(fcTT{iTT},[0 0 0 0 1],0,1,[])))';
+    MCS.ChannelValidity=size(FD,1)~=sum(FD==0)';
+    
 	% STEP 1A: Create FD files
-	[MCD.TTdn MCD.TTfn MCD.TText] = fileparts(fcTT{iTT});
+	[MCD.TTdn, MCD.TTfn, MCD.TText] = fileparts(fcTT{iTT});
 	MClust.CalculateFeatures(featuresToCompute);
 	[FeatureTimestamps, featuresTT] = MClust.CalculateFeatures(featuresToUse); % featuresToUse are now feature objects
     
