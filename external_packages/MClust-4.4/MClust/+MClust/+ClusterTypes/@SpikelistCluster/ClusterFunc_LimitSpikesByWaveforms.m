@@ -78,7 +78,7 @@ UndoButton = ...
 MultiLimitButton = uicontrol('Parent', F, ...
         'Units', 'Normalized', ...
         'Position', [.15 0.95 0.30 0.05], ...
-        'String', 'MultiLimit (''Enter when finished'')', ...
+        'String', 'MultiLimit (Enter when finished)', ...
         'Callback', @(src,event)MultiLimit);
 
 
@@ -148,15 +148,16 @@ RedrawWaveforms();
                 if useSelfColor, set(h, 'color', self.color); end
             end
             darkBackground(gcf,[0.2 0.2 0.2],[0.7 0.7 0.7])% Ryan Harvey addition (dark mode)
+            set(ax(jCh), 'YTick', [0], 'XTick', [], 'UserData', jCh);
         end
         for iL = 1:length(myLimits)
             plot(ax(myLimits{iL}.channel), ...
                 myLimits{iL}.sample * [1 1], [myLimits{iL}.min myLimits{iL}.max], ...
                 'color', 'k', 'LineWidth', 2);
         end
-        for jCh = 1:nCh
-            set(ax(jCh), 'YTick', [0], 'XTick', [], 'UserData', jCh);
-		end
+%         for jCh = 1:nCh
+%             set(ax(jCh), 'YTick', [0], 'XTick', [], 'UserData', jCh);
+% 		end
         axes(ax(1)); title(sprintf('showing %d of %d spikes', nToPlot, nS));
     end 
 end
