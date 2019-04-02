@@ -118,11 +118,10 @@ RedrawWaveforms();
         for jCh = 1:nCh
             cla(ax(jCh)); hold on;
             if ~isempty(iX)
-                darkBackground(gcf,[0.2 0.2 0.2],[0.7 0.7 0.7])% Ryan Harvey addition (dark mode)
-                
                 h = plot(ax(jCh), 1:nSamp, squeeze(WVD(iX(r), jCh, :)),'w');
                 if useSelfColor, set(h, 'color', self.color); end
             end
+            darkBackground(gcf,[0.2 0.2 0.2],[0.7 0.7 0.7])% Ryan Harvey addition (dark mode)
         end
         for iL = 1:length(myLimits)
             plot(ax(myLimits{iL}.channel), ...
@@ -133,6 +132,5 @@ RedrawWaveforms();
             set(ax(jCh), 'YTick', [0], 'XTick', [], 'UserData', jCh);
 		end
         axes(ax(1)); title(sprintf('showing %d of %d spikes', nToPlot, nS));
-       
     end 
 end
