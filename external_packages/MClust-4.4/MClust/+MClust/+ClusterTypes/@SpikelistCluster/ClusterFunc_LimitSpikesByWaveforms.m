@@ -141,13 +141,15 @@ RedrawWaveforms();
         nS = length(S);
         nToPlot = min(nS, floor(get(slider_nSpikesToDisplay, 'Value')));
         r = randperm(nS, nToPlot);
+        maxamp=max(max(max(WVD(iX(r), :, :))));
+        minamp=min(min(min(WVD(iX(r), :, :))));
         
         % set up initial plot
         if isempty(findobj(ax(1:4), 'type', 'line'))
             x=repmat([1:32,NaN]',nToPlot,1);
             for jCh = 1:nCh
                 if ~isempty(iX)
-                    y=[squeeze(WVD(iX(r), 1, :))';nan(1,nToPlot)];
+                    y=[squeeze(WVD(iX(r), jCh, :))';nan(1,nToPlot)];
                     y=y(:);
                     h=plot(ax(jCh),x,y,'w');
                     if useSelfColor, set(h, 'color', self.color); end
@@ -177,6 +179,7 @@ RedrawWaveforms();
                     'color', 'k', 'LineWidth', 2);hold on
             end
         end
+        set(findall(gcf,'type','axes'),'ylim',[minamp maxamp])
         axes(ax(1)); title(sprintf('showing %d of %d spikes', nToPlot, nS));
     end
 end
