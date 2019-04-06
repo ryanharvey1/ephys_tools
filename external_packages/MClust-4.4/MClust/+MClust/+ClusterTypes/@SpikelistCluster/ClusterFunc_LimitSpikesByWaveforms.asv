@@ -137,6 +137,7 @@ RedrawWaveforms();
     end
 % -------------------------------------
     function RedrawWaveforms
+        tic
         [S, iX] = ApplyLimits();
         nS = length(S);
         nToPlot = min(nS, floor(get(slider_nSpikesToDisplay, 'Value')));
@@ -178,5 +179,6 @@ RedrawWaveforms();
             end
         end
         axes(ax(1)); title(sprintf('showing %d of %d spikes', nToPlot, nS));
+        toc
     end
 end
