@@ -122,7 +122,7 @@ classdef KKwikCutter < MClust.Cutter
             hold on; 
             plot(self.whoHasFocus.xrange, self.whoHasFocus.mWV, 'k');
             hold off
-            set(gca, 'YLim',MCS.AverageWaveform_ylim);
+%             set(gca, 'YLim',MCS.AverageWaveform_ylim); Ryan H commented
             if ~isequal(self.whoHasComparison, self.whoHasFocus)
                 hold on
                 plot(self.whoHasComparison.xrange, self.whoHasComparison.mWV, 'r');
