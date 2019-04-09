@@ -15,7 +15,7 @@ function [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path)
 
 
 % sets path to snap folder & looks within for mat files
-cd([path,filesep,'SNAPSorterResults']);
+cd([path,filesep,'Sorted']);
 file=struct2table(dir( '**/*.mat'));
 t=table2cell(file(:,1));
 file=t(~contains(t,'_info.mat'),1);

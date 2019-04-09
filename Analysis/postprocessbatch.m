@@ -41,7 +41,7 @@ for iratID=1:length(ratID)
     for I=1:length(structdir) % 1 TO # OF FILES IN DIR
         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
             path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
-            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'SNAPSorterResults'],'dir')==7
+            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'Sorted'],'dir')==7
                 if tracklength==1
                     track_length=TrackLength(path); % SET TRACK LENGTH
                     if contains(path,'HPCatn')

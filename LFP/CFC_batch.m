@@ -39,7 +39,7 @@ for irats=1:length(rats)
         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
             path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
             cd 'F:\Users\BClarkLab\GoogleDrive\MatlabDir\BClarkToolbox'
-            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'SNAPSorterResults'],'dir')==7
+            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'Sorted'],'dir')==7
                 track_length=TrackLength(path); % SET TRACK LENGTH
                 postprocess_snapsort(path,track_length,'yes',0); % CALL POSTPROCESS FUNCTION
             end
@@ -105,7 +105,7 @@ end
 %         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
 %             path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
 %             cd 'F:\Users\BClarkLab\GoogleDrive\MatlabDir\BClarkToolbox'
-%             if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'SNAPSorterResults'],'dir')==7
+%             if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'Sorted'],'dir')==7
 %                 track_length=TrackLength(path); % SET TRACK LENGTH
 %                 postprocess_snapsort(path,track_length,linear_track,0); % CALL POSTPROCESS FUNCTION
 %             end

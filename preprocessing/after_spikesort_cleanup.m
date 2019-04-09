@@ -16,7 +16,7 @@ classdef after_spikesort_cleanup
             %           fn: file name to clustered .ntt files
             %
             %   Example:
-            %           fn='C:\Users\ryanh\Downloads\2016-05-11_13-44-16\SNAPSorterResults\TT7_clust.ntt'
+            %           fn='C:\Users\ryanh\Downloads\2016-05-11_13-44-16\Sorted\TT7_clust.ntt'
             %           after_spikesort_cleanup(fn)
             %
             %   Important:
@@ -29,9 +29,9 @@ classdef after_spikesort_cleanup
             basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
             addpath([basedir,filesep,'BClarkToolbox',filesep,'Analyses',filesep,'spikeCode',filesep,'MEX'])
             
-            if ~contains(pwd,'SNAPSorterResults')
+            if ~contains(pwd,'Sorted')
                 after_spikesort_cleanup.handle_tfiles
-            elseif contains(pwd,'SNAPSorterResults')
+            elseif contains(pwd,'Sorted')
                 after_spikesort_cleanup.handle_ntt
             end
         end
@@ -61,7 +61,7 @@ classdef after_spikesort_cleanup
                 confidence=nan(1,cluster_n);
                 final_grades=nan(1,cluster_n);
                 grades=nan(cluster_n,27);
-                orig_filename=erase(fn{ntt},{'SNAPSorterResults\','_clust'});
+                orig_filename=erase(fn{ntt},{'Sorted\','_clust'});
                 
                 FD=squeeze(max(Samples))';
                 clust=unique(CellNumbers);
@@ -174,8 +174,8 @@ classdef after_spikesort_cleanup
                 
                 output=[Timestamps,CellNumbers];
                 
-                if ~exist('SNAPSorterResults','file')
-                    mkdir('SNAPSorterResults');
+                if ~exist('Sorted','file')
+                    mkdir('Sorted');
                 end
                 
                 % SAVE SPIKE TIMESTAMPS
@@ -183,7 +183,7 @@ classdef after_spikesort_cleanup
                 disp(['Saving TT',tetrode{i},' ',num2str(length(unique(output(:,2)))),' Clusters']) 
                 
                 if i==1
-                    cd SNAPSorterResults
+                    cd Sorted
                 end
                 
                 save(['TT',tetrode{i},'.mat'],'output')
