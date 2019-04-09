@@ -118,7 +118,7 @@ classdef KKwikCutter < MClust.Cutter
         function RedisplayAvgWV(self)
             MCS = MClust.GetSettings();
             figure(self.figHandle_AvgWV);
-            errorbar(self.whoHasFocus.xrange, self.whoHasFocus.mWV, self.whoHasFocus.sWV, 'c');
+            errorbar(self.whoHasFocus.xrange, self.whoHasFocus.mWV, self.whoHasFocus.sWV);
             hold on; 
             plot(self.whoHasFocus.xrange, self.whoHasFocus.mWV, 'k');
             hold off
@@ -128,6 +128,7 @@ classdef KKwikCutter < MClust.Cutter
                 plot(self.whoHasComparison.xrange, self.whoHasComparison.mWV, 'r');
                 hold off
             end
+            darkBackground(self.figHandle_AvgWV,[0.2 0.2 0.2],[0.9 0.7 0.7])
         end
         
         function RedisplayISI(self)
@@ -136,7 +137,7 @@ classdef KKwikCutter < MClust.Cutter
             cla
             T = MCD.FeatureTimestamps(self.whoHasFocus.GetSpikes());
             if length(T)>2 % check for 1-spike clusters ADR 2013-12-12
-                MClust.HistISI(T, 'axesHandle', gca, 'myColor', 'b');
+                MClust.HistISI(T, 'axesHandle', gca, 'myColor', 'w');
             end
             if ~isequal(self.whoHasComparison, self.whoHasFocus)
                 hold on
@@ -145,7 +146,8 @@ classdef KKwikCutter < MClust.Cutter
                     MClust.HistISI(T, 'axesHandle', gca, 'myColor', 'r');
                 end
                 hold off
-            end            
+            end
+            darkBackground(self.figHandle_ISI,[0.2 0.2 0.2],[0.9 0.7 0.7])
         end
         
         % ---------------------------------

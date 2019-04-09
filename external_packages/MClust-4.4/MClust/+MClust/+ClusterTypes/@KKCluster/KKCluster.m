@@ -72,7 +72,7 @@ classdef KKCluster < MClust.ClusterTypes.DisplayableCluster
 		
 		function TakeFocus(self)
 			if all(self.color==[0 0 0])
-				self.color = [0 0 1];
+				self.color = [.7 .7 .7];
 			end;
 			KCC = self.getAssociatedCutter();
             KCC.SetFocus(self);

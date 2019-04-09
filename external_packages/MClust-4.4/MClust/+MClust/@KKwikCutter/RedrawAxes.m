@@ -46,5 +46,7 @@ if self.get_redrawStatus()
     xlabel(xFeat.name,'interpreter','none');
     ylabel(yFeat.name,'interpreter','none');
     zoom on
+    darkBackground(self.CC_displayWindow,[0.2 0.2 0.2],[0.9 0.7 0.7])
+
 end
 end
