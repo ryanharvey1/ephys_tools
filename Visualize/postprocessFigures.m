@@ -28,16 +28,7 @@ classdef postprocessFigures
     
     methods(Static)
         function main(data,cellid)
-            com=which('postprocessFigures');
-            com=strsplit(com,filesep);
-            
-            basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-            addpath([basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'Visualize',filesep,'panel'],...
-                [basedir,filesep,'BClarkToolbox',filesep,'Analysis'],...
-                [basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'Utils'],...
-                [basedir,filesep,'CircStat2012a'],...
-                [basedir,filesep,'plotSpikeRaster']);
-            
+
             % how many cells, how many sessions?
             ncells=length(data.Spikes);
             nsessions=size(data.events,2);
@@ -297,6 +288,8 @@ classdef postprocessFigures
             subplot(3,2,6)
             % power by freq
             pspectrum(median(data.lfp.signal(idx,:)),1000,'power','FrequencyLimits',[0, 100]);
+            
+            colormap(viridis(255))
         end
         
         function plot_corr_line(x,maxx,data)
@@ -423,7 +416,7 @@ classdef postprocessFigures
             set(gca,'XTickLabel',[]);
             axis tight
             hold on;box off;
-            colormap(ax,jet(255))
+            colormap(ax,viridis(255))
             title(sprintf('Info Content: %4.2f Peak Rate: %4.2f',...
                 measures(contains(varnames,["InformationContent","PeakRate"]))))
         end
@@ -434,7 +427,7 @@ classdef postprocessFigures
             imAlpha(isnan(ratemap))=0;
             imagesc(ratemap,'AlphaData',imAlpha);
             axis xy; axis off; hold on; box off; axis image;
-            colormap(ax,jet(255))
+            colormap(ax,viridis(255))
             title(sprintf('Info Content: %4.2f Peak Rate: %4.2f',...
                 measures(contains(varnames,["InformationContent","PeakRate"]))))
         end
@@ -510,7 +503,7 @@ classdef postprocessFigures
             
             % plot
             pcolor(flipud(rot90(phasemap)));shading flat;box off;axis off;axis tight;
-            colormap(ax,jet(255))
+            colormap(ax,viridis(255))
         end
         
         function autocors(thetaautocorr,measures,varnames)
