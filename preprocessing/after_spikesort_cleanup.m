@@ -9,33 +9,25 @@ classdef after_spikesort_cleanup
     methods(Static)
         
         function main
-            % after_spikesort_cleanup compiles cluster data from spike sort 3d and
-            % exports SNAP .mat files
-            %
-            %   Input:
-            %           fn: file name to clustered .ntt files
+            % after_spikesort_cleanup compiles cluster data from spike sort 3d & mclust and
+            % exports .mat files that contain spikes, waveforms, and quality metrics
             %
             %   Example:
-            %           fn='C:\Users\ryanh\Downloads\2016-05-11_13-44-16\Sorted\TT7_clust.ntt'
-            %           after_spikesort_cleanup(fn)
+            %           cd('C:\Users\ryanh\Downloads\2016-05-11_13-44-16')
+            %           after_spikesort_cleanup
             %
             %   Important:
             %           make sure to include an '_clust.ntt' after your tetrode number when you save from SS3D
             %
             % Ryan Harvey
             %
-            com=which('after_spikesort_cleanup');
-            com=strsplit(com,filesep);
-            basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-            addpath([basedir,filesep,'BClarkToolbox',filesep,'Analyses',filesep,'spikeCode',filesep,'MEX'])
             
-            if exist(fullfile(pwd,'FD'))
+            if exist(fullfile(pwd,'FD'),'file')
                 after_spikesort_cleanup.handle_tfiles
             elseif contains(pwd,'Sorted')
                 after_spikesort_cleanup.handle_ntt
             end
         end
-        
         
         
         function handle_ntt
