@@ -29,7 +29,7 @@ classdef after_spikesort_cleanup
             basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
             addpath([basedir,filesep,'BClarkToolbox',filesep,'Analyses',filesep,'spikeCode',filesep,'MEX'])
             
-            if ~contains(pwd,'Sorted')
+            if exist(fullfile(pwd,'FD'))
                 after_spikesort_cleanup.handle_tfiles
             elseif contains(pwd,'Sorted')
                 after_spikesort_cleanup.handle_ntt
@@ -183,6 +183,7 @@ classdef after_spikesort_cleanup
                 disp(['Saving TT',tetrode{i},' ',num2str(length(unique(output(:,2)))),' Clusters']) 
                 
                 if i==1
+                    mkdir('Sorted')
                     cd Sorted
                 end
                 
