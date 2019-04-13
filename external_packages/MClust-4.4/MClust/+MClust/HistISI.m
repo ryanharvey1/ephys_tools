@@ -78,6 +78,10 @@ if nargout == 0 || ~isempty(axesHandle)  % no output args, plot it
     if isempty(axesHandle)
         axesHandle = axes('Parent', figure('Tag', myFigureTag));
     end
+    % Ryan H- sometimes the these two lengths would be off by one
+    if length(binsUsed)~=length(H)
+        binsUsed=logspace(minLogISI,maxLogISI,length(H));
+    end
     plot(axesHandle, binsUsed, H, '-', 'color', myColor); hold on
     plot([0.001 0.001], get(axesHandle, 'yLim'), 'r-', ...
         [0.002 0.002], get(axesHandle, 'yLim'), 'g-');
