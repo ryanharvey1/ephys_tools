@@ -9,6 +9,7 @@ function [S,f,Serr]=mtspectrumc(data,params)
 %       data (in form samples x channels/trials) -- required
 %       params: structure with fields tapers, pad, Fs, fpass, err, trialave
 %       -optional
+
 %           tapers : precalculated tapers from dpss or in the one of the following
 %                    forms: 
 %                    (1) A numeric vector [TW K] where TW is the
