@@ -1,4 +1,4 @@
-function xmax=findpeaks_(data,threshold)
+function xmax=FindPeaks(data,threshold)
 % Helper function to find peaks in a given continuous valued time series x
 % Usage: xmax=findpeaks(data,threshold)
 % Input:
