@@ -54,9 +54,10 @@ for ii=1:length(eegfile)
         
         % preallocate
         EEG_DownSampledData=zeros(TTnum,length(EEG_DownSampledTimestamps));
-        EEGthetaData=zeros(TTnum,length(EEG_DownSampledTimestamps));
-        theta_phase=zeros(TTnum,length(EEG_DownSampledTimestamps));
-        theta_amp=zeros(TTnum,length(EEG_DownSampledTimestamps));
+        EEGthetaData=EEG_DownSampledData;
+        theta_phase=EEG_DownSampledData;
+        theta_amp=EEG_DownSampledData;
+        
         sec=EEG_DownSampledTimestamps/10^6;
         sec=sec-(sec(1));
     end
