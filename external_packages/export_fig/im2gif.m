@@ -41,6 +41,10 @@
 
 % Copyright (C) Oliver Woodford 2011
 
+%{
+% 14/02/18: Merged issue #235: reduced memory usage, improved performance (thanks to @numb7rs)
+%}
+
 function im2gif(A, varargin)
 
 % Parse the input arguments
@@ -53,8 +57,19 @@ end
 
 % Convert to indexed image
 [h, w, c, n] = size(A);
+
+% Issue #235: Using unique(A,'rows') on the whole image stack at once causes
+% massive memory usage when dealing with large images (at least on Matlab 2017b).
+% Running unique(...) on individual frames, then again on the results drastically
+% reduces the memory usage & slightly improves the execution time (@numb7rs).
+uns = cell(1,size(A,4));
+for nn=1:size(A,4)
+    uns{nn}=unique(reshape(A(:,:,:,nn), h*w, c),'rows');
+end
+map=unique(cell2mat(uns'),'rows');
+
 A = reshape(permute(A, [1 2 4 3]), h, w*n, c);
-map = unique(reshape(A, h*w*n, c), 'rows');
+
 if size(map, 1) > 256
     dither_str = {'dither', 'nodither'};
     dither_str = dither_str{1+(options.dither==0)};
