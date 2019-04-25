@@ -3,7 +3,7 @@ clear
 data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
 
 control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
-pae={'RH11','RH16','LS17','LS19','LE2813'};
+pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
 
 %% COMPILE GROUPS
 data.control.measures=[];
