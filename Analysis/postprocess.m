@@ -132,7 +132,7 @@ if isequal(linear_track,'yes')
         data.linear_track{nmaze}.nonlinearFrames=templinear;
         if contains(data.mazetypes{nmaze},'circ track')
             [X,Y]=ParamToHorseshoeTrack(templinear(:,2),templinear(:,3));
-        elseif contains(data.mazetypes{nmaze},'LinearTrack')
+        elseif contains(data.mazetypes{nmaze},'Linear','IgnoreCase',true)
             [X,Y]=ParameterizeToLinearTrack2(templinear(:,2),templinear(:,3));
         end
         data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),2:3)=[X Y];
