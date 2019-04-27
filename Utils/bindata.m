@@ -20,10 +20,10 @@ if isequal(linear_track, 'yes')
     Omatrix = hist3(occMatrix,'Edges',edges);
     Omatrix(2,:) = [];
     Omatrix(:,end) = [];
-    occ = Omatrix/sampleRate;
+    occ = Omatrix/sampleRate; %puts occupancy into seconds
     
     % bin spike data
-    Smatrix = hist3([spks_VEL(:,3), spks_VEL(:,2)],'Edges',edges);
+    Smatrix = hist3([spks_VEL(:,3), spks_VEL(:,2)],'Edges',edges); 
     Smatrix(2,:) = [];
     Smatrix(:,end) = [];
     
