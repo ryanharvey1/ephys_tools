@@ -1,5 +1,0 @@
-function preprocessLFP(lfp)
-
-
-
-end
