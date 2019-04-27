@@ -1,4 +1,4 @@
-function CutterOptions_CompareCrossCorrelationAverageWaveforms(self)
+function CutterOption_CompareCrossCorrelationAverageWaveforms(self)
 % plots cross correlations of average waveforms of only shows
 %
 % INPUTS
