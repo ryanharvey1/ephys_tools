@@ -119,7 +119,7 @@ for a=1:length(folders)
         %% CREATE TUNING CURVE
         % 6 degree bins
         da=pi/30;
-        angBins=[da/2:da:2*pi-da/2];
+        angBins=da/2:da:2*pi-da/2;
         % Occupancy
         histAng=hist(frames(:,10),angBins);
         % Number of spikes per bin
@@ -129,10 +129,11 @@ for a=1:length(folders)
         % remove nan & inf
         hdTuning(isnan(hdTuning) | isinf(hdTuning))=0;
         
-        clear da histAng spkPerAng
+        clear da histAng
         
         %% COMPUTE R LENGTH
         rlength(i,1)=circ_r(angBins',hdTuning',deg2rad(6));
+        k(i,1)=kappa(angBins,spkPerAng);
         
         %% CIRCSHIFT SO PEAK IS IN THE MIDDLE
         %         [M,I]=max(hdTuning);
@@ -159,6 +160,7 @@ for a=1:length(folders)
     HDdata.(areas{a}).TuningCurve=ALL_hdTuningsorted;
     HDdata.(areas{a}).TuningIdx=I;
     HDdata.(areas{a}).RLength=rlength;
+    HDdata.(areas{a}).kappa=k;
     
     clear ALL_hdTuning rlength
 end
