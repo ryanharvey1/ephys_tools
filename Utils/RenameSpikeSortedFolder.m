@@ -1,7 +1,7 @@
 % RenameSpikeSortedFolder
 
 % path to raw data
-cd D:\Projects\PAE_PlaceCell\data
+cd F:\ClarkP30_Recordings\Data
 
 folders=dir('**/*SNAPSorterResults');
 for i=1:size(folders,1)
