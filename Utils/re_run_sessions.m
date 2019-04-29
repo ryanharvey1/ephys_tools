@@ -17,3 +17,17 @@ for i=1:size(sessions,1)
         data=postprocess(session_path,track_length,'yes',0);
     end
 end
+
+
+sessions=dir('D:\Projects\PAE_PlaceCell\ProcessedData\*.mat');
+for i=1:size(sessions,1)
+    load(fullfile(sessions(i).folder,sessions(i).name),'date_processed','session_path','mazetypes')
+    if isempty(mazetypes{1})
+        
+        disp(session_path)
+        
+        track_length=TrackLength(session_path); % SET TRACK LENGTH
+        
+        data=postprocess(session_path,track_length,'yes',0);
+    end
+end
