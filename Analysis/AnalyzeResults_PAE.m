@@ -61,61 +61,36 @@ group2(:,colstodelete)=[];
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-cd D:\Projects\PAE_PlaceCell\AnimalMetadata
 
-rats=dir('*.mat');
-rats={rats.name};
-sess_region=[];
-sessionid=[];
-% mainpath='D:\Projects\PAE_PlaceCell\ProcessedData\';
-mainpath=[];
+group1id=get_region_id(group1id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
+group2id=get_region_id(group2id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
 
-for i=1:length(rats)
-  load(rats{i})
-  sess=fieldnames(AnimalMetadata.RecordingLogs);
-  for s=1:length(sess)
-      sess_region=[sess_region;{AnimalMetadata.AnimalName,sess{s},AnimalMetadata.RecordingLogs.(sess{s}).RecordingArea}];
-      sessionid=[sessionid;{[mainpath,AnimalMetadata.AnimalName,'_',sess{s}]}];
-  end
-end
+group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
+group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
+group1ca3 = group1(strcmp(group1id(:,4),'ca3'),:);
+group1ca3id = group1id(strcmp(group1id(:,4),'ca3'),:);
+group1cortex = group1(strcmp(group1id(:,4),'cortex'),:);
+group1cortexid = group1id(strcmp(group1id(:,4),'cortex'),:);
 
-% create idx
-ca1idx=strcmp(sess_region(:,3), 'ca1');
-ca3idx=strcmp(sess_region(:,3), 'ca3');
-cortexidx=strcmp(sess_region(:,3), 'cortex');
+group2ca1 = group2(strcmp(group2id(:,4),'ca1'),:);
+group2ca1id = group2id(strcmp(group2id(:,4),'ca1'),:);
+group2ca3 = group2(strcmp(group2id(:,4),'ca3'),:);
+group2ca3id = group2id(strcmp(group2id(:,4),'ca3'),:);
+group2cortex = group2(strcmp(group2id(:,4),'cortex'),:);
+group2cortexid = group2id(strcmp(group2id(:,4),'cortex'),:);
 
-ca1=sessionid(ca1idx);
-ca3=sessionid(ca3idx);
-cortex=sessionid(cortexidx);
-
-% split groups between regions
-% ca1
-group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:);
-group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:);
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca1id);
 disp([num2str(size(uCA,1)),' pae ca1 cells'])
 
-% ca3
-group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:);
-group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:);
 
 [uCA,~,~] = uniqueRowsCA(group1ca3id);
 disp([num2str(size(uCA,1)),' control ca3 cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 cells'])
 
-% cortex
-group1cortex = group1(ismember(erase(group1id(:,1),'.mat'), cortex),:);
-group2cortex = group2(ismember(erase(group2id(:,1),'.mat'), cortex),:);
-group1cortexid = group1id(ismember(erase(group1id(:,1),'.mat'), cortex),:);
-group2cortexid = group2id(ismember(erase(group2id(:,1),'.mat'), cortex),:);
 
 [uCA,~,~] = uniqueRowsCA(group1cortexid);
 disp([num2str(size(uCA,1)),' control cortex cells'])
@@ -177,6 +152,11 @@ disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 
 % AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
 % AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
+
+visualizecells(group1ca1id,'control_ca1')
+visualizecells(group2ca1id,'pae_ca1')
+visualizecells(group1ca3id,'control_ca3')
+visualizecells(group2ca3id,'pae_ca3')
 
 
 popvector(group1ca1id,group1ca1(:,end),'controlca1');
@@ -390,16 +370,16 @@ cd('D:\Projects\PAE_PlaceCell\ProcessedData')
 for i=1:length(groupid)
     data=load(groupid{i,1});
     try
-        p=postprocessFigures(data,{groupid{i,2},str2double(groupid(i,3))});
+        postprocessFigures.main(data,{groupid{i,2},str2double(groupid(i,3))});
         pause(.001)
     catch
     end
 %     set(gcf, 'Position', get(0, 'Screensize'));
 
-    set(gcf,'units','normalized','outerposition',[0 0 1 1])
+    set(gcf,'WindowState','maximized')
 
     print(gcf,'-dpng', '-r70',...
-        ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2018\CellExamples\',group,...
+        ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2019\CellExamples\',group,...
         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
     close all
 end
