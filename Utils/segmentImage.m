@@ -105,13 +105,14 @@ end
 % for some reason contourc gives multiple similar countours, so here we
 % find and remove the duplicates within a certain tol.
 % This is not the best way to do this
-[~,I]=uniquetol(cellfun('length',x),.01);
-zz=zeros(length(fieldarea),1);
-zz(I)=1;
+% [~,I]=uniquetol(cellfun('length',x),1);
+%  zz=zeros(length(fieldarea),1);
+% zz(I)=1;
 
-x(fieldarea<30 | ~zz')=[];
-y(fieldarea<30 | ~zz')=[];
-fieldarea(fieldarea<30 | ~zz')=[];
+% 
+% x(fieldarea<30 | ~zz')=[];
+% y(fieldarea<30 | ~zz')=[];
+% fieldarea(fieldarea<30 | ~zz')=[];
 
 X(nanloc)=NaN;
 if figs
@@ -120,7 +121,7 @@ if figs
     imagesc(X,'AlphaData',imAlpha);
     axis off
     axis image
-    colormap jet
+    colormap(viridis(255))
     hold on
     for n = 1:length(x)
         plot(x{n},y{n},'r','LineWidth', 3)
