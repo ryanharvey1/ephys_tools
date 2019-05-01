@@ -96,7 +96,7 @@ for vars=1:size(VarNames,2)
     end
 end
 clear vars
-if length(VarNames)>4; font=10;else; font=30;end
+if length(VarNames)>4; font=10;else; font=20;end
 if plots~=3
     var4plot=1;
     fig1=figure;fig1.Color=[1 1 1];
