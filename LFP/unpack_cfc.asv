@@ -150,12 +150,6 @@ for i=1:length(rats)
     clear cfc
 end
 
-%% Delete empties from datamat
-DataMat_Ses1(all(cellfun(@isempty,DataMat_Ses1{:,:}),2),:)=[];
-DataMat_Ses2(all(cellfun(@isempty,DataMat_Ses2{:,:}),2),:)=[];
-DataMat_Ses3(all(cellfun(@isempty,DataMat_Ses3{:,:}),2),:)=[];
-
-
 
 clear sess i
 
@@ -175,17 +169,17 @@ for sess=1:3
         Group1_CA3=DataMat_Ses1(contains([DataMat_Ses1.ratID{:}],control) & contains([DataMat_Ses1.areaIdx{:}],'ca3') ,:);
         Group2_CA3=DataMat_Ses1(contains([DataMat_Ses1.ratID{:}],pae) & contains([DataMat_Ses1.areaIdx{:}],'ca3'),:);
     elseif sess==2
-        Group1_CA1=DataMat_Ses2(contains([DataMat_Ses2.ratID{:}],control) & contains([DataMat_Ses2.areaIdx{:}],'ca1'),:);
-        Group2_CA1=DataMat_Ses2(contains([DataMat_Ses2.ratID{:}],pae) & contains([DataMat_Ses2.areaIdx{:}],'ca1'),:);
+        Group1_CA1=DataMat_Ses2(contains([DataMat_Ses1.ratID{:}],control) & contains([DataMat_Ses1.areaIdx{:}],'ca1'),:);
+        Group2_CA1=DataMat_Ses2(contains([DataMat_Ses1.ratID{:}],pae) & contains([DataMat_Ses1.areaIdx{:}],'ca1'),:);
         
-        Group1_CA3=DataMat_Ses2(contains([DataMat_Ses2.ratID{:}],control) & contains([DataMat_Ses2.areaIdx{:}],'ca3') ,:);
-        Group2_CA3=DataMat_Ses2(contains([DataMat_Ses2.ratID{:}],pae) & contains([DataMat_Ses2.areaIdx{:}],'ca3'),:);
+        Group1_CA3=DataMat_Ses2(contains([DataMat_Ses1.ratID{:}],control) & contains([DataMat_Ses1.areaIdx{:}],'ca3') ,:);
+        Group2_CA3=DataMat_Ses2(contains([DataMat_Ses1.ratID{:}],pae) & contains([DataMat_Ses1.areaIdx{:}],'ca3'),:);
     elseif sess==3
-        Group1_CA1=DataMat_Ses3(contains([DataMat_Ses3.ratID{:}],control) & contains([DataMat_Ses3.areaIdx{:}],'ca1'),:);
-        Group2_CA1=DataMat_Ses3(contains([DataMat_Ses3.ratID{:}],pae) & contains([DataMat_Ses3.areaIdx{:}],'ca1'),:);
+        Group1_CA1=DataMat_Ses3(contains([DataMat_Ses1.ratID{:}],control) & contains([DataMat_Ses1.areaIdx{:}],'ca1'),:);
+        Group2_CA1=DataMat_Ses3(contains([DataMat_Ses1.ratID{:}],pae) & contains([DataMat_Ses1.areaIdx{:}],'ca1'),:);
         
-        Group1_CA3=DataMat_Ses3(contains([DataMat_Ses3.ratID{:}],control) & contains([DataMat_Ses3.areaIdx{:}],'ca3') ,:);
-        Group2_CA3=DataMat_Ses3(contains([DataMat_Ses3.ratID{:}],pae) & contains([DataMat_Ses3.areaIdx{:}],'ca3'),:);
+        Group1_CA3=DataMat_Ses3(contains([DataMat_Ses1.ratID{:}],control) & contains([DataMat_Ses1.areaIdx{:}],'ca3') ,:);
+        Group2_CA3=DataMat_Ses3(contains([DataMat_Ses1.ratID{:}],pae) & contains([DataMat_Ses1.areaIdx{:}],'ca3'),:);
     end
     
     [group1ca1,~]=extract_double_from_table(Group1_CA1);
@@ -193,36 +187,22 @@ for sess=1:3
     [group1ca3,~]=extract_double_from_table(Group1_CA3);
     [group2ca3,varnames]=extract_double_from_table(Group2_CA3);
 
-%     %low gamma
-%     LG_propSig_group1=sum(group1ca1(:,5))/size(group1ca1(:,5),1);
-%     LG_propSig_group2=sum(group2ca1(:,5))/size(group2ca1(:,5),1);
+    %low gamma
+    LG_propSig_group1=sum(group1ca1(:,5))/size(group1ca1(:,5),1);
+    LG_propSig_group2=sum(group2ca1(:,5))/size(group2ca1(:,5),1);
     
     %test proportion of sessions that exhibit phase-amplitude coupling
-    disp('CA1 proportion of low gamma phase-amp coupling')
-    [~,p, chi2stat,df] = prop_test([sum(group1ca1(:,5))/size(group1ca1(:,5),1) sum(group2ca1(:,5))/size(group2ca1(:,5),1)] , [1 1], 0);
-    disp(['X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-    
-    disp('CA1 proportion of high gamma phase-amp coupling')
-    [~,p, chi2stat,df] = prop_test([sum(group1ca1(:,8))/size(group1ca1(:,8),1) sum(group2ca1(:,8))/size(group2ca1(:,8),1)] , [1 1], 0);
-    disp(['X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-    
-    disp('CA3 proportion of low gamma phase-amp coupling')
-    [~,p, chi2stat,df] = prop_test([sum(group1ca3(:,5))/size(group1ca3(:,5),1) sum(group2ca3(:,5))/size(group2ca3(:,5),1)] , [1 1], 0);
-    disp(['X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-    
-    disp('CA3 proportion of high gamma phase-amp coupling')
-    [~,p, chi2stat,df] = prop_test([sum(group1ca3(:,8))/size(group1ca3(:,8),1) sum(group2ca3(:,8))/size(group2ca3(:,8),1)] , [1 1], 0);
-    disp(['X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
+    [~,p, chi2stat,df] = prop_test([LG_propSig_group1 LG_propSig_group2] , [1 1], 0);
     
     
-%     disp(['Results for proportion of sessions that contain significant PAC',area,' session ',num2str(sess)])
-%     if p<.05
-%         disp(['The total number of sessions that exhibit significant'...
-%             'phase-amplitude coupling is different between groups, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-%     else
-%         disp(['Both groups exhibit a similar proportion of sessions with signficant '...
-%             'phase-amplitude coupling, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-%     end
+    disp(['Results for proportion of sessions that contain significant PAC',area,' session ',num2str(sess)])
+    if p<.05
+        disp(['The total number of sessions that exhibit significant'...
+            'phase-amplitude coupling is different between groups, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
+    else
+        disp(['Both groups exhibit a similar proportion of sessions with signficant '...
+            'phase-amplitude coupling, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
+    end
     
     %test magnitude difference of MI between groups
 %     LG_group1=group1ca1(group1ca1(:,5)==1,3);
@@ -234,21 +214,18 @@ for sess=1:3
 %         h = vartest2(LG_group1,LG_group2);
         
         LGModulationIndex_ca1=CDFplots(group1ca1(group1ca1(:,5)==1,3),...
-            group2ca1(group2ca1(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA1'},2);
-        title(extractBetween(LGModulationIndex_ca1,',',', CI'))
+            group2ca1(group2ca1(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA1'},2)
+        title(extractBetween(LGModulationIndex_ca1,','))
         
         LGModulationIndex_ca3=CDFplots(group1ca3(group1ca3(:,5)==1,3),...
-            group2ca3(group2ca3(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA3'},2);
-        title(extractBetween(LGModulationIndex_ca3,',',', CI'))
+            group2ca3(group2ca3(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA3'},2)
         
         HGModulationIndex_ca1=CDFplots(group1ca1(group1ca1(:,8)==1,6),...
-            group2ca1(group2ca1(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA1'},2);
-        title(extractBetween(HGModulationIndex_ca1,',',', CI'))
+            group2ca1(group2ca1(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA1'},2)
         
         HGModulationIndex_ca3=CDFplots(group1ca3(group1ca3(:,8)==1,6),...
-            group2ca3(group2ca3(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA3'},2);
-        title(extractBetween(HGModulationIndex_ca3,',',', CI'))
-
+            group2ca3(group2ca3(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA3'},2)
+        
 %         if h==0 %run t-test with equal variances assumed
 %             [~,p,~,LGstats] = ttest2(LG_group1,LG_group2,'Vartype','equal');
 %         else %run t-test controlling for unequal variances
@@ -276,54 +253,54 @@ for sess=1:3
         
 %     end
     
-%     
-%     %high gamma
-%     HG_propSig_group1=sum(Group1(:,5))/size(Group1(:,4),1);
-%     HG_propSig_group2=sum(Group2(:,5))/size(Group2(:,4),1);
-%     
-%     %test proportion of sessions that exhibit phase-amplitude coupling
-%     [~,p, chi2stat,df] = prop_test([HG_propSig_group1 HG_propSig_group2] , [1 1], 0);
-%     
-%     disp(['Results for proportion of sessions that contain significant PAC:',area{region},' session ',num2str(sess)])
-%     if p<.05
-%         disp(['The total number of sessions that exhibit significant'...
-%             'phase-amplitude coupling is different between groups,X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-%     else
-%         disp(['Both groups exhibit a similar proportion of sessions with signficant '...
-%             'phase-amplitude coupling, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
-%     end
-%     
-%     HG_group1=Group1(Group1(:,5)==1,4);
-%     HG_group2=Group2(Group2(:,5)==1,4);
-%     
-%     CDFplots(HG_group1,HG_group2,{'Sacc','PAE'},{'HG Modulation Index'},2)
-%     
-%     
-%     if ~isempty(LG_group2) && ~isempty(LG_group1)
-%         %test variance
-%         h = vartest2(HG_group1,HG_group2);
-%         
-%         if h==0 %run t-test with equal variances assumed
-%             [h,p,ci,HGstats] = ttest2(HG_group1,HG_group2,'Vartype','equal');
-%         else %run t-test controlling for unequal variances
-%             [h,p,ci,HGstats] = ttest2(HG_group1,HG_group2,'Vartype','unequal');
-%         end
-%         
-%         HGmu_group1=nanmean(Group1(Group1(:,5)==1,4));
-%         HGmu_group2=nanmean(Group2(Group2(:,5)==1,4));
-%         
-%         HGsem_group1=std(Group1(Group1(:,5)==1,4))/sqrt(size(Group1(Group1(:,5)==1,4),1));
-%         HGsem_group2=std(Group2(Group2(:,5)==1,4))/sqrt(size(Group2(Group2(:,5)==1,4),1));
-%         
-%         disp(['High Gamma Magnitude of MI in area ',area{region},' session ',num2str(sess)])
-%         if p<.05 && HGmu_group1<HGmu_group2
-%             disp(['PAE rats exhibited higher mean MI, mean=',num2str(LGmu_group2),'sem=',num2str(LGsem_group2),' across the entire session'...
-%                 'relative to Sacc controls, mean=',num2str(LGmu_group1),'sem=',num2str(LGsem_group1),'p=',num2str(p)])
-%         elseif p<.05 && HGmu_group1>HGmu_group2
-%             disp(['Sacc rats exhibited higher mean MI, mean=',num2str(HGmu_group1),'sem=',num2str(HGsem_group1),' across the entire session'...
-%                 'relative to PAE rats, mean=',num2str(HGmu_group2),'sem=',num2str(HGsem_group2),'p=',num2str(p)])
-%         else
-%             disp(['There is no significant difference between MI between groups, p=',num2str(p)])
-%         end
-%     end
+    
+    %high gamma
+    HG_propSig_group1=sum(Group1(:,5))/size(Group1(:,4),1);
+    HG_propSig_group2=sum(Group2(:,5))/size(Group2(:,4),1);
+    
+    %test proportion of sessions that exhibit phase-amplitude coupling
+    [~,p, chi2stat,df] = prop_test([HG_propSig_group1 HG_propSig_group2] , [1 1], 0);
+    
+    disp(['Results for proportion of sessions that contain significant PAC:',area{region},' session ',num2str(sess)])
+    if p<.05
+        disp(['The total number of sessions that exhibit significant'...
+            'phase-amplitude coupling is different between groups,X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
+    else
+        disp(['Both groups exhibit a similar proportion of sessions with signficant '...
+            'phase-amplitude coupling, X(',num2str(df),')=',num2str(chi2stat),', p=',num2str(p)])
+    end
+    
+    HG_group1=Group1(Group1(:,5)==1,4);
+    HG_group2=Group2(Group2(:,5)==1,4);
+    
+    CDFplots(HG_group1,HG_group2,{'Sacc','PAE'},{'HG Modulation Index'},2)
+    
+    
+    if ~isempty(LG_group2) && ~isempty(LG_group1)
+        %test variance
+        h = vartest2(HG_group1,HG_group2);
+        
+        if h==0 %run t-test with equal variances assumed
+            [h,p,ci,HGstats] = ttest2(HG_group1,HG_group2,'Vartype','equal');
+        else %run t-test controlling for unequal variances
+            [h,p,ci,HGstats] = ttest2(HG_group1,HG_group2,'Vartype','unequal');
+        end
+        
+        HGmu_group1=nanmean(Group1(Group1(:,5)==1,4));
+        HGmu_group2=nanmean(Group2(Group2(:,5)==1,4));
+        
+        HGsem_group1=std(Group1(Group1(:,5)==1,4))/sqrt(size(Group1(Group1(:,5)==1,4),1));
+        HGsem_group2=std(Group2(Group2(:,5)==1,4))/sqrt(size(Group2(Group2(:,5)==1,4),1));
+        
+        disp(['High Gamma Magnitude of MI in area ',area{region},' session ',num2str(sess)])
+        if p<.05 && HGmu_group1<HGmu_group2
+            disp(['PAE rats exhibited higher mean MI, mean=',num2str(LGmu_group2),'sem=',num2str(LGsem_group2),' across the entire session'...
+                'relative to Sacc controls, mean=',num2str(LGmu_group1),'sem=',num2str(LGsem_group1),'p=',num2str(p)])
+        elseif p<.05 && HGmu_group1>HGmu_group2
+            disp(['Sacc rats exhibited higher mean MI, mean=',num2str(HGmu_group1),'sem=',num2str(HGsem_group1),' across the entire session'...
+                'relative to PAE rats, mean=',num2str(HGmu_group2),'sem=',num2str(HGsem_group2),'p=',num2str(p)])
+        else
+            disp(['There is no significant difference between MI between groups, p=',num2str(p)])
+        end
+    end
 end

@@ -3,7 +3,7 @@ clear
 data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
 
 control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
-pae={'RH11','RH16','LS17','LS19','LE2813'};
+pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
 
 %% COMPILE GROUPS
 data.control.measures=[];
@@ -67,45 +67,44 @@ end
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-cd D:\Projects\PAE_PlaceCell\AnimalMetadata
+group1id=get_region_id(group1id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
+group2id=get_region_id(group2id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
 
-rats=dir('*.mat');
-rats={rats.name};
-sess_region=[];
-sessionid=[];
-% mainpath='D:\Projects\PAE_PlaceCell\ProcessedData\';
-mainpath=[];
+group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
+group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
+group1ca3 = group1(strcmp(group1id(:,4),'ca3'),:);
+group1ca3id = group1id(strcmp(group1id(:,4),'ca3'),:);
+group1cortex = group1(strcmp(group1id(:,4),'cortex'),:);
+group1cortexid = group1id(strcmp(group1id(:,4),'cortex'),:);
 
-for i=1:length(rats)
-    load(rats{i})
-    sess=fieldnames(AnimalMetadata.RecordingLogs);
-    for s=1:length(sess)
-        sess_region=[sess_region;{AnimalMetadata.AnimalName,sess{s},AnimalMetadata.RecordingLogs.(sess{s}).RecordingArea}];
-        sessionid=[sessionid;{[mainpath,AnimalMetadata.AnimalName,'_',sess{s}]}];
-    end
-end
-
-% create idx
-ca1idx=strcmp(sess_region(:,3), 'ca1');
-ca3idx=strcmp(sess_region(:,3), 'ca3');
-
-ca1=sessionid(ca1idx);
-ca3=sessionid(ca3idx);
-
-% split groups between regions
-% ca1
-group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:);
-group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:);
-
-% ca3
-group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:);
-group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:);
+group2ca1 = group2(strcmp(group2id(:,4),'ca1'),:);
+group2ca1id = group2id(strcmp(group2id(:,4),'ca1'),:);
+group2ca3 = group2(strcmp(group2id(:,4),'ca3'),:);
+group2ca3id = group2id(strcmp(group2id(:,4),'ca3'),:);
+group2cortex = group2(strcmp(group2id(:,4),'cortex'),:);
+group2cortexid = group2id(strcmp(group2id(:,4),'cortex'),:);
 
 
+[uCA,~,~] = uniqueRowsCA(group1ca1id);
+disp([num2str(size(uCA,1)),' control ca1 cells'])
+[uCA,~,~] = uniqueRowsCA(group2ca1id);
+disp([num2str(size(uCA,1)),' pae ca1 cells'])
+
+
+[uCA,~,~] = uniqueRowsCA(group1ca3id);
+disp([num2str(size(uCA,1)),' control ca3 cells'])
+[uCA,~,~] = uniqueRowsCA(group2ca3id);
+disp([num2str(size(uCA,1)),' pae ca3 cells'])
+
+
+[uCA,~,~] = uniqueRowsCA(group1cortexid);
+disp([num2str(size(uCA,1)),' control cortex cells'])
+[uCA,~,~] = uniqueRowsCA(group2cortexid);
+disp([num2str(size(uCA,1)),' pae cortex cells'])
+
+
+%% place cell filter
+%  define_field(group1ca1id,session)
 
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
@@ -122,15 +121,15 @@ disp([num2str(size(uCA,1)),' control ca3 place cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 
-% visualizecells(uniqueRowsCA(group1ca1id),'sacca1')
-% visualizecells(uniqueRowsCA(group2ca1id),'paeca1')
-% visualizecells(uniqueRowsCA(group1ca3id),'sacca3')
-% visualizecells(uniqueRowsCA(group2ca3id),'paeca3')
-
-
-
 AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
-% AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
+AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
+
+
+visualizecells(uniqueRowsCA(group1ca1id),'control_ca1')
+visualizecells(uniqueRowsCA(group2ca1id),'pae_ca1')
+visualizecells(uniqueRowsCA(group1ca3id),'control_ca3')
+visualizecells(uniqueRowsCA(group2ca3id),'pae_ca3')
+
 
 %% phase precess
 phaseprecess=CDFplots(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
@@ -140,7 +139,7 @@ phaseprecess=CDFplots(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,con
 fig=figure;fig.Color=[1 1 1];
 [h1,h2]=CoolHistogram(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
     group2ca1(group2ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
-    20,varnames{contains(varnames,'PhcircLinCorr')})
+    50,varnames{contains(varnames,'PhcircLinCorr')})
 xlim([-.4 .4])
 
 print(gcf,'-dpng', '-r400',...
@@ -158,8 +157,36 @@ visualizecells(group2ca1id(group2ca1(:,contains(varnames,'Phpval'))<.05 & group2
 % 
 % plotexamples(group1ca1id,'control')
 % plotexamples(group2ca1id,'pae')
+function define_field(groupid,session)
+for i=1:length(groupid)
+    data=load(groupid{i,1},'spikesID','ratemap','maze_size_cm');
+    
+    cells=find(contains(data.spikesID.TetrodeNum,groupid(i,2)) & ismember(data.spikesID.CellNum,str2double(groupid(i,3))))';
+    upscalefac=15;
+    [BW,maskedImage,x,y,fieldarea,X] = segmentImage('map',data.ratemap{cells,session},'figs',true,'upscalefac',upscalefac);
+    
+%     figure;
+%     imagesc(data.ratemap{cells,session});hold on
+    for f=1:length(x)
+        % downscale
+        x_temp=rescale([x{f},upscalefac+1,size(X,2)-upscalefac],1,size(data.ratemap{cells,session},2));
+        x{f}=x_temp(1:end-2)';
+        y_temp=rescale([y{f},upscalefac+1,size(X,2)-upscalefac],1,size(data.ratemap{cells,session},2));
+        y{f}=y_temp(1:end-2)';
+        
+%         plot(x{f},y{f})
 
-
+        [majorradius,~,COM] = min_encl_ellipsoid( x{f},y{f});
+        
+        fields{f}.bounds=[x{f},y{f}];
+        fields{f}.peakFR=max(max(data.ratemap{cells,session}(round(y{f}),round(x{f}))));
+        fields{f}.COM=COM;
+        fields{f}.width=majorradius*2*(data.maze_size_cm(session)/length(data.ratemap{cells,session}));
+        fields{f}.fieldarea=fieldarea(f);
+    end
+    data.openfield=fields;
+end
+end
 
 function [group,groupid]=placefieldfilter(group,groupid,varnames)
 % 1) Minimum peak firing rate of 1 Hz,
@@ -169,15 +196,15 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 % 5) at least 100 spikes
 
 groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
-    group(:,contains(varnames,'FieldWidth'))>=8 &...
+    group(:,contains(varnames,'FieldWidth'))>=9 &...
     group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.4 &...
+    group(:,contains(varnames,'InformationContent'))>=.3 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 
 group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
-    group(:,contains(varnames,'FieldWidth'))>=8 &...
+    group(:,contains(varnames,'FieldWidth'))>=9 &...
     group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.4 &...
+    group(:,contains(varnames,'InformationContent'))>=.3 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 end
 
@@ -235,29 +262,29 @@ end
 
 function visualizecells(groupid,group)
 cd('D:\Projects\PAE_PlaceCell\ProcessedData')
-for i=1:length(groupid)
-    data=load(groupid{i,1});
-    try
-        p=postprocessFigures(data,{groupid{i,2},str2double(groupid(i,3))});
-        pause(.001)
-    catch
-    end
-    %     set(gcf, 'Position', get(0, 'Screensize'));
-    
-    set(gcf,'units','normalized','outerposition',[0 0 1 1])
-    %
-    %     print(gcf,'-dpng', '-r400',...
-    %         ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2018\CellExamples\cylinder\',group,...
-    %         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
-    
-%     print(gcf,'-dpng', '-r400',...
-%         ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\pae',...
-%         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
-    
-        print(gcf,'-dpng', '-r400',...
-        ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\T32_JournalClub\2019\figures\phaseprecess\',group,...
-        filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
-    
+
+sessions=unique(groupid(:,1));
+
+for i=1:length(sessions)
     close all
+    idx=find(contains(groupid(:,1),sessions{i}));
+    
+    data=load(sessions{i});
+    
+    postprocessFigures.main(data,{groupid(idx,2),str2double(groupid(idx,3))});
+    
+    
+    FigList=findobj(allchild(0), 'flat', 'Type', 'figure');
+    for iFig=1:length(FigList)
+        FigHandle=FigList(iFig);
+        FigName=get(FigHandle, 'Name');
+        
+        set(FigHandle, 'Position', get(0, 'Screensize'));
+        print(gcf,'-dpng', '-r40',...
+            ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2019\CellExamples\cylinder\',group,...
+            filesep,groupid{idx(iFig),1},groupid{idx(iFig),2},groupid{idx(iFig),3},'.png'])
+    end
+    
 end
 end
+

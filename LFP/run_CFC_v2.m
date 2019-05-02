@@ -62,7 +62,7 @@ for ses=1
     % ANALYSIS OF PHASE-AMPLITUDE COUPLING
     session.CFC = thetaModGamma_v2(session,...
         'filtType','vel','filtParams',[5 90],'thetarange',...
-        4:0.25:12,'gammarange',25:1:55,'nbins',36,'ifPlot',1);
+        4:0.25:12,'gammarange',25:1:55,'nbins',36,'ifPlot',0);
     
 end
 

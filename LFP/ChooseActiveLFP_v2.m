@@ -2,7 +2,7 @@ function [f_peak, active_lfp_ind] = ChooseActiveLFP_v2(self)
 
 % active_lfp_ind = ChooseActive(root)
 
-        parfor k = 1:size(self.signal,1)
+        for k = 1:size(self.signal,1)
            [f_peak(k), pr(k)] = calc_spectrum(self.signal(k,:),self.lfpsamplerate);
         end
         

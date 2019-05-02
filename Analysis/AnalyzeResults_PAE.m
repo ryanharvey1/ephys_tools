@@ -143,6 +143,8 @@ disp([num2str(size(uCA,1)),' control ca3 place cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 
+uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
+
 
 %  [pontential]=COM(group1ca1id)
 % visualizecells(uniqueRowsCA(group1ca1id),'sacca1')
