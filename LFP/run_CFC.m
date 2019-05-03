@@ -1,6 +1,4 @@
 %Cross-Frequency coupling script for B.Clark lab data structure
-%
-%
 
 %LB October 2018, updated January 2019
 
@@ -12,24 +10,9 @@ function cfc=run_CFC(data)
 %
 % Dependencies: getPower.m, thetaModGamma_v2.m, UnderThreshold Detect_v2.m
 
-
-% data=load('d:\Users\BClarkLab\Desktop\HPCatn02_S20180707144931');
 data=load(data);
 
-%ADD PATHS FOR PROCESSING
-com=which('run_CFC');
-com=strsplit(com,filesep);
-
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-addpath([basedir,filesep,'BClarkToolbox',filesep,'Analysis'],...
-    [basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'Utils'],...
-    [basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'Visualize'],...
-    [basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'LFP']);
-addpath(genpath([basedir,filesep,'chronux_2_11']))
-clear com
-
 %SET PARAMETERS
-% nchannels=1:size(data.lfp.signal,1);
 nsessions=data.events;
 mazeType=data.mazetypes;
 
@@ -54,16 +37,7 @@ for ses=1:size(nsessions,2)
         & data.frames(:,1)<=data.events(2,ses),1);
     
     %FIND MOST ACTIVE CHANNEL FOR THETA
-%     disp('Finding most active channel for theta')
     [session.theta_ch.f_peak, session.theta_ch.active_lfp_ind] = ChooseActiveLFP_v2(session);
-%     disp(['Got it! Channel ',num2str(session.theta_ch.active_lfp_ind),' is the best'])
-    
-    
-    %TAKE A LOOK AT PHASE-PHASE MODULATION OF BANDS OF INTEREST ($$$ MOVE AFTER CFC FIRST RUN
-    %FINDS FREQUENCY CHANNELS TO EVALUATION).
-    %     [PhaseCounts, binn] = phase_phase_histogram(session,session.theta_ch.active_lfp_ind);
-    %     plot_phase_histogram(binn,PhaseCounts )
-    
     
     %compute MI for only two frequency ranges for surrogate data via tort 2010 (code adapted
     %from CMBHOME thetaModGamma).

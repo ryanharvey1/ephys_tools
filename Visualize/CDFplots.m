@@ -96,7 +96,7 @@ for vars=1:size(VarNames,2)
     end
 end
 clear vars
-if length({VarNames})>4; font=14;else; font=30;end
+if length(VarNames)>4; font=10;else; font=20;end
 if plots~=3
     var4plot=1;
     fig1=figure;fig1.Color=[1 1 1];
@@ -122,7 +122,7 @@ if plots~=3
             ylabel('Cumulative Frequency')
             xlabel(VarNames(vars))
             ax=gca;
-            set(ax,'FontSize',20,'FontWeight','bold','LineWidth',2,'box','off')
+            set(ax,'FontSize',font,'FontWeight','bold','LineWidth',2,'box','off')
             var4plot=var4plot+1;
         end
     end

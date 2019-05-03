@@ -24,14 +24,14 @@ RateMap2 = padarray(RateMap2,[3 3],0,'both');
 
 rALL=zeros(360,1);
 
-if animation==1; figure(1); subplot(1,3,1);  pcolor(RateMap1); colormap jet; end
+if animation==1; figure(1); subplot(1,3,1);  imagesc(RateMap1); colormap jet; end
 for theta=0:359
     % ROTATE PATH & SPIKE XY
     RateMap=imrotate(RateMap2,theta,'nearest','crop');
 
     % CORRELATE STANDARD AND ROTATED MAPS
     rALL(theta+1,1) = corr2(RateMap1,RateMap);
-    if animation==1;subplot(1,3,2); pcolor(RateMap); colormap jet; subplot(1,3,3); plot(rALL);pause(.25);end
+    if animation==1;subplot(1,3,2); imagesc(RateMap); colormap jet; subplot(1,3,3); plot(rALL);pause(.25);end
 end
 % FIND MAX CORRELATION & DEGREE SHIFT
 [c,d]=max(rALL);
