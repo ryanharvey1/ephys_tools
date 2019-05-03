@@ -1,4 +1,4 @@
-function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,data_video_nospk,sampleRate,Angle,Spike)
+function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,sampleRate)
 %Within_HDstability computes the 4-quarter stability score for head direction signals based off
 %Boccara et al. 
 
@@ -19,31 +19,16 @@ function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,da
 % Created by LBerkowitz March 2018, updated by LB July 2018 
 
 time=[.25,.5,.75,1];
-idx=1;
-sessionLength=length(data_video_nospk(:,1));
 
-for i=1:sessionLength*.25:sessionLength
-    tempNoSpk=data_video_nospk(round(i):round(sessionLength*time(idx)),:);
-    tempSpk=data_video_spk(round(i):round(sessionLength*time(idx)),:);
-    % 6 degree bins
-    da=pi/30;
-    angBins=da/2:da:2*pi-da/2;
-    % Occupancy
-    histAng=hist(tempNoSpk(:,Angle),angBins);
+block=[data_video_spk(1,1),data_video_spk(end,1)*time];
+
+for i=1:length(block)-1
+    tempSpk=data_video_spk(data_video_spk(:,1)>block(i) & data_video_spk(:,1)<block(i+1),:);
     
-    % Number of spikes per bin
-    spkPerAng=hist(tempSpk(tempSpk(:,Spike)==1,Angle),angBins);
-    
-    % Tuning
-    hdTuning=(spkPerAng./histAng)*sampleRate;
-    
-    % remove nan & inf
-    hdTuning(isnan(hdTuning) | isinf(hdTuning))=0;
-    
-    within.hdTuning{idx,1}=hdTuning;
-    
-    idx=idx+1;
-    
+    [~,~,~,~,~,hdTuning]=tuningcurve(tempSpk(tempSpk(:,6)==0,4),tempSpk(tempSpk(:,6)==1,4),sampleRate);
+
+    within.hdTuning{i,1}=hdTuning;
+        
 %     figure;
 %     plot(tempSpk(:,2),tempSpk(:,3),'.k');hold on
 %     scatter(tempSpk(tempSpk(:,6)==1,2),tempSpk(tempSpk(:,6)==1,3),'Filled','r');

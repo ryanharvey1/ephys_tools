@@ -56,8 +56,9 @@ classdef HD_cell_analysis
             DIC = sum(ICi);
         end
         
-        function hd_drift(data_video_spk)
-            angBins=0:6:360;
+        function stability=hd_stability(data_video_spk)
+            da=pi/30;
+            angBins=rad2deg(da/2:da:2*pi-da/2);
             bin_centers=movmedian(angBins,2);
             bin_centers(1)=[];
             i=1;
@@ -65,8 +66,8 @@ classdef HD_cell_analysis
             chunk=[];
             hdTuning=[];
             heading=data_video_spk(:,4);
-            figure;
-            plot(data_video_spk(:,2),data_video_spk(:,3),'.k')
+%             figure;
+%             plot(data_video_spk(:,2),data_video_spk(:,3),'.k')
             
             while ii<length(heading)
                 histAng=histcounts(heading(i:ii),angBins);
@@ -77,17 +78,23 @@ classdef HD_cell_analysis
                     [~,~,~,~,~,hdtuning]=tuningcurve(a,spk_a,30);
                     hdTuning=[hdTuning;hdtuning];
                     chunk=[chunk;i,ii];
-                    hold on
-                    plot(data_video_spk(i:ii,2),data_video_spk(i:ii,3))
+%                     hold on
+%                     plot(data_video_spk(i:ii,2),data_video_spk(i:ii,3))
                     i=ii+1;
                     ii=ii+1;
                 end
                 ii=ii+1;
             end
-            test=1;
+           
+            store=[];
+            corrMat=corr(hdTuning');
+             for k=1:size(corrMat,2)-1
+                 data=diag(corrMat,k);
+                 store=[store;data];
+             end
             
-            
-            
+             stability=nanmean(store);
+             
         end
         
     end
