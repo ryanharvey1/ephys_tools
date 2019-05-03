@@ -99,7 +99,7 @@ clear vars
 if length(VarNames)>4; font=10;else; font=20;end
 if plots~=3
     var4plot=1;
-    fig1=figure;fig1.Color=[1 1 1];
+%     fig1=figure;fig1.Color=[1 1 1];
     for vars=1:size(VarNames,2)
         if hypothesis1(vars)==1 && plots==1 || plots==2
             if plots==1;SQR=round(sqrt(sum(hypothesis1))); elseif plots==2; SQR=round(sqrt(size(VarNames,2))); end
