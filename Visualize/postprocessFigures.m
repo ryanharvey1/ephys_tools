@@ -48,9 +48,15 @@ classdef postprocessFigures
             %             end
             
             if exist('cellid','var')
-                cells=find(contains(data.spikesID.TetrodeNum,cellid{1}) & ismember(data.spikesID.CellNum,cellid{2}))';
+                cells_to_find=strcat(cellid{1},num2str(cellid{2}));
+
+                cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
+
+                cells=find(ismember(cell_list,cells_to_find));
+                
                 plotraster=0;
                 xcorr=0;
+
             else
                 cells=1:ncells;
                 plotraster=1;
@@ -62,7 +68,7 @@ classdef postprocessFigures
             end
             
             
-            for i=cells
+            for i=cells'
                 tetrode=strsplit(data.spikesID.paths{i},filesep);
                 tetrode=tetrode{end};
                 trodeID=str2double(extractBetween(tetrode,'TT','.'));
