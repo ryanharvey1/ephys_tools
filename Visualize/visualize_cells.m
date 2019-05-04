@@ -34,6 +34,7 @@ if ~exist(savelocation,'file')
 end
 
 % find unique session: only loading sessions once significantly reduces run time 
+
 sessions=unique(groupid(:,1));
 
 for i=1:length(sessions)
@@ -51,7 +52,7 @@ for i=1:length(sessions)
         
         set(FigHandle, 'Position', get(0, 'Screensize'));
         
-        print(gcf,['-d',format], dpi,...
+        print(FigHandle,['-d',format], dpi,...
             [savelocation,filesep,groupid{idx(iFig),1},groupid{idx(iFig),2},...
             groupid{idx(iFig),3},'.',format])
     end
