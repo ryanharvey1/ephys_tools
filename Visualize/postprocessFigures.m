@@ -52,7 +52,7 @@ classdef postprocessFigures
 
                 cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
 
-                cells=find(ismember(cell_list,cells_to_find));
+                cells=find(ismember(cell_list,cells_to_find))';
                 
                 plotraster=0;
                 xcorr=0;
@@ -68,7 +68,7 @@ classdef postprocessFigures
             end
             
             
-            for i=cells'
+            for i=cells
                 tetrode=strsplit(data.spikesID.paths{i},filesep);
                 tetrode=tetrode{end};
                 trodeID=str2double(extractBetween(tetrode,'TT','.'));
