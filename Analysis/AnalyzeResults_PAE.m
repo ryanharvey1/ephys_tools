@@ -1,6 +1,7 @@
 % AnalyzeResults_PAE_LinearTrack
 clear
 data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
+addpath('D:\Projects\PAE_PlaceCell\ProcessedData')
 
 control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
 pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
@@ -97,36 +98,8 @@ disp([num2str(size(uCA,1)),' control cortex cells'])
 [uCA,~,~] = uniqueRowsCA(group2cortexid);
 disp([num2str(size(uCA,1)),' pae cortex cells'])
 
-%% FILTER BY LAPS and SPIKES
-% [group1ca1,group1ca1id]=lap_spikesfilter(group1ca1,group1ca1id,varnames);
-% [group2ca1,group2ca1id]=lap_spikesfilter(group2ca1,group2ca1id,varnames);
-% [group1ca3,group1ca3id]=lap_spikesfilter(group1ca3,group1ca3id,varnames);
-% [group2ca3,group2ca3id]=lap_spikesfilter(group2ca3,group2ca3id,varnames);
 
 %% PLACE CELL FILTER
-% cd D:\Projects\PAE_PlaceCell\ProcessedData
-% groupid=group1ca1id;
-% groupid=unique(groupid(:,1));
-% placeidx=[];
-% for i=1:length(groupid)
-%     load(groupid{i,1},'linear_track')
-%     for ii=1:length(linear_track.right)
-%         placeidx=[placeidx;~isempty(linear_track.right{ii}.fields)];
-%     end
-% end
-% for i=length(groupid)
-%     load(groupid{i,1},'linear_track')
-%     for ii=1:length(linear_track.left)
-%         placeidx=[placeidx;~isempty(linear_track.left{ii}.fields)];
-%     end
-% end
-% group1ca1=group1ca1(placeidx);
-% group1ca1id=group1ca1id(placeidx);
-
-% [group1,group1id]=placefieldfilter(group1,group1id,varnames);
-% [group2,group2id]=placefieldfilter(group2,group2id,varnames);
-
-
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
 [group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
@@ -153,12 +126,37 @@ uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
 % visualizecells(uniqueRowsCA(group2ca3id),'paeca3')
 
 % AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
-% AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
+    AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1);
+    
+    ph1=group1ca3(group1ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
+    ph2=group2ca3(group2ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
+    figure
+    PHca3=CDFplots(ph1,ph2,{'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},1)
+fig=figure;fig.Color=[1 1 1]
+[h1,h2]=CoolHistogram(ph1,ph2,50,varnames{contains(varnames,'PhcircLinCorr')})
 
-visualizecells(group1ca1id,'control_ca1')
-visualizecells(group2ca1id,'pae_ca1')
-visualizecells(group1ca3id,'control_ca3')
-visualizecells(group2ca3id,'pae_ca3')
+
+for i=1:length(varnames)
+    fig=figure('Name',['ca3 ',varnames{i}],'NumberTitle','off');
+    AllStatsca3=CDFplots(group1ca3(:,i),group2ca3(:,i),{'Sacc','PAE'},varnames{i},2);
+    toPPT(fig,'exportMode','matlab');
+    toPPT('setTitle',AllStatsca3);
+    close all
+end
+
+visualize_cells(uniqueRowsCA(group1ca1id),...
+    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca1');
+visualize_cells(uniqueRowsCA(group2ca1id),...
+    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca1');
+visualize_cells(uniqueRowsCA(group1ca3id),...
+    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca3');
+visualize_cells(uniqueRowsCA(group2ca3id),...
+    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca3');
+
+% visualizecells(group1ca1id,'control_ca1')
+% visualizecells(group2ca1id,'pae_ca1')
+% visualizecells(group1ca3id,'control_ca3')
+% visualizecells(group2ca3id,'pae_ca3')
 
 
 popvector(group1ca1id,group1ca1(:,end),'controlca1');

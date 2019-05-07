@@ -232,19 +232,22 @@ for sess=1:3
 %     if ~isempty(LG_group2) && ~isempty(LG_group1)
         
 %         h = vartest2(LG_group1,LG_group2);
-        
+        figure;
         LGModulationIndex_ca1=CDFplots(group1ca1(group1ca1(:,5)==1,3),...
             group2ca1(group2ca1(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA1'},2);
         title(extractBetween(LGModulationIndex_ca1,',',', CI'))
-        
+                figure;
+
         LGModulationIndex_ca3=CDFplots(group1ca3(group1ca3(:,5)==1,3),...
             group2ca3(group2ca3(:,5)==1,3),{'Sacc','PAE'},{'LG Modulation Index CA3'},2);
         title(extractBetween(LGModulationIndex_ca3,',',', CI'))
-        
+                figure;
+
         HGModulationIndex_ca1=CDFplots(group1ca1(group1ca1(:,8)==1,6),...
             group2ca1(group2ca1(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA1'},2);
         title(extractBetween(HGModulationIndex_ca1,',',', CI'))
-        
+                figure;
+
         HGModulationIndex_ca3=CDFplots(group1ca3(group1ca3(:,8)==1,6),...
             group2ca3(group2ca3(:,8)==1,6),{'Sacc','PAE'},{'HG Modulation Index CA3'},2);
         title(extractBetween(HGModulationIndex_ca3,',',', CI'))

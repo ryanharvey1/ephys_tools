@@ -125,6 +125,14 @@ AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
 AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1)
 
 
+for i=1:length(varnames)
+    fig=figure('Name',['ca3 ',varnames{i}],'NumberTitle','off');
+    AllStatsca3=CDFplots(group1ca3(:,i),group2ca3(:,i),{'Sacc','PAE'},varnames{i},2);
+    toPPT(fig,'exportMode','matlab');
+    toPPT('setTitle',AllStatsca3);
+    close all
+end
+
 visualizecells(uniqueRowsCA(group1ca1id),'control_ca1')
 visualizecells(uniqueRowsCA(group2ca1id),'pae_ca1')
 visualizecells(uniqueRowsCA(group1ca3id),'control_ca3')
