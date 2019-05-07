@@ -1,4 +1,4 @@
-lfunction [ SmoothRateMap,nBinsx,nBinsy,occ,Coherence] = bindata(occMatrix,sampleRate,spks_VEL,linear_track,track_length)
+function [ SmoothRateMap,nBinsx,nBinsy,occ,Coherence] = bindata(occMatrix,sampleRate,spks_VEL,linear_track,track_length)
 %bindata: Creates smoothed ratemaps of linear track and open field enviorments
 
 if isequal(linear_track, 'yes')
