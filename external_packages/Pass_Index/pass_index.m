@@ -209,6 +209,12 @@ end
 dens_oc = dens_oc*mean(diff(lfp_ts));
 % Calculate density map (spike counts)
 [density,~,dens_centers] = histcn([spk_pass_index mod(spk_theta_phase,2*pi)],linspace(-1,1,41),linspace(0,2*pi,101));
+
+% ryan H 2019 bug fix: density had an extra row and column of zeros
+if size(density)~=size(dens_oc)
+    density = density(1:40,1:100);
+end
+
 density = density./dens_oc;% Normalize by occupancy
 % Smooth kernel
 h = 1.5;
