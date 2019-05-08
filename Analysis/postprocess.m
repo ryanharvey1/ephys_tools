@@ -377,18 +377,14 @@ for event=1:size(data.events,2)
                     fieldbound=[0 1];
                     spks_VEL4LFP=NaN;
                 else
-                    try
-                        results=pass_index(data_video_nospk(:,1),data_video_nospk(:,2:3),...
-                            data_video_spk(data_video_spk(:,6)==1,1),...
-                            [data.lfp.ts(data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
-                            [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
-                            'plots',0,'method','place','binside',binside);
-                        occ4Ph=[results.ts,results.pass_index,zeros(length(results.ts),1)];
-                        fieldbound=[0 1];
-                        spks_VEL4LFP=data_video_spk(data_video_spk(:,6)==1,1);
-                    catch
-                        [spks_VEL4LFP,occ4Ph,fieldbound]=CylindarForPhasePrec(data_video_spk,ratemap,bound);
-                    end
+                    results=pass_index(data_video_nospk(:,1),data_video_nospk(:,2:3),...
+                        data_video_spk(data_video_spk(:,6)==1,1),...
+                        [data.lfp.ts(data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
+                        [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
+                        'plots',1,'method','place','binside',round(binside));
+                    occ4Ph=[results.ts,results.pass_index,zeros(length(results.ts),1)];
+                    fieldbound=[0 1];
+                    spks_VEL4LFP=data_video_spk(data_video_spk(:,6)==1,1);
                 end
                 
                 % calculate egocentric and border modulation based on (Peyrache, Schieferstein, Buzsaki, 2017)
