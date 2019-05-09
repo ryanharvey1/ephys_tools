@@ -44,7 +44,7 @@ end
 nsessions=sum(nsessions);ns=1;
 
 close all
-h = waitbar(0,'Initializing waitbar...');
+% h = waitbar(0,'Initializing waitbar...');
 
 % CYCLE THROUGH ALL DATA
 for iratID=1:length(ratID)
@@ -66,7 +66,7 @@ for iratID=1:length(ratID)
                     postprocess(path,76.5,'no',0); % CALL POSTPROCESS FUNCTION
                 end
             end
-            waitbar(ns/nsessions,h,sprintf('%d%% done...',round((ns/nsessions)*100)))
+%             waitbar(ns/nsessions,h,sprintf('%d%% done...',round((ns/nsessions)*100)))
             ns=ns+1;
         end
     end
