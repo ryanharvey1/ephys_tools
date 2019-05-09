@@ -276,6 +276,8 @@ resampled = sample_along(:,3);
 
 Fs = mean(diff(cc)).^-1;
 Wn = band/(Fs/2);
+Wn(Wn>=1) = 1-1*10^-5;
+Wn(Wn<0) = 0;
 [b,a] = butter(3,Wn);
 filtered = filtfilt(b,a,resampled);
 
