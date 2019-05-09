@@ -1,25 +1,19 @@
-function [data]=downsampleLFP(eegfile,data)
-warning('off', 'MATLAB:dispatcher:nameConflict')
-
-com=which('downsampleLFP');
-com=strsplit(com,filesep);
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-addpath(genpath([basedir,filesep, 'buzcode', filesep, 'externalPackages', filesep, 'FMAToolbox']));
+function [data]=downsampleLFP(lfpfile,data)
 
 % set up max TT number. This will make associating spike time stamps
 %   to the matching CSCs easier
-TTnum=max(str2double(extractBetween(eegfile,'CSC','.ncs')));
+TTnum=max(str2double(extractBetween(lfpfile,'CSC','.ncs')));
 
 fprintf('channel...');
-for ii=1:length(eegfile)
+for ii=1:length(lfpfile)
     
     fprintf(' %d ', ii);
     
     % extract CSC data with mex
     if ismac==1
-        [Timestamps,Samples]= Nlx2MatCSC_v3(eegfile{ii}, [1 0 0 0 1], 0, 1);
+        [Timestamps,Samples]= Nlx2MatCSC_v3(lfpfile{ii}, [1 0 0 0 1], 0, 1);
     else
-        [Timestamps,Samples]= Nlx2MatCSC(eegfile{ii}, [1 0 0 0 1], 0, 1);
+        [Timestamps,Samples]= Nlx2MatCSC(lfpfile{ii}, [1 0 0 0 1], 0, 1);
     end
     
     % reshape Samples variable into a vector
@@ -71,7 +65,7 @@ for ii=1:length(eegfile)
             EEGreshaped(length(EEGtsUpSampled)+1:end)=[];
         end
     end
-    [~, filename] = fileparts(eegfile{ii});
+    [~, filename] = fileparts(lfpfile{ii});
     trodeID = str2double(extractAfter(filename,'CSC'));
     
     % interpolate data points
@@ -87,7 +81,7 @@ for ii=1:length(eegfile)
     theta_phase(trodeID,:)=phase(:,2)';
     theta_amp(trodeID,:)=amplitude(:,2)';
     
-    clearvars -except sampleout eegfile i EEG_DownSampledTimestamps EEGtsUpSampled...
+    clearvars -except sampleout lfpfile i EEG_DownSampledTimestamps EEGtsUpSampled...
         EEG_DownSampledData Fs EEGthetaData sec theta_phase theta_amp ts_sec data
 end
 fprintf('lfp loaded\n');
@@ -97,4 +91,6 @@ data.lfp.signal=EEG_DownSampledData;
 data.lfp.theta=EEGthetaData;
 data.lfp.theta_phase=theta_phase;
 data.lfp.theta_amp=theta_amp;
+data.lfp.lfpsamplerate=1000;
+
 end
