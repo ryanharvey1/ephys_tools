@@ -126,7 +126,7 @@ tempangle(tempangle<0)=tempangle(tempangle<0)+360;
 
 data_video=[ts',xtemp,ytemp,tempangle]; clear xtemp ytemp ts
 
-if isequal(linear_track,'yes')
+if contains(data.mazetypes,'track','IgnoreCase',true)
     for nmaze=find(contains(data.mazetypes,'track','IgnoreCase',true))
         templinear=data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),:);
         data.linear_track{nmaze}.nonlinearFrames=templinear;
@@ -152,7 +152,7 @@ elseif contains(linear_track,'no')
 end
 
 % GET VELOCITY
-[vel_cmPerSec,~,pixelDist]=InstaVel([data_video(:,2),data_video(:,3)],linear_track,mazesize,data.samplerate);
+[vel_cmPerSec,~,pixelDist]=InstaVel([data_video(:,2),data_video(:,3)],mazesize,data.samplerate);
 
 % vel_abs=smooth(vel_abs,24);
 data_video=[data_video,[vel_cmPerSec(1);vel_cmPerSec]];
@@ -166,13 +166,11 @@ clear StartofRec EndofRec
 % EXTRACT LFP FROM ALL TETRODES FOR LATER USE
 disp('Have patience...Loading LFP')
 channels=table2cell(struct2table(dir([path,filesep,'*.ncs'])));
-eegfile=[strcat(channels(:,2),filesep,channels(:,1))];
-[data]=downsampleLFP(eegfile,data);
-clear tetrodes eegfile
-data.lfp.lfpsamplerate=1000;
+lfpfile=[strcat(channels(:,2),filesep,channels(:,1))];
+[data]=downsampleLFP(lfpfile,data);
+clear tetrodes lfpfile
 
 % FIX TIMESTAMPS (set a zero point and convert microseconds to seconds)
-
 data=FixTime(data);
 
 % START OF EVENT LOOP 1:nSESSIONS
@@ -381,7 +379,7 @@ for event=1:size(data.events,2)
                         data_video_spk(data_video_spk(:,6)==1,1),...
                         [data.lfp.ts(data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
                         [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
-                        'plots',1,'method','place','binside',round(binside));
+                        'plots',0,'method','place','binside',round(binside),'sample_along','arc_length');
                     occ4Ph=[results.ts,results.pass_index,zeros(length(results.ts),1)];
                     fieldbound=[0 1];
                     spks_VEL4LFP=data_video_spk(data_video_spk(:,6)==1,1);
@@ -610,4 +608,3 @@ if figures==1
     postprocessFigures.main(data);
 end
 disp 'DONE'
-
