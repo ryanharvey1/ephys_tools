@@ -138,6 +138,8 @@ map(occupancy==0) = NaN;
 % % SMOOTHING % %
 
 % try % *** I never got this section to work so I used inpaint_nans instead - RH 10/9/18
+% Actually, inpaints_nan just made things worse... So lets just leave this
+% chunk out. I saw someone else leave this out in their github fork. 5/9/2019
 
 %     % Patch inner occupancy holes with the mean rate of the surrounding pixels
 %     props = regionprops(bwlabeln(isnan(map)),'PixelIdxList','PixelList');
@@ -168,7 +170,7 @@ map(occupancy==0) = NaN;
 %         map(props(i).PixelIdxList) = nanmean(map(pixelselect));
 %     end
 % catch
-    map=inpaint_nans(map);
+%     map=inpaint_nans(map);
     
 % end
 
