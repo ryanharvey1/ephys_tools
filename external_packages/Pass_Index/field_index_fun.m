@@ -128,6 +128,11 @@ end
 
 % Convert locations to indicies
 pos_loc = round(pos_loc);
+
+% Addition to remove locations outside dim of map - Ryan H 2019-may-11
+pos(size(map,1)<pos_loc(:,1) | size(map,2)<pos_loc(:,2),:)=[];
+pos_loc(size(map,1)<pos_loc(:,1) | size(map,2)<pos_loc(:,2),:)=[];
+
 temp = NaN(size(pos,1),1);
 i = ~any(pos_loc==0,2);
 pos_loc = cellfun(@(x)pos_loc(i,x),num2cell(1:size(pos,2)),'UniformOutput',false);
