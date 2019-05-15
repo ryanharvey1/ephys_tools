@@ -19,14 +19,10 @@ function [ AllStats ] = CDFplots(Group1,Group2,GroupNames,VarNames,plots)
 %       -Group1 & Group2 can have different lengths
 %
 % Ryan E Harvey 3/29/2017
+% Ryan E Harvey 5/13/2019 updated 
 
-com=which('CDFplots');
-com=strsplit(com,filesep);
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-addpath([basedir,filesep,filesep,'MatlabStatsUofG'],...
-    [basedir,filesep,'RC_notBoxPlot'],...
-    [basedir,filesep,'CircStat2012a'],...
-    [basedir,filesep,'BClarkToolbox',filesep,'Analysis']);
+Group1(isinf(Group1))=NaN;
+Group2(isinf(Group2))=NaN;
 
 % MAKE MATRIX = LENGTH WITH NANS
 if size(Group1,1)~=size(Group2,1)
@@ -45,31 +41,18 @@ end
 
 % Stats Decision Tree * WORKING *
 for vars=1:size(VarNames,2)
-    % Remove NaNs
-    con=Group1(:,vars); 
-    con(isnan(con))=[]; 
-    con(isnan(con) | isinf(con))=[];
-    PAE=Group2(:,vars); 
-    PAE(isnan(PAE) | isinf(PAE))=[];
     % Kolmogorov-Smirnov test to test if the sample was derived from a standard normal distribution
-    Kolmogorov=sum([kstest(zscore(con)),kstest(zscore(PAE))]);
+    Kolmogorov=sum([kstest(Group1(:,vars)),kstest(Group2(:,vars))]);
 
-    if Kolmogorov==2
+    if Kolmogorov>=1
         % Wilcoxon rank sum test
         [p,hypothesis1(vars),statz] = ranksum(Group1(:,vars),Group2(:,vars));
         % median
         median1=nanmedian(Group1(:,vars)); median2=nanmedian(Group2(:,vars));
-        % POWER **** (Power for a non parametric test is more tricky than this--- Need to re-work)
-        %         statsCON = bootstrp(length(con),@(x)[median(x),std(x)],con);
-        %         statsPAE = bootstrp(length(PAE),@(x)median(x),PAE);
-        %         try
-        %             Power=sampsizepwr('z',[mean(statsCON(:,1)),std(statsCON(:,2))],mean(statsPAE),[],max([length(con),length(PAE)]),'Ratio',min([length(con),length(PAE)]));
-        %         catch
-        %             Power=NaN;
-        %         end
-    elseif Kolmogorov<2
+
+    elseif Kolmogorov==0
         % Check for equal variance
-        variances=vartest2(con,PAE);
+        variances=vartest2(Group1(:,vars),Group2(:,vars));
         if variances==1
             % Two-Sample t test for unequal variance
             [hypothesis1(vars),p,ci,statz]=ttest2(Group1(:,vars),Group2(:,vars),'Vartype','unequal');
@@ -79,10 +62,6 @@ for vars=1:size(VarNames,2)
             [hypothesis1(vars),p,ci,statz]=ttest2(Group1(:,vars),Group2(:,vars));
             mean1=nanmean(Group1(:,vars)); mean2=nanmean(Group2(:,vars));
         end
-        % POWER
-        % Bootstrap two sample distributions with equal means and std for first group and equal means for second group
-        %         statsCON = bootstrp(length(con),@(x)[mean(x) std(x)],con);
-        %         Power=sampsizepwr('t2',[mean(statsCON(:,1)),mean(statsCON(:,2))],mean(bootstrp(length(PAE),@(x)mean(x),PAE)),[],max([length(con),length(PAE)]),'Ratio',min([length(con),length(PAE)]));
     end
     % Cohen's D
     cod = cohend(Group1(:,vars),Group2(:,vars));
@@ -95,11 +74,12 @@ for vars=1:size(VarNames,2)
             ', d=',num2str(round(cod,2)),', ',GroupNames(1),' Mean=',num2str(round(mean1,2)),', ',GroupNames(2),' Mean=',num2str(round(mean2,2)));
     end
 end
+
+% Plotting 
 clear vars
 if length(VarNames)>4; font=10;else; font=20;end
 if plots~=3
     var4plot=1;
-%     fig1=figure;fig1.Color=[1 1 1];
     for vars=1:size(VarNames,2)
         if hypothesis1(vars)==1 && plots==1 || plots==2
             if plots==1;SQR=round(sqrt(sum(hypothesis1))); elseif plots==2; SQR=round(sqrt(size(VarNames,2))); end
@@ -108,8 +88,6 @@ if plots~=3
             else
                 subplot(SQR,SQR,var4plot)
             end
-            fig1.Color=[1 1 1];
-%             h = notBoxPlot([Group1(:,vars),Group2(:,vars)],[],'jitter',0.6,'style','sdline','markMedian',true);
             
             [f1,x1] = ecdf(Group1(:,vars));
             [f2,x2] = ecdf(Group2(:,vars));
