@@ -98,6 +98,22 @@ disp([num2str(size(uCA,1)),' control cortex cells'])
 [uCA,~,~] = uniqueRowsCA(group2cortexid);
 disp([num2str(size(uCA,1)),' pae cortex cells'])
 
+%% cluster dentate from CA3
+% x=group1ca3(:,:,1);
+% x(any(isnan(x) | isinf(x),2),:)=[];
+% x=zscore(x);
+% [coeff,score,latent,tsquared,explained,mu]=pca(x);
+% 
+% figure
+% scatter3(score(:,1),score(:,2),score(:,3))
+% axis equal
+% xlabel('1st Principal Component')
+% ylabel('2nd Principal Component')
+% zlabel('3rd Principal Component')
+% 
+% scatter(group1ca3(:,contains(varnames,'spikewidth'),1),group1ca3(:,contains(varnames,'burstIdx'),1),'k','Filled')
+% 
+
 
 %% PLACE CELL FILTER
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
@@ -124,6 +140,9 @@ uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
 % visualizecells(uniqueRowsCA(group2ca1id),'paeca1')
 % visualizecells(uniqueRowsCA(group1ca3id),'sacca3')
 % visualizecells(uniqueRowsCA(group2ca3id),'paeca3')
+
+fig=figure;fig.Color=[1 1 1];
+AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames,'plots',1,'plottype','beeswarm')
 
 % AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
     AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1);
