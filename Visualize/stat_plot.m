@@ -110,7 +110,7 @@ if plots~=3
                 ylabel('Cumulative Frequency')
                 xlabel(VarNames(vars))
             elseif strcmp(plottype,'beeswarm')
-                plotspread_wrapper(Group1(:,vars),Group2(:,vars))
+                plotspread_wrapper(Group1(:,vars),Group2(:,vars),GroupNames)
                 title(VarNames(vars))
             end
             ax=gca;

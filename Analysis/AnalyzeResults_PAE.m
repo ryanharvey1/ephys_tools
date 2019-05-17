@@ -144,20 +144,20 @@ uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
 fig=figure;fig.Color=[1 1 1];
 AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames,'plots',1,'plottype','beeswarm')
 
-% AllStatsca1=CDFplots(group1ca1,group2ca1,{'Sacc','PAE'},varnames,1)
-    AllStatsca3=CDFplots(group1ca3,group2ca3,{'Sacc','PAE'},varnames,1);
+% AllStatsca1=stat_plot(group1ca1,group2ca1,{'Sacc','PAE'},varnames)
+    AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames);
     
     ph1=group1ca3(group1ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
     ph2=group2ca3(group2ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
     figure
-    PHca3=CDFplots(ph1,ph2,{'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},1)
+    PHca3=stat_plot(ph1,ph2,{'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},1)
 fig=figure;fig.Color=[1 1 1]
 [h1,h2]=CoolHistogram(ph1,ph2,50,varnames{contains(varnames,'PhcircLinCorr')})
 
 
 for i=1:length(varnames)
     fig=figure('Name',['ca3 ',varnames{i}],'NumberTitle','off');
-    AllStatsca3=CDFplots(group1ca3(:,i),group2ca3(:,i),{'Sacc','PAE'},varnames{i},2);
+    AllStatsca3=stat_plot(group1ca3(:,i),group2ca3(:,i),{'Sacc','PAE'},varnames{i},'plots',2);
     toPPT(fig,'exportMode','matlab');
     toPPT('setTitle',AllStatsca3);
     close all
@@ -185,7 +185,7 @@ popvector(group2ca1id,group2ca1(:,end),'paeca1');
 popvector(group2ca3id,group2ca3(:,end),'paeca3');
 
 
-% AllStatsca1=CDFplots(group1ca1(:,contains(varnames,'thetaindex')),group2ca1(:,contains(varnames,'thetaindex')),{'Sacc','PAE'},'thetaindex',1)
+% AllStatsca1=stat_plot(group1ca1(:,contains(varnames,'thetaindex')),group2ca1(:,contains(varnames,'thetaindex')),{'Sacc','PAE'},'thetaindex',1)
 
 
 
@@ -230,21 +230,21 @@ popvector(group2ca3id,group2ca3(:,end),'paeca3');
 % p=[];
 % for i=1:1000
 %     try
-%     AllStatsca3=CDFplots(group1ca3(randi([1,size(group1ca3,1)],13,1),:),group2ca3,{'Sacc','PAE'},varnames,3);
+%     AllStatsca3=stat_plot(group1ca3(randi([1,size(group1ca3,1)],13,1),:),group2ca3,{'Sacc','PAE'},varnames,3);
 %     p=[ p,str2double(extractBetween(AllStatsca3,'p=',','))];
 %     catch
 %     end
 % end
 % (sum(p<.05,2)/size(p,2))>.95
 
-AllStatsca1=CDFplots(group1ca1(:,1),group2ca1(:,1),{'Sacc','PAE'},varnames{1},2)
-AllStatsca1=CDFplots(group1ca1(:,2),group2ca1(:,2),{'Sacc','PAE'},varnames{2},2)
-AllStatsca1=CDFplots(group1ca1(:,4),group2ca1(:,4),{'Sacc','PAE'},varnames{4},2)
-AllStatsca1=CDFplots(group1ca1(:,5),group2ca1(:,5),{'Sacc','PAE'},varnames{5},2)
+AllStatsca1=stat_plot(group1ca1(:,1),group2ca1(:,1),{'Sacc','PAE'},varnames{1},2)
+AllStatsca1=stat_plot(group1ca1(:,2),group2ca1(:,2),{'Sacc','PAE'},varnames{2},2)
+AllStatsca1=stat_plot(group1ca1(:,4),group2ca1(:,4),{'Sacc','PAE'},varnames{4},2)
+AllStatsca1=stat_plot(group1ca1(:,5),group2ca1(:,5),{'Sacc','PAE'},varnames{5},2)
 
-AllStatsca1=CDFplots(group1ca1(:,19),group2ca1(:,19),{'Sacc','PAE'},varnames{19},2)
+AllStatsca1=stat_plot(group1ca1(:,19),group2ca1(:,19),{'Sacc','PAE'},varnames{19},2)
 
-AllStatsca1=CDFplots(group1ca1(group1ca1(:,20)<.05,19),group2ca1(group2ca1(:,20)<.05,19),{'Sacc','PAE'},varnames{19},2)
+AllStatsca1=stat_plot(group1ca1(group1ca1(:,20)<.05,19),group2ca1(group2ca1(:,20)<.05,19),{'Sacc','PAE'},varnames{19},2)
 
 fig=figure;fig.Color=[1 1 1]
 [h1,h2]=CoolHistogram(group1ca1(group1ca1(:,20)<.05,19),group2ca1(group2ca1(:,20)<.05,19),50,varnames{19})
@@ -272,10 +272,10 @@ RL_anova(group1ca1_stab.com,group2ca1_stab.com,'ca1 com')
 RL_anova(group1ca3_stab.com,group2ca3_stab.com,'ca3 com')
 
 
-CDFplots(nanstd(group1ca1_stab.com,0,2)/sqrt(size(group1ca1_stab.com,1)),...
+stat_plot(nanstd(group1ca1_stab.com,0,2)/sqrt(size(group1ca1_stab.com,1)),...
     nanstd(group2ca1_stab.com,0,2)/sqrt(size(group2ca1_stab.com,1)),{'Sacc','PAE'},{'std_com'},2)
 
-CDFplots(nanstd(group1ca3_stab.com,0,2)/sqrt(size(group1ca3_stab.com,1)),...
+stat_plot(nanstd(group1ca3_stab.com,0,2)/sqrt(size(group1ca3_stab.com,1)),...
     nanstd(group2ca3_stab.com,0,2)/sqrt(size(group2ca3_stab.com,1)),{'Sacc','PAE'},{'std_com'},2)
 %%
 % function [pontential]=COM(groupid)

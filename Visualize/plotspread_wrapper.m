@@ -1,10 +1,10 @@
-function plotspread_wrapper(x1,x2)
+function plotspread_wrapper(x1,x2,groupnames)
 % plotspread_wrapper: wrapper for plotSpread
 % Takes in data from 2 groups and creates bee swarm plots
 %
 %   Input: 
 %           x1,x2: two vectors of data to plot
-%
+%           groupnames: cell array of group names
 % Ryan Harvey 2019
 
 data = {x1, x2};
@@ -15,7 +15,7 @@ if exist('plotSpread','file')~=2
 end
 
 plotSpread(data, ...
-    'xNames', {'control','lesion'}, ...
+    'xNames', groupnames, ...
     'distributionMarkers', {'.', '.'},...
     'distributionColors',{'k','r'});
 
