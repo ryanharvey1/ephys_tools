@@ -72,6 +72,6 @@ for iratID=1:length(ratID)
     %     perc=(iratID/length(ratID))*100;
 %     waitbar(perc/100,h,sprintf('%d%% done...',round(perc)))
 end
-close(h)
+% close(h)
 toc
 end
