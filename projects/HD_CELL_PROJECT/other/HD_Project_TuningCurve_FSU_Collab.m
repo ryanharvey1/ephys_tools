@@ -6,8 +6,8 @@
 %
 % cd to data and get file names
 clear;clc;close all
-addpath(genpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/CircStat2012a'))
-addpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis')
+% addpath(genpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/CircStat2012a'))
+% addpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis')
 
 % path='/Users/ryanharvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis/HD_CELL_PROJECT/PHC HD Cells';
 path='/Users/ryanharvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis/HD_CELL_PROJECT/other/PHC HD Cells';
