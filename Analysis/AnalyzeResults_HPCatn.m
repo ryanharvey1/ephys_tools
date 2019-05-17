@@ -4,6 +4,18 @@ data=compileResults('D:\Projects\HPCatn\ProcessedData');
 control={'HPCatn02','HPCatn05'};
 lesion={'HPCatn03','HPCatn04'};
 
+% load inactivation data
+load('D:\Projects\HPCatn\AnimalMetadata\HPCatn06_metadata.mat')
+sessions=fieldnames(AnimalMetadata.RecordingLogs);
+for i=1:length(sessions)
+    mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
+end
+idx=contains(data.HPCatn06.id(:,1),sessions(contains(mazes,'track')));
+tempdata=[data.HPCatn06.measures(idx,:,1);data.HPCatn06.measures(idx,:,2)];
+tempdata=[tempdata,[ones(size(data.HPCatn06.measures(idx,:,1),1),1);ones(size(data.HPCatn06.measures(idx,:,1),1),1)+1]];
+tempdata(:,:,2)=NaN(size(tempdata));
+tempid=[data.HPCatn06.id(idx,:);data.HPCatn06.id(idx,:)];
+
 
 %% COMPILE GROUPS
 data.control.measures=[];
@@ -27,9 +39,16 @@ group1=[[data.control.measures(:,:,1),ones(size(data.control.measures(:,:,1),1),
 group2=[[data.lesion.measures(:,:,1),ones(size(data.lesion.measures(:,:,1),1),1)];...
     [data.lesion.measures(:,:,2),ones(size(data.lesion.measures(:,:,1),1),1)+1]];
 
+group1(:,:,2)=[[data.control.measures(:,:,2);data.control.measures(:,:,2)],ones(size(data.control.measures(:,:,1),1)*2,1)+1];
+group2(:,:,2)=[[data.lesion.measures(:,:,2);data.lesion.measures(:,:,2)],ones(size(data.lesion.measures(:,:,1),1)*2,1)+1];
+
 group1id=[data.control.id;data.control.id];
 group2id=[data.lesion.id;data.lesion.id];
 
+%% add inactivation control data
+group1=[group1;tempdata];
+group1id=[group1id;tempid];
+control{3}='HPCatn06';
 
 %% DELETE MEASURES FOR OPEN ARENA
 varnames=data.varnames;
@@ -39,8 +58,8 @@ colstodelete=contains(varnames,["Cluster Grade","borderScore","E",...
     "DisplacementCorr","bordermod","egomod","Tightness","Incompleteness",...
     "StationInTime","TempMatch","BDistanceClust","BDistanceSpike"]);
 varnames(colstodelete)=[];
-group1(:,colstodelete)=[];
-group2(:,colstodelete)=[];
+group1(:,colstodelete,:)=[];
+group2(:,colstodelete,:)=[];
 
 
 %% SPLIT BY REGION
@@ -74,10 +93,10 @@ cortex=sessionid(cortexidx);
 
 % split groups between regions
 % ca1
-group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:);
-group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:);
-group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:);
+group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
+group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
+group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
+group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 cells'])
@@ -85,10 +104,10 @@ disp([num2str(size(uCA,1)),' control ca1 cells'])
 disp([num2str(size(uCA,1)),' pae ca1 cells'])
 
 % ca3/dg
-group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:);
-group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:);
-group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:);
+group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
+group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
+group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
+group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
 
 [uCA,~,~] = uniqueRowsCA(group1ca3id);
 disp([num2str(size(uCA,1)),' control ca3 cells'])
@@ -96,16 +115,15 @@ disp([num2str(size(uCA,1)),' control ca3 cells'])
 disp([num2str(size(uCA,1)),' pae ca3 cells'])
 
 % cortex
-group1cortex = group1(ismember(erase(group1id(:,1),'.mat'), cortex),:);
-group2cortex = group2(ismember(erase(group2id(:,1),'.mat'), cortex),:);
-group1cortexid = group1id(ismember(erase(group1id(:,1),'.mat'), cortex),:);
-group2cortexid = group2id(ismember(erase(group2id(:,1),'.mat'), cortex),:);
+group1cortex = group1(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
+group2cortex = group2(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
+group1cortexid = group1id(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
+group2cortexid = group2id(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
 
 [uCA,~,~] = uniqueRowsCA(group1cortexid);
 disp([num2str(size(uCA,1)),' control cortex cells'])
 [uCA,~,~] = uniqueRowsCA(group2cortexid);
 disp([num2str(size(uCA,1)),' pae cortex cells'])
-
 
 
 %% PLACE CELL FILTER
@@ -148,11 +166,53 @@ visualizecells(uniqueRowsCA(group1ca1id),'Control')
 visualizecells(uniqueRowsCA(group2ca1id),'Lesion')
 
 
+visualize_cells(group1ca3id,'D:\Projects\HPCatn\figures\13_05_2019\control')
+visualize_cells(group2ca3id,'D:\Projects\HPCatn\figures\13_05_2019\lesion')
 
 
 
-% AllStats=CDFplots(group1,group2,{'Control','ATN Lesion'},varnames,1)
+figure
+AllStats=CDFplots(group1ca1(:,:,1),group2ca1(:,:,1),{'Control','ATN Lesion'},varnames,1)
+AllStats=CDFplots(group1ca3(:,:,1),group2ca3(:,:,1),{'Control','ATN Lesion'},varnames,1)
 
+
+
+%%
+figure
+plot(sort(group1ca3(:,55,1)),linspace(0,1,length(group1ca3(:,55,1))),'k')
+hold on
+plot(sort(group1ca3(:,55,2)),linspace(0,1,length(group1ca3(:,55,2))),'-.k')
+plot(sort(group2ca3(:,55,1)),linspace(0,1,length(group2ca3(:,55,1))),'r')
+plot(sort(group2ca3(:,55,2)),linspace(0,1,length(group2ca3(:,55,2))),'-.r')
+xlabel(varnames{55})
+box off
+grid on
+
+%% plot individual rats
+clear colors
+for i=1:length(control)
+colors(:,i)=contains(group1ca1id(:,1),control{i})*i;
+end
+colors=sum(colors,2);
+
+figure
+plot(sort(group1ca1(colors==1,1,1)),linspace(0,1,length(group1ca1(colors==1,1,1))))
+hold on
+plot(sort(group1ca1(colors==2,1,1)),linspace(0,1,length(group1ca1(colors==2,1,1))))
+plot(sort(group1ca1(colors==3,1,1)),linspace(0,1,length(group1ca1(colors==3,1,1))))
+
+clear colors
+for i=1:length(lesion)
+colors(:,i)=contains(group2ca1id(:,1),lesion{i})*i;
+end
+colors=sum(colors,2);
+
+plot(sort(group2ca1(colors==1,1,1)),linspace(0,1,length(group2ca1(colors==1,1,1))),'.-r')
+plot(sort(group2ca1(colors==2,1,1)),linspace(0,1,length(group2ca1(colors==2,1,1))),'r')
+xlabel('info content')
+legend(control{1},control{2},control{3},lesion{1},lesion{2})
+
+%% plot all measures to ppt
 % for i=1:length(varnames)
 %     AllStats=CDFplots(group1(:,i),group2(:,i),{'Control','ATN Lesion'},varnames(i),2);
 %     toPPT(figure(1),'exportMode','matlab');
@@ -200,17 +260,17 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 % 4) at least 10 trials with consistent behavior. 
 % 5) at least 100 spikes
 
-groupid=groupid(group(:,contains(varnames,'PeakRate'))>=2 &...
+groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=180 &...
     group(:,contains(varnames,'nlaps'))>=10 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 
-group=group(group(:,contains(varnames,'PeakRate'))>=2 &...
+group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=180 &...
     group(:,contains(varnames,'nlaps'))>=10 &...
-    group(:,contains(varnames,'nSpikes'))>=100,:);
+    group(:,contains(varnames,'nSpikes'))>=100,:,:);
 end
 
 function visualizecells(groupid,group)
