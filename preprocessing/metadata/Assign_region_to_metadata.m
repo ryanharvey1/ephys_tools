@@ -1,7 +1,7 @@
 %% Assign_region_to_metadata
 clear
 % load metadata of choice
-load('D:\Projects\PAE_PlaceCell\AnimalMetadata\LEM3124_metadata.mat')
+load('D:\Projects\PAE_PlaceCell\AnimalMetadata\RH11_metadata.mat')
 
 %% First, fill in recording logs based on processed data files
 
