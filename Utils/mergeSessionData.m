@@ -1,17 +1,59 @@
-function mergeSessionData(sessions_to_combine)
+function mergeSessionData(sessions_to_combine,varargin)
 % mergeSessionData: merges two neuralynx sessions together
 % 
 % Input: cell array of session ids
 %        each row should contain a different session pair
 %
+% optional: 
+%       'view_xy': 1 to view xy coordinates from both sessions before merging. (default 0)
+%  
 % Example:
 % sessions_to_combine={'D:\Projects\PAE_PlaceCell\data\RH11\2016-05-16_09-46-39',...
 %     'D:\Projects\PAE_PlaceCell\data\RH11\2016-05-16_18-45-45'};
 % mergeSessionData(sessions_to_combine)
 %
 % Ryan Harvey 2019
+warning off
+
+p = inputParser;
+p.addParameter('view_xy',0);
+p.parse(varargin{:});
+
+view_xy = p.Results.view_xy;
 
 for i=1:size(sessions_to_combine,1)
+    
+    disp([sessions_to_combine{i,1},'  &&  ',sessions_to_combine{i,2}])
+    
+    % compare xy from each session pair 
+    if view_xy
+        cd(sessions_to_combine{i,1})
+        fn=dir('*.nvt');
+        fn={fn.name}';
+                
+        [Timestamps,X,Y,Angles,Targets,Points,Header]=Nlx2MatVT(fullfile(sessions_to_combine{i,1},fn{:}),...
+            [1 1 1 1 1 1], 1, 1, [] );
+        
+        [Timestamps2,X2,Y2,Angles2,Targets2,Points2,Header2]=Nlx2MatVT(fullfile(sessions_to_combine{i,2},fn{:}),...
+            [1 1 1 1 1 1], 1, 1, [] );
+        fig=figure;
+        subplot(1,2,1)
+        plot(X,Y,'.k')
+        title(sessions_to_combine{i,1})
+        grid on
+
+        subplot(1,2,2)
+        plot(X2,Y2,'.k')
+        title(sessions_to_combine{i,2})
+        grid on
+        
+        str = input('Continue to merge? y or n  ','s');
+        close(fig)
+        if strcmp(str,'n')
+            continue
+        end
+    end
+    
     % make new folder
     mkdir([sessions_to_combine{i,1},'_combined'])
     
@@ -24,6 +66,24 @@ for i=1:size(sessions_to_combine,1)
         fullfile([sessions_to_combine{i,1},'_combined'],'CheetahLostADRecords.txt'));    
 
     cd(sessions_to_combine{i,1})
+    
+    % combine video files
+    fn=dir('*.nvt');
+    fn={fn.name}';
+    for ntt=1:length(fn)
+        [Timestamps,X,Y,Angles,Targets,Points,Header]=Nlx2MatVT(fullfile(sessions_to_combine{i,1},fn{ntt}),...
+            [1 1 1 1 1 1], 1, 1, [] );
+        
+        [Timestamps2,X2,Y2,Angles2,Targets2,Points2,Header2]=Nlx2MatVT(fullfile(sessions_to_combine{i,2},fn{ntt}),...
+            [1 1 1 1 1 1], 1, 1, [] );
+        
+        Mat2NlxVT(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),...
+            0, 1, [], [1 1 1 1 1 1],...
+            [Timestamps,Timestamps2+Timestamps(end)], [X,X2], [Y,Y2], [Angles,Angles2],...
+            [Targets,Targets2], [Points,Points2], Header);
+        
+        disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
+    end
     
     % combine spike files
     fn=dir('*.ntt');
@@ -68,23 +128,7 @@ for i=1:size(sessions_to_combine,1)
         disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
     end
     
-    % combine video files
-    fn=dir('*.nvt');
-    fn={fn.name}';
-    for ntt=1:length(fn)
-        [Timestamps,X,Y,Angles,Targets,Points,Header]=Nlx2MatVT(fullfile(sessions_to_combine{i,1},fn{ntt}),...
-            [1 1 1 1 1 1], 1, 1, [] );
-        
-        [Timestamps2,X2,Y2,Angles2,Targets2,Points2,Header2]=Nlx2MatVT(fullfile(sessions_to_combine{i,2},fn{ntt}),...
-            [1 1 1 1 1 1], 1, 1, [] );
-        
-        Mat2NlxVT(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),...
-            0, 1, [], [1 1 1 1 1 1],...
-            [Timestamps,Timestamps2+Timestamps(end)], [X,X2], [Y,Y2], [Angles,Angles2],...
-            [Targets,Targets2], [Points,Points2], Header);
-        
-        disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
-    end
+
     
     % combine event files
     fn=dir('*.nev');
@@ -107,4 +151,6 @@ for i=1:size(sessions_to_combine,1)
         
         disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
     end
+end
+warning on
 end
