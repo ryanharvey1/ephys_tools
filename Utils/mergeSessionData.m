@@ -36,19 +36,24 @@ for i=1:size(sessions_to_combine,1)
         
         [Timestamps2,X2,Y2,Angles2,Targets2,Points2,Header2]=Nlx2MatVT(fullfile(sessions_to_combine{i,2},fn{:}),...
             [1 1 1 1 1 1], 1, 1, [] );
+        
         fig=figure;
         subplot(1,2,1)
         plot(X,Y,'.k')
+        xlim([min([X,X2]) max([X,X2])])
+        ylim([min([Y,Y2]) max([Y,Y2])])
         title(sessions_to_combine{i,1})
         grid on
-
+        
         subplot(1,2,2)
         plot(X2,Y2,'.k')
+        xlim([min([X,X2]) max([X,X2])])
+        ylim([min([Y,Y2]) max([Y,Y2])])
         title(sessions_to_combine{i,2})
         grid on
         
         str = input('Continue to merge? y or n  ','s');
-        close(fig)
+        close all
         if strcmp(str,'n')
             continue
         end
