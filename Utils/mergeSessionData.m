@@ -82,8 +82,16 @@ for i=1:size(sessions_to_combine,1)
         [Timestamps2,X2,Y2,Angles2,Targets2,Points2,Header2]=Nlx2MatVT(fullfile(sessions_to_combine{i,2},fn{ntt}),...
             [1 1 1 1 1 1], 1, 1, [] );
         
-        ts_gap=[Timestamps(end),Timestamps2(1)]; 
-        tempts=(Timestamps2-ts_gap(2))+ts_gap(1);
+        % time gap of time between video frames
+        ts_gap=mean(diff(Timestamps));
+        
+        % range of time between sessions
+        ts_range=[Timestamps(end),Timestamps2(1)]; 
+        
+        % alter second session time stamps to fit after first session
+        tempts=((Timestamps2-ts_range(2))+ts_range(1))+ts_gap;
+        
+        % locate final time stamp
         lastts=tempts(end);
         
         Mat2NlxVT(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),...
@@ -104,10 +112,10 @@ for i=1:size(sessions_to_combine,1)
         [Timestamps2, ScNumbers2, CellNumbers2, Features2, Samples2, Header2] =...
             Nlx2MatSpike(fullfile(sessions_to_combine{i,2},fn{ntt}), [1 1 1 1 1], 1, 1, [] );
         
-        tempts=(Timestamps2-ts_gap(2));
+        tempts=(Timestamps2-ts_range(2));
         to_remove=tempts<0;
         tempts(to_remove)=[];
-        tempts=tempts+ts_gap(1);
+        tempts=tempts+ts_range(1)+ts_gap;
         
         ScNumbers2(to_remove)=[];
         CellNumbers2(to_remove)=[];
@@ -135,10 +143,10 @@ for i=1:size(sessions_to_combine,1)
         [Timestamps2, ChannelNumbers2, SampleFrequencies2, NumberOfValidSamples2,...
             Samples2, Header2] = Nlx2MatCSC(fullfile(sessions_to_combine{i,2},fn{ntt}),[1 1 1 1 1], 1, 1, [] );
         
-        tempts=(Timestamps2-ts_gap(2));
+        tempts=(Timestamps2-ts_range(2));
         to_remove=tempts<0;
         tempts(to_remove)=[];
-        tempts=tempts+ts_gap(1);
+        tempts=tempts+ts_range(1)+ts_gap;
         
         ChannelNumbers2(to_remove)=[];
         SampleFrequencies2(to_remove)=[];
