@@ -71,6 +71,8 @@ group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
 group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
 group1ca3 = group1(strcmp(group1id(:,4),'ca3'),:);
 group1ca3id = group1id(strcmp(group1id(:,4),'ca3'),:);
+group1dg = group1(strcmp(group1id(:,4),'dg'),:);
+group1dgid = group1id(strcmp(group1id(:,4),'dg'),:);
 group1cortex = group1(strcmp(group1id(:,4),'cortex'),:);
 group1cortexid = group1id(strcmp(group1id(:,4),'cortex'),:);
 
@@ -78,6 +80,8 @@ group2ca1 = group2(strcmp(group2id(:,4),'ca1'),:);
 group2ca1id = group2id(strcmp(group2id(:,4),'ca1'),:);
 group2ca3 = group2(strcmp(group2id(:,4),'ca3'),:);
 group2ca3id = group2id(strcmp(group2id(:,4),'ca3'),:);
+group2dg = group2(strcmp(group2id(:,4),'dg'),:);
+group2dgid = group2id(strcmp(group2id(:,4),'dg'),:);
 group2cortex = group2(strcmp(group2id(:,4),'cortex'),:);
 group2cortexid = group2id(strcmp(group2id(:,4),'cortex'),:);
 
@@ -93,6 +97,10 @@ disp([num2str(size(uCA,1)),' control ca3 cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 cells'])
 
+[uCA,~,~] = uniqueRowsCA(group1dgid);
+disp([num2str(size(uCA,1)),' control dg cells'])
+[uCA,~,~] = uniqueRowsCA(group2dgid);
+disp([num2str(size(uCA,1)),' pae dg cells'])
 
 [uCA,~,~] = uniqueRowsCA(group1cortexid);
 disp([num2str(size(uCA,1)),' control cortex cells'])
@@ -104,16 +112,16 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 % x(any(isnan(x) | isinf(x),2),:)=[];
 % x=zscore(x);
 % [coeff,score,latent,tsquared,explained,mu]=pca(x);
-% 
+%
 % figure
 % scatter3(score(:,1),score(:,2),score(:,3))
 % axis equal
 % xlabel('1st Principal Component')
 % ylabel('2nd Principal Component')
 % zlabel('3rd Principal Component')
-% 
+%
 % scatter(group1ca3(:,contains(varnames,'spikewidth'),1),group1ca3(:,contains(varnames,'burstIdx'),1),'k','Filled')
-% 
+%
 
 
 %% PLACE CELL FILTER
@@ -121,7 +129,8 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
 [group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
 [group2ca3,group2ca3id]=placefieldfilter(group2ca3,group2ca3id,varnames);
-
+[group1dg,group1dgid]=placefieldfilter(group1dg,group1dgid,varnames);
+[group2dg,group2dgid]=placefieldfilter(group2dg,group2dgid,varnames);
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 place cells'])
@@ -133,7 +142,60 @@ disp([num2str(size(uCA,1)),' control ca3 place cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 
-uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
+[uCA,~,~] = uniqueRowsCA(group1dgid);
+disp([num2str(size(uCA,1)),' control dg place cells'])
+[uCA,~,~] = uniqueRowsCA(group2dgid);
+disp([num2str(size(uCA,1)),' pae dg place cells'])
+
+disp('...')
+disp('control rats with ca1')
+C=unique(extractBefore(unique(group1ca1id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group1ca1id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('pae rats with ca1')
+C=unique(extractBefore(unique(group2ca1id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group2ca1id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('control rats with ca3')
+C=unique(extractBefore(unique(group1ca3id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group1ca3id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('pae rats with ca3')
+C=unique(extractBefore(unique(group2ca3id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group2ca3id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('control rats with dg')
+C=unique(extractBefore(unique(group1dgid(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group1dgid);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('pae rats with dg')
+C=unique(extractBefore(unique(group2dgid(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group2dgid);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+
 
 
 %  [pontential]=COM(group1ca1id)
@@ -143,15 +205,41 @@ uniqueRowsCA(extractBefore(group2ca3id(:,1),'_'))
 % visualizecells(uniqueRowsCA(group2ca3id),'paeca3')
 
 fig=figure;fig.Color=[1 1 1];
-AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames,'plots',1,'plottype','beeswarm')
+AllStatsca1=stat_plot(group1ca1,group2ca1,{'Sacc','PAE'},varnames)
+fig=figure;fig.Color=[1 1 1];
+AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames)
+fig=figure;fig.Color=[1 1 1];
+AllStatsdg=stat_plot(group1dg,group2dg,{'Sacc','PAE'},varnames)
 
-% AllStatsca1=stat_plot(group1ca1,group2ca1,{'Sacc','PAE'},varnames)
-    AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames);
+
+
+for i=1:length(varnames)
+    fig=figure;fig.Color=[1 1 1];
+    plot(sort(group1ca1(:,i)),linspace(0,1,length(group1ca1(:,i))),'LineWidth',2);hold on
+    plot(sort(group1ca3(:,i)),linspace(0,1,length(group1ca3(:,i))),'LineWidth',2)
+    plot(sort(group1dg(:,i)),linspace(0,1,length(group1dg(:,i))),'LineWidth',2)
     
-    ph1=group1ca3(group1ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
-    ph2=group2ca3(group2ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
-    figure
-    PHca3=stat_plot(ph1,ph2,{'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},1)
+    plot(sort(group2ca1(:,i)),linspace(0,1,length(group2ca1(:,i))),'LineWidth',2)
+    plot(sort(group2ca3(:,i)),linspace(0,1,length(group2ca3(:,i))),'LineWidth',2)
+    plot(sort(group2dg(:,i)),linspace(0,1,length(group2dg(:,i))),'LineWidth',2)
+    
+    xlabel(varnames{i})
+    legend('control ca1','control ca3','control dg','pae ca1','pae ca3','pae dg','Location','best')
+    grid on
+    pause(.000001)
+    export_fig(fullfile('D:\Projects\PAE_PlaceCell\Figures\region_comparison',[varnames{i},'.png']))
+
+    close(fig)
+end
+
+
+
+
+
+ph1=group1ca3(group1ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
+ph2=group2ca3(group2ca3(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr'));
+figure
+PHca3=stat_plot(ph1,ph2,{'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},1)
 fig=figure;fig.Color=[1 1 1]
 [h1,h2]=CoolHistogram(ph1,ph2,50,varnames{contains(varnames,'PhcircLinCorr')})
 
@@ -201,7 +289,7 @@ popvector(group2ca3id,group2ca3(:,end),'paeca3');
 
 % data=load('LS19_S20170508130713.mat')
 % postprocessFigures(data,{'TT4.mat',8});
-% 
+%
 % groupid= group1ca1id;
 % for i=1:length(groupid)
 %     concatid{i,1}=strcat(groupid{i,:});
@@ -209,7 +297,7 @@ popvector(group2ca3id,group2ca3(:,end),'paeca3');
 % [~,~,ic]=unique(concatid,'stable');
 % idx=find(abs(diff(ic))>1);
 % idx=idx(2);
-% 
+%
 % for i=1:length(group1ca1id)
 % if i>idx
 %     d=2;
@@ -221,7 +309,7 @@ popvector(group2ca3id,group2ca3(:,end),'paeca3');
 % autocorr(i,:)=thetaautocorr{cells,d}';
 % end
 % group1ca1(group1ca1(:,contains(varnames,'thetaindex'))>1.5,contains(varnames,'thetaindex'))
-% 
+%
 % [~,I]=sort(group1ca1(:,contains(varnames,'thetaindex')));
 % figure;
 % imagesc(autocorr(I,:))
@@ -289,7 +377,7 @@ stat_plot(nanstd(group1ca3_stab.com,0,2)/sqrt(size(group1ca3_stab.com,1)),...
 %     ratemap(cells,:,2)
 % [fields1]=getPlaceFields(ratemap{cells,:,1},'minPeakRate',0,'minFieldWidth',3,'maxFieldWidth',length(ratemap{cells,:,1}));
 % [fields2]=getPlaceFields(ratemap{cells,:,2},'minPeakRate',0,'minFieldWidth',3,'maxFieldWidth',length(ratemap{cells,:,2}));
-% 
+%
 %                 for fie=1:length(fields1{1, 1})
 %                     PR(fie)=fields1{1, 1}{fie}.peakFR;
 %                 end
@@ -333,7 +421,7 @@ for i=1:length(groupid)
     cells=find(contains(spikesID.TetrodeNum,groupid{i,2}) & ismember(spikesID.CellNum,str2double(groupid{i,3})))';
     laps=vertcat(linear_track.(direction){cells}.maps{:});
     if i<idx
-       laps=fliplr(laps); 
+        laps=fliplr(laps);
     end
     laps=imresize(laps,[NaN,40]);
     laps=rescale(laps,0,1);
@@ -366,10 +454,10 @@ end
 
 
 function [group,groupid]=placefieldfilter(group,groupid,varnames)
-% 1) Minimum peak firing rate of 1 Hz, 
-% 2) Minimum field width of 8 cm, 
-% 3) Maximum field width of 80 cm, 
-% 4) at least 10 trials with consistent behavior. 
+% 1) Minimum peak firing rate of 1 Hz,
+% 2) Minimum field width of 8 cm,
+% 3) Maximum field width of 80 cm,
+% 4) at least 10 trials with consistent behavior.
 % 5) at least 100 spikes
 
 groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
@@ -394,10 +482,10 @@ for i=1:length(groupid)
         pause(.001)
     catch
     end
-%     set(gcf, 'Position', get(0, 'Screensize'));
-
+    %     set(gcf, 'Position', get(0, 'Screensize'));
+    
     set(gcf,'WindowState','maximized')
-
+    
     print(gcf,'-dpng', '-r70',...
         ['C:\Users\ryanh\Dropbox\school work\UNM\Lab\Projects\PAE Project\Presentations\SfN2019\CellExamples\',group,...
         filesep,groupid{i,1},groupid{i,2},groupid{i,3},'.png'])
@@ -410,7 +498,7 @@ for i=1:length(groupid)
     data=load(groupid{i,1},'ratemap','spikesID');
     cells=find(contains(data.spikesID.TetrodeNum,groupid{i,2}) &...
         ismember(data.spikesID.CellNum,str2double(groupid{i,3})))';
-
+    
     placecellmaps(i,:)=imresize(rescale(data.ratemap{cells,runningdir(i)},0,1),[1,40]);
     
     if runningdir(i)==1
@@ -418,8 +506,8 @@ for i=1:length(groupid)
     else
         oppositerunningmaps(i,:)=imresize(rescale(data.ratemap{cells,1},0,1),[1,40]);
     end
-
-
+    
+    
 end
 
 [~,I]=max(placecellmaps,[],2);
