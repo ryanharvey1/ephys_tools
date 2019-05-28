@@ -1,7 +1,7 @@
 function shuff_pass=shuff(groupid,varargin)
-% shuff: general shuffler 
+% shuff: general shuffler
 %
-% Input: 
+% Input:
 %       groupid: cell array with same format as below (postprocessed .mat file,
 %                   tetrode id, & cell number)
 %
@@ -17,102 +17,140 @@ function shuff_pass=shuff(groupid,varargin)
 %               feature:    cell array of features you want to shuffle
 %                           currently supports ic, mvl, dic
 %                           to add more, just add another sub-function
-%               mazetype:   string of maze type
 %               percentile: percentile threshold
 %               session:    session number
 %               plotting:   want plots? 1 or 0
 %               nshuffle:   number of shuffles
 % output:
-%       shuff_pass: binary of 
+%       shuff_pass: binary of
 %
 % ryan harvey 2019
 
 % Output:
 p = inputParser;
 p.addParameter('feature',{'ic'});
-p.addParameter('mazetype','arena');
 p.addParameter('percentile',99);
 p.addParameter('session',1);
 p.addParameter('plotting',0);
 p.addParameter('nshuffle',200);
+p.addParameter('runningdir',[]);
 
 p.parse(varargin{:});
 
 feature = p.Results.feature;
-mazetype = p.Results.mazetype;
 percentile = p.Results.percentile;
 session = p.Results.session;
 plotting = p.Results.plotting;
 nshuffle = p.Results.nshuffle;
+runningdir = p.Results.runningdir;
 
-sessions=unique(groupid(:,1),'stable');
+% sessions=unique(groupid(:,1),'stable');
+sessions=groupid;
 shuff_pass=[];
-for i=1:length(sessions)
+
+fields_to_load={'frames','events','Spikes','spikesID',...
+    'maze_size_cm','sessionID','samplerate'};
+
+if ~isempty(runningdir)
+    fields_to_load={'frames','events','Spikes','spikesID',...
+        'maze_size_cm','sessionID','samplerate','linear_track'};
+    dirs={'right','left'};
     
-    data=load(sessions{i},'frames','events','Spikes','spikesID',...
-        'maze_size_cm','sessionID','samplerate');
+    %  [U_CA,I,J]=uniqueRowsCA([groupid(:,1),num2cell(runningdir)])
+    %  U_CA(J)
+    % groupid(J,1)
+    % unique([groupid(:,1),num2cell(runningdir)])
     
-    idx=contains(groupid(:,1),sessions{i});
+    % sessions = cellfun(@(S) S(1:end-1),unique(strcat(groupid(:,1),...
+    %     num2str(runningdir)),'stable'), 'Uniform', 0);
+end
+for i=1:size(sessions,1)
     
-    cells_to_find=strcat(groupid(idx,2),num2str(str2double(groupid(idx,3))));
+    data=load(sessions{i},fields_to_load{:});
     
+    %     if isempty(runningdir)
+    
+    %         idx=contains(groupid(:,1),sessions{i});
+    %
+    %         cells_to_find=strcat(groupid(idx,2),num2str(str2double(groupid(idx,3))));
+    %
+    %         cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
+    %
+    %         cells=find(ismember(cell_list,cells_to_find))';
+    cells_to_find=strcat(groupid(i,2),num2str(str2double(groupid(i,3))));
     cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
-    
     cells=find(ismember(cell_list,cells_to_find))';
+    %     elseif ~isempty(runningdir)
+    %         idx1=contains(groupid(:,1),sessions{i}) & runningdir==1;
+    %         idx2=contains(groupid(:,1),sessions{i}) & runningdir==2;
+    %
+    %         cells=[find(ismember(strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum)),...
+    %             strcat(groupid(idx1,2),num2str(str2double(groupid(idx1,3))))))',...
+    %             find(ismember(strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum)),...
+    %             strcat(groupid(idx2,2),num2str(str2double(groupid(idx2,3))))))'];
+    %
+    %        temprunningdir=runningdir(contains(groupid(:,1),sessions{i}));
+    %     end
+    %     for icell=cells
+    if isempty(runningdir)
+        [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cells);
+    elseif ~isempty(runningdir)
+        data_video_spk=data.linear_track{1,1}.(dirs{runningdir(i)}){1,2}.dataspks;
+        data_video_nospk=data_video_spk(data_video_spk(:,6)==0,:);
+    end
     
-    for icell=cells
-        [data_video_spk,~]=createframes_w_spikebinary(data,session,icell);
+    for f=1:length(feature)
+        truth{f,1}=feval(feature{f},data_video_spk,data,session);
+    end
+    
+    secIdx=data_video_nospk(data.samplerate:data.samplerate:length(data_video_nospk),1);
+    
+    [I,~]=ismember(data_video_spk(:,1),secIdx);
+    I=find(I);
+    I=[1;I;length(data_video_spk)];
+    
+    for s=1:length(I)
+        if s==length(I)
+            datacell{s,1}=data_video_spk(I(s):I(end),:);
+            break
+        end
+        datacell{s,1}=data_video_spk(I(s):I(s+1)-1,:);
+    end
+    
+    tempframes=data_video_spk;
+    shuff_max=(length(secIdx)-20);
+    bispk=[];
+    for ishuff=1:nshuffle
+        shift=randi([20 round(shuff_max)]);
+        tempcell=circshift(datacell,shift);
+        for open=1:length(tempcell)
+            bispk=[bispk;tempcell{open}(:,6)];
+        end
+        tempframes(:,6)=bispk;
+        bispk=[];
         
         for f=1:length(feature)
-            truth{f,1}=feval(feature{f},data_video_spk,data,session);
+            shuffled{f,ishuff}=feval(feature{f},tempframes,data,session);
         end
-        
-        data_video_nospk=data_video_spk(data_video_spk(:,6)==0,:);
-        
-        secIdx=data_video_nospk(30:30:length(data_video_nospk),1);
-        
-        [I,~]=ismember(data_video_spk(:,1),secIdx);
-        I=find(I);
-        I=[1;I;length(data_video_spk)];
-        
-        for s=1:length(I)
-            if s==length(I)
-                datacell{s,1}=data_video_spk(I(s):I(end),:);
-                break
-            end
-            datacell{s,1}=data_video_spk(I(s):I(s+1)-1,:);
-        end
-        
-        tempframes=data_video_spk;
-        shuff_max=(length(secIdx)-20);
-        bispk=[];
-        for ishuff=1:nshuffle
-            shift=randi([20 round(shuff_max)]);
-            tempcell=circshift(datacell,shift);
-            for open=1:length(tempcell)
-                bispk=[bispk;tempcell{open}(:,6)];
-            end
-            tempframes(:,6)=bispk;
-            bispk=[];
-            
-            for f=1:length(feature)
-                shuffled{f,ishuff}=feval(feature{f},tempframes,data,session);
-            end
-        end
-        
-        clear datacell
-        
-        shuff_pass=[shuff_pass;cell2mat(truth)'>prctile(cell2mat(shuffled)',percentile)];
-        
-        disp([num2str((length(shuff_pass)/length(groupid(:,1)))*100) ' percent done'])
     end
+    
+    clear datacell
+    
+    shuff_pass(i,:)=cell2mat(truth)'>prctile(cell2mat(shuffled)',percentile);
+    
+    disp([num2str((length(shuff_pass)/length(groupid(:,1)))*100) ' percent done'])
 end
 end
+% end
 
 function IC=ic(tempframes,data,session)
-[ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
-    30,tempframes(tempframes(:,6)==1,:),'no',data.maze_size_cm(session));
-
+if isfield(data,'linear_track')
+    [ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
+        data.samplerate,tempframes(tempframes(:,6)==1,:),'yes',data.maze_size_cm(session));
+else
+    [ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
+        data.samplerate,tempframes(tempframes(:,6)==1,:),'no',data.maze_size_cm(session));
+end
 IC=place_cell_analysis.SpatialInformation('ratemap',...
     ratemap,'occupancy',occ,'n_spikes',sum(tempframes(:,6)));
 end
@@ -133,7 +171,7 @@ end
 %             plot(data_video_nospk(:,2),data_video_nospk(:,3),'.k');hold on
 %             scatter(data_video_spk(data_video_spk(:,6)==1,2),data_video_spk(data_video_spk(:,6)==1,3),20,'r','filled');
 %             axis image; box off; axis off
-%             
+%
 %             subplot(1,3,2)
 %             imAlpha=ones(size(ratemap));
 %             imAlpha(isnan(ratemap))=0;
@@ -141,7 +179,7 @@ end
 %             axis xy; axis off; hold on; box off; axis image;
 %             colormap(gca,viridis(255))
 %             title(sprintf('true IC: %4.2f shuff IC: %4.2f',[true_IC,prctile(cell2mat(shuffled),99)]))
-%             
+%
 %             subplot(1,3,3)
 %             h = histogram(cell2mat(shuffled),50,'FaceColor','k');hold on;
 %             plot([prctile(cell2mat(shuffled),99);prctile(cell2mat(shuffled),99)],[0;max(h.BinCounts)],'k')
@@ -150,11 +188,11 @@ end
 %             pause(.0000001)
 %         end
 % function IC=SHUFF(data_video_spk,secIdx,track_length)
-% 
+%
 % [I,row]=ismember(data_video_spk(:,1),secIdx);
 % I=find(I);
 % I=[1;I;length(data_video_spk)];
-% 
+%
 % for s=1:length(I)
 %     if s==length(I)
 %         datacell{s,1}=data_video_spk(I(s):I(end),:);
@@ -162,7 +200,7 @@ end
 %     end
 %     datacell{s,1}=data_video_spk(I(s):I(s+1)-1,:);
 % end
-% 
+%
 % tempframes=data_video_spk;
 % shuff_max=(length(secIdx)-20);
 % bispk=[];
@@ -175,13 +213,13 @@ end
 %     end
 %     tempframes(:,6)=bispk;
 %     bispk=[];
-%     
+%
 %     [ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
 %         30,tempframes(tempframes(:,6)==1,:),'no',track_length);
-%     
+%
 %     IC=[IC;place_cell_analysis.SpatialInformation('ratemap',...
 %         ratemap,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)))];
-%     
+%
 % end
 % end
 
