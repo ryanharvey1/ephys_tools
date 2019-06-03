@@ -120,9 +120,8 @@ if exist([path,filesep,'restrictxy.mat'],'file')
 end
 
 % FIX NON-DETECTS
-[ts,I]=unique(ts);
-[xtemp,ytemp]=FixPos(x(I)',y(I)',ts',round(0.1667*data.samplerate));
-tempangle=wrapTo360(fixNLXangle(angles(I)',round(0.1667*data.samplerate)))'-90;
+[xtemp,ytemp]=FixPos(x',y',ts',round(0.1667*data.samplerate));
+tempangle=wrapTo360(fixNLXangle(angles',round(0.1667*data.samplerate)))'-90;
 tempangle(tempangle<0)=tempangle(tempangle<0)+360;
 
 data_video=[ts',xtemp,ytemp,tempangle]; clear xtemp ytemp ts

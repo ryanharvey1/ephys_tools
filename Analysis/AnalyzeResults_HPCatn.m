@@ -1,4 +1,4 @@
-% AnalyzeResults_PAE
+% AnalyzeResults_HPCatn
 data=compileResults('D:\Projects\HPCatn\ProcessedData');
 
 control={'HPCatn02','HPCatn05'};
@@ -149,6 +149,40 @@ disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 disp([num2str(size(uCA,1)),' control cortex place cells'])
 [uCA,~,~] = uniqueRowsCA(group2cortexid);
 disp([num2str(size(uCA,1)),' pae cortex place cells'])
+
+disp('...')
+disp('control rats with ca1')
+C=unique(extractBefore(unique(group1ca1id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group1ca1id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('lesion rats with ca1')
+C=unique(extractBefore(unique(group2ca1id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group2ca1id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('control rats with ca3')
+C=unique(extractBefore(unique(group1ca3id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group1ca3id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+disp('...')
+disp('lesion rats with ca3')
+C=unique(extractBefore(unique(group2ca3id(:,1)),'_'));
+for i=1:length(C)
+    temp=uniqueRowsCA(group2ca3id);
+    disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
+end
+
+
 
 %% pop vec
 popvector(group1id,group1(:,end),'control');

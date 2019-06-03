@@ -57,10 +57,6 @@ elseif session==4
     varnames(colstodelete)=[];
     group1(:,colstodelete)=[];
     group2(:,colstodelete)=[];
-    
-    %     group1(:,contains(varnames,'Displacement'))=abs(wrapTo180(group1(:,contains(varnames,'Displacement'))));
-    %     group2(:,contains(varnames,'Displacement'))=abs(wrapTo180(group2(:,contains(varnames,'Displacement'))));
-    
 end
 
 
@@ -110,16 +106,80 @@ disp([num2str(size(uCA,1)),' control cortex cells'])
 [uCA,~,~] = uniqueRowsCA(group2cortexid);
 disp([num2str(size(uCA,1)),' pae cortex cells'])
 
+%%
+% group1ca1_shuff_pass=shuff(group1ca1id);
+% group2ca1_shuff_pass=shuff(group2ca1id);
+% AllStatsca1=stat_plot(group1ca1(logical(group1ca1_shuff_pass),:),...
+%     group2ca1(logical(group2ca1_shuff_pass),:),{'Sacc','PAE'},varnames,'plots',1)
+% profile on
+% shuff_pass=shuff(group1ca1id(1:5,:),'session',2,'feature',{'ic'})
+% profile viewer
 
-%% place cell filter
-%  define_field(group1ca1id,session)
+% allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
+% 
 
+
+
+ 
+% x=[allgroups(:,contains(varnames,'OverallFiringRate')),...
+%     allgroups(:,contains(varnames,'spikewidth')),...
+%     allgroups(:,contains(varnames,'halfwidth')),...
+%     allgroups(:,contains(varnames,'peak2valleyratio')),...
+%     allgroups(:,contains(varnames,'InformationContent'))];
+% x(any(isnan(x) | isinf(x),2),:)=[];
+% 
+% [coeff,score,latent,tsquared,explained,mu] = pca(zscore(x));
+% figure;
+% biplot(coeff(:,1:3),'scores',score(:,1:3),'varlabels',{'avg','spkwidth','halfwidth','ratio','IC'});
+% figure;
+% scatter3(score(:,1),score(:,2),score(:,3))
+% axis equal
+% xlabel('1st Principal Component')
+% ylabel('2nd Principal Component')
+% zlabel('3rd Principal Component')
+% 
+% 
+% 
+% clust = zeros(size(score,1),10);
+% for i=1:10
+%     clust(:,i) = kmeans(score,i,'emptyaction','singleton',...
+%         'replicate',5);
+% end
+% eva = evalclusters(score,clust,'CalinskiHarabasz');
+% 
+% figure;
+% scatter3(score(:,1),score(:,2),score(:,3),10,'k','Filled')
+% axis equal
+% xlabel('1st Principal Component')
+% ylabel('2nd Principal Component')
+% zlabel('3rd Principal Component')
+% hold on
+% for i=1:8
+%     scatter3(score(clust(:,8)==i,1),score(clust(:,8)==i,2),score(clust(:,8)==i,3))
+% end
+
+%%
+figure;
+allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
+scatter3(allgroups(:,contains(varnames,'PeakRate')),...
+    allgroups(:,contains(varnames,'FieldWidth')),...
+    allgroups(:,contains(varnames,'InformationContent')),10,'k','Filled')
+
+% place cell filter
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
 [group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
 [group2ca3,group2ca3id]=placefieldfilter(group2ca3,group2ca3id,varnames);
 [group1dg,group1dgid]=placefieldfilter(group1dg,group1dgid,varnames);
 [group2dg,group2dgid]=placefieldfilter(group2dg,group2dgid,varnames);
+
+allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
+scatter3(allgroups(:,contains(varnames,'PeakRate')),...
+    allgroups(:,contains(varnames,'FieldWidth')),...
+    allgroups(:,contains(varnames,'InformationContent')),10,'r','Filled')
+xlabel('PeakRate')
+ylabel('FieldWidth')
+zlabel('InformationContent')
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 place cells'])
@@ -204,10 +264,14 @@ for i=1:length(varnames)
 end
 
 AllStatsca1=stat_plot(group1cortex,group2cortex,{'Sacc','PAE'},varnames)
-
+figure
 AllStatsca1=stat_plot(group1ca1,group2ca1,{'Sacc','PAE'},varnames)
+
+figure
 AllStatsca3=stat_plot(group1ca3,group2ca3,{'Sacc','PAE'},varnames)
-AllStatsca3=stat_plot(group1dg,group2dg,{'Sacc','PAE'},varnames)
+
+figure
+AllStatsdg=stat_plot(group1dg,group2dg,{'Sacc','PAE'},varnames)
 
 
 for i=1:length(varnames)
@@ -227,7 +291,7 @@ visualizecells(uniqueRowsCA(group2ca3id),'pae_ca3')
 %% phase precess
 phaseprecess=stat_plot(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
     group2ca1(group2ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
-    {'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')},2)
+    {'Sacc','PAE'},varnames{contains(varnames,'PhcircLinCorr')})
 
 fig=figure;fig.Color=[1 1 1];
 [h1,h2]=CoolHistogram(group1ca1(group1ca1(:,contains(varnames,'Phpval'))<.05,contains(varnames,'PhcircLinCorr')),...
