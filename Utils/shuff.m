@@ -79,7 +79,7 @@ for i=1:size(sessions,1)
     %         cells=find(ismember(cell_list,cells_to_find))';
     cells_to_find=strcat(groupid(i,2),num2str(str2double(groupid(i,3))));
     cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
-    cells=find(ismember(cell_list,cells_to_find))';
+    cells=find(ismember(strrep(cell_list,' ',''),cells_to_find))';
     %     elseif ~isempty(runningdir)
     %         idx1=contains(groupid(:,1),sessions{i}) & runningdir==1;
     %         idx2=contains(groupid(:,1),sessions{i}) & runningdir==2;
@@ -94,8 +94,9 @@ for i=1:size(sessions,1)
     %     for icell=cells
     if isempty(runningdir)
         [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cells);
+
     elseif ~isempty(runningdir)
-        data_video_spk=data.linear_track{1,1}.(dirs{runningdir(i)}){1,2}.dataspks;
+        data_video_spk=data.linear_track{1,1}.(dirs{runningdir(i)}){1,cells}.dataspks;
         data_video_nospk=data_video_spk(data_video_spk(:,6)==0,:);
     end
     
