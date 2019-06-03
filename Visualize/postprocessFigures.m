@@ -6,6 +6,11 @@
 %
 % List of Methods
 %   main
+%       input: 
+%               data: full postprocessed data structure
+%               optional 
+%                   cellid: id of cell or cells you want to plot
+%                   colorcode: spike color choice of 'HD', 'phase', or 'r'
 %   raster
 %   plot_corr_line
 %   unlinearpath
@@ -27,8 +32,15 @@
 classdef postprocessFigures
     
     methods(Static)
-        function main(data,cellid)
-
+        function main(data,varargin)
+            
+            p = inputParser;
+            p.addParameter('cellid',[]);
+            p.addParameter('colorcode','phase');
+            p.parse(varargin{:});
+            cellid = p.Results.cellid;
+            colorcode = p.Results.colorcode;
+            
             % how many cells, how many sessions?
             ncells=length(data.Spikes);
             nsessions=size(data.events,2);
@@ -47,7 +59,7 @@ classdef postprocessFigures
             %                 unlinear=data.linear_track.nonlinearFrames;
             %             end
             
-            if exist('cellid','var')
+            if ~isempty(cellid)
                 cells_to_find=strcat(cellid{1},num2str(cellid{2}));
 
                 cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
@@ -95,14 +107,14 @@ classdef postprocessFigures
                         if ns==1 || ns==3% FOR LEFT RUNNING DIRECTION
                             postprocessFigures.unlinearpath(ax,data.linear_track{round(ns/2)}.nonlinearFrames,data.linear_track{round(ns/2)}.right{1,i}.laps,...
                                 data.linear_track{round(ns/2)}.right{1,i}.dataspks,data.mazetypes,...
-                                data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                                data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                             
                             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
                             % CODED BY ITS THETA PHASE
                             p(2, ns).select();
                             ax=gca;
                             postprocessFigures.spikesonpath(ax,data.linear_track{round(ns/2)}.right{1,i}.dataspks,...
-                                data.ratemap{i,ns},data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                                data.ratemap{i,ns},data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                             
                             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
                             % SUPERIMPOSED
@@ -138,14 +150,14 @@ classdef postprocessFigures
                             
                             postprocessFigures.unlinearpath(ax,data.linear_track{round(ns/2)}.nonlinearFrames,data.linear_track{round(ns/2)}.left{1,i}.laps,...
                                 data.linear_track{round(ns/2)}.left{1,i}.dataspks,data.mazetypes,...
-                                data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                                data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                             
                             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
                             % CODED BY ITS THETA PHASE
                             p(2, ns).select();
                             ax = gca;
                             postprocessFigures.spikesonpath(ax,data.linear_track{round(ns/2)}.left{1,i}.dataspks,...
-                                data.ratemap{i,ns},data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                                data.ratemap{i,ns},data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                             
                             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
                             % SUPERIMPOSED
@@ -194,7 +206,7 @@ classdef postprocessFigures
                         % CODED BY ITS THETA PHASE
                         p(2, ns).select();
                         ax=gca;
-                        postprocessFigures.spikesonpath_2d(ax,data_video_spk,data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                        postprocessFigures.spikesonpath_2d(ax,data_video_spk,data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                         
                         % PLOT RATEMAP
                         p(3, ns).select();
@@ -221,7 +233,7 @@ classdef postprocessFigures
                         % CODED BY ITS THETA PHASE
                         p(2, ns).select();
                         ax=gca;
-                        postprocessFigures.spikesonpath_2d(ax,data_video_spk,data.lfp.ts,data.lfp.theta_phase(trodeID,:))
+                        postprocessFigures.spikesonpath_2d(ax,data_video_spk,data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
                         
                         % PLOT RATEMAP
                         p(3, ns).select();
@@ -348,7 +360,7 @@ classdef postprocessFigures
             end
         end
         
-        function unlinearpath(ax,unlinear,laps,spkframes,mazetypes,lfp_ts,theta_phase)
+        function unlinearpath(ax,unlinear,laps,spkframes,mazetypes,lfp_ts,theta_phase,colorcode)
             % set up colormap
             theta=0:.01:2*pi;
             color=hsv(length(theta));
@@ -366,15 +378,22 @@ classdef postprocessFigures
             end
             plot(unlinear_together(:,2),unlinear_together(:,3),'.k');hold on
             [ts,idx]=unique(unlinear_together(:,1));
-            scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
-                interp1(lfp_ts,theta_phase,spkts,'linear'),'filled');
-            
+            if strcmp(colorcode,'HD')
+                scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
+                    interp1(ts,unlinear_together(idx,4),spkts,'linear'),'filled');  
+            elseif strcmp(colorcode,'phase')
+                scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
+                    interp1(lfp_ts,theta_phase,spkts,'linear'),'filled');
+            elseif strcmp(colorcode,'r')
+                scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
+                    'r','filled');
+            end
             box off;axis image; axis off
             colormap(ax,color)
             title(['nSpikes: ',num2str(length(spkts))]);
         end
         
-        function spikesonpath(ax,dataspks,ratemap,lfp_ts,theta_phase)
+        function spikesonpath(ax,dataspks,ratemap,lfp_ts,theta_phase,colorcode)
             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
             % set up colormap
@@ -388,13 +407,24 @@ classdef postprocessFigures
             plot(x,ts,'.k');
             axis tight
             hold on;box off; axis off
-            scatter(x(spkbinary),ts(spkbinary),20,...
-                interp1(lfp_ts,...
-                theta_phase,ts(spkbinary)','linear'),'filled');
+            if strcmp(colorcode,'HD')
+                txya=dataspks(dataspks(:,6)==0,:);
+                [~,idx]=unique(txya(:,1));
+                txya= txya(idx,:);
+                scatter(x(spkbinary),ts(spkbinary),20,...
+                    interp1(txya(:,1),...
+                    txya(:,4),ts(spkbinary)','linear'),'filled');
+            elseif strcmp(colorcode,'phase')
+                scatter(x(spkbinary),ts(spkbinary),20,...
+                    interp1(lfp_ts,...
+                    theta_phase,ts(spkbinary)','linear'),'filled');
+            elseif strcmp(colorcode,'r')
+                scatter(x(spkbinary),ts(spkbinary),20,'r','filled');
+            end
             colormap(ax,color)
         end
         
-        function spikesonpath_2d(ax,dataspks,lfp_ts,theta_phase)
+        function spikesonpath_2d(ax,dataspks,lfp_ts,theta_phase,colorcode)
             % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
             % set up colormap
@@ -408,7 +438,18 @@ classdef postprocessFigures
             plot(x,y,'.k');
             axis image
             hold on;box off; axis off
-            scatter(x(spkbinary),y(spkbinary),20,interp1(lfp_ts,theta_phase,ts(spkbinary)','linear'),'filled');
+            if strcmp(colorcode,'HD')
+                txya=dataspks(dataspks(:,6)==0,:);
+                [~,idx]=unique(txya(:,1));
+                txya= txya(idx,:);
+                scatter(x(spkbinary),y(spkbinary),20,...
+                    interp1(txya(:,1),...
+                    txya(:,4),ts(spkbinary)','linear'),'filled');
+            elseif strcmp(colorcode,'phase')
+                scatter(x(spkbinary),y(spkbinary),20,interp1(lfp_ts,theta_phase,ts(spkbinary)','linear'),'filled');
+            elseif strcmp(colorcode,'r')
+                scatter(x(spkbinary),y(spkbinary),20,'r','filled');
+            end
             colormap(ax,color)
             title(['nSpikes: ',num2str(sum(dataspks(:,6)==1))]);
         end
@@ -444,6 +485,14 @@ classdef postprocessFigures
             
             phase=interp1(lfp_ts,theta_phase,dataspks(logical(dataspks(:,6)),1)','linear');
             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],[phase';phase'+2*pi]*180/pi,15,'Filled','k');
+            
+%             txya=dataspks(dataspks(:,6)==0,:);
+%             [~,idx]=unique(txya(:,1));
+%             txya= txya(idx,:);
+%             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],...
+%                 [phase';phase'+2*pi]*180/pi,20,...
+%                 [interp1(txya(:,1),txya(:,4),dataspks(logical(dataspks(:,6)),1));interp1(txya(:,1),txya(:,4),dataspks(logical(dataspks(:,6)),1))],'filled');
+%             
             box off;axis off
             xlim([min(x) max(x)])
             set(ax,'YTick',0:360:720,'YTickLabel',[{'0'},{'2\pi'},{'4\pi'}])
