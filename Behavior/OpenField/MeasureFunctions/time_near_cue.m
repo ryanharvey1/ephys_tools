@@ -35,32 +35,32 @@ for i=1:size(params.subID)
     bincenters(end)=[];
     
     % hd in and out of zone
-    params.overall_hd{i}=wrapTo360(rad2deg(circ_mean(deg2rad(hd'))));
+    params.overall_hd{i}=wrapTo360(hd');
     params.overall_hd_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(hd,0:6:360)',deg2rad(6));
 
-    params.hd_out_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(hd(~inbound)'))));
+    params.hd_out_zone{i}=wrapTo360(hd(~inbound)');
     params.hd_out_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(hd(~inbound),0:6:360)',deg2rad(6));
 
     if isempty(hd(inbound))
         params.hd_in_zone{i}=NaN;
         params.hd_in_zone_mvl{i}=NaN;
     else
-        params.hd_in_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(hd(inbound)'))));
+        params.hd_in_zone{i}=wrapTo360(hd(inbound)');
         params.hd_in_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(hd(inbound),0:6:360)',deg2rad(6));
     end
     
     % body direction in and out of zone
-    params.overall_body_dir{i}=wrapTo360(rad2deg(circ_mean(deg2rad(bd'))));
+    params.overall_body_dir{i}=wrapTo360(bd');
     params.overall_body_dir_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(bd,0:6:360)',deg2rad(6));
 
-    params.body_dir_out_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(bd(~inbound)'))));
+    params.body_dir_out_zone{i}=wrapTo360(bd(~inbound)');
     params.body_dir_out_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(bd(~inbound),0:6:360)',deg2rad(6));
 
     if isempty(bd(inbound))
         params.body_dir_in_zone{i}=NaN;
         params.body_dir_in_zone_mvl{i}=NaN;
     else
-        params.body_dir_in_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(bd(inbound)'))));
+        params.body_dir_in_zone{i}=wrapTo360(bd(inbound)');
         params.body_dir_in_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(bd(inbound),0:6:360)',deg2rad(6));
     end
     
@@ -74,17 +74,17 @@ for i=1:size(params.subID)
     head_bearing=wrapTo360(head_bearing-hd);
     
     % egocentric bearing in and out of zone
-    params.overall_head_bearing{i}=wrapTo360(rad2deg(circ_mean(deg2rad(head_bearing'))));
+    params.overall_head_bearing{i}=wrapTo360(head_bearing');
     params.overall_head_bearing_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(head_bearing,0:6:360)',deg2rad(6));
 
-    params.head_bearing_out_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(head_bearing(~inbound)'))));
+    params.head_bearing_out_zone{i}=wrapTo360(head_bearing(~inbound)');
     params.head_bearing_out_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(head_bearing(~inbound),0:6:360)',deg2rad(6));
 
     if isempty(head_bearing(inbound))
         params.head_bearing_in_zone{i}=NaN;
         params.head_bearing_in_zone_mvl{i}=NaN;
     else
-        params.head_bearing_in_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(head_bearing(inbound)'))));
+        params.head_bearing_in_zone{i}=wrapTo360(head_bearing(inbound)');
         params.head_bearing_in_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(head_bearing(inbound),0:6:360)',deg2rad(6));
     end
     
@@ -99,17 +99,17 @@ for i=1:size(params.subID)
     body_bearing=wrapTo360(body_bearing-bd);
     
     % egocentric bearing in and out of zone
-    params.overall_body_bearing{i}=wrapTo360(rad2deg(circ_mean(deg2rad(body_bearing'))));
+    params.overall_body_bearing{i}=wrapTo360(body_bearing');
     params.overall_body_bearing_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(body_bearing,0:6:360)',deg2rad(6));
 
-    params.body_bearing_out_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(body_bearing(~inbound)'))));
+    params.body_bearing_out_zone{i}=wrapTo360(body_bearing(~inbound)');
     params.body_bearing_out_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(body_bearing(~inbound),0:6:360)',deg2rad(6));
 
     if isempty(body_bearing(inbound))
         params.body_bearing_in_zone{i}=NaN;
         params.body_bearing_in_zone_mvl{i}=NaN;
     else
-        params.body_bearing_in_zone{i}=wrapTo360(rad2deg(circ_mean(deg2rad(body_bearing(inbound)'))));
+        params.body_bearing_in_zone{i}=wrapTo360(body_bearing(inbound)');
         params.body_bearing_in_zone_mvl{i}=circ_r(deg2rad(bincenters)',histcounts(body_bearing(inbound),0:6:360)',deg2rad(6));
     end
     
