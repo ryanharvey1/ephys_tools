@@ -13,7 +13,9 @@ n = size(Z,1);
 % compute cumulative distance vector
 cumdist = zeros(1, n);
 for i = 2:n
-    cumdist(i) = cumdist(i - 1) + norm(Z(i,:) - Z(i-1,:) );
+    cumdist(i) = nansum([cumdist(i - 1); norm(Z(i,:) - Z(i-1,:) )]); %changed to nansum lb 06/2019 
+    % nansum allows the vector to contain NaN. May be problematic for accurate segmentation with a large amount of contiguous nans.                                                                  
+    %                                   
 end
 
 % step size
