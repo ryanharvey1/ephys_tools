@@ -1,7 +1,7 @@
 
 %%
 %%%%%%%%%%% Plot Paths with home base outline and cue location
-load('params_V8');
+load('params_V14');
 param_idx=params.PathName;
 params.cueCenter{1}=[];
 
@@ -88,11 +88,11 @@ axis off
 
 %% Path Length 
 
-pathL_tg1=vertcat(params.pathL{contains(param_idx,'lgOF') & contains(param_idx,'Tg') & contains(param_idx,'day1')});
-pathL_wt1=vertcat(params.pathL{contains(param_idx,'lgOF') & contains(param_idx,'Wt') & contains(param_idx,'day1')});
+pathL_tg1=vertcat(params.pathL{contains(param_idx,'Tg') & contains(param_idx,'D1')});
+pathL_wt1=vertcat(params.pathL{contains(param_idx,'WT') & contains(param_idx,'D1')});
 
-pathL_tg2=vertcat(params.pathL{contains(param_idx,'lgOF') & contains(param_idx,'Tg') & contains(param_idx,'day2')});
-pathL_wt2=vertcat(params.pathL{contains(param_idx,'lgOF') & contains(param_idx,'Wt') & contains(param_idx,'day2')});
+pathL_tg2=vertcat(params.pathL{contains(param_idx,'Tg') & contains(param_idx,'D2')});
+pathL_wt2=vertcat(params.pathL{contains(param_idx,'WT') & contains(param_idx,'D2')});
 
 
 % RUN MIXED ANOVA
@@ -226,11 +226,11 @@ hold on;
 plot(cueX*-1,cueY*-1,'*b', 'MarkerSize',25,'LineWidth',3) 
 
 %%DWELL TIME
-dwellQuad_tg1=vertcat(params.dwellQuad{contains(param_idx,'lgOF') & contains(param_idx,'Tg') & contains(param_idx,'day1')});
-dwellQuad_wt1=vertcat(params.dwellQuad{contains(param_idx,'lgOF') & contains(param_idx,'Wt') & contains(param_idx,'day1')});
+dwellQuad_tg1=vertcat(params.dwellQuad{contains(param_idx,'Tg') & contains(param_idx,'D1')});
+dwellQuad_wt1=vertcat(params.dwellQuad{contains(param_idx,'WT') & contains(param_idx,'D1')});
 
-dwellQuad_tg2=vertcat(params.dwellQuad{contains(param_idx,'lgOF') & contains(param_idx,'Tg') & contains(param_idx,'day2')});
-dwellQuad_wt2=vertcat(params.dwellQuad{contains(param_idx,'lgOF') & contains(param_idx,'Wt') & contains(param_idx,'day2')});
+dwellQuad_tg2=vertcat(params.dwellQuad{contains(param_idx,'Tg') & contains(param_idx,'D2')});
+dwellQuad_wt2=vertcat(params.dwellQuad{contains(param_idx,'WT') & contains(param_idx,'D2')});
 
 %Histograms for quadrant dwell time
 bincenter=[0:360/16:360]-22.5;
