@@ -27,7 +27,7 @@ function  behavior_coding(varargin)
 % parse input
 p = inputParser;
 p.addParameter('path',[]);
-p.addParameter('behaviors',{'grooming','rearing','headscan','freezing'});
+p.addParameter('behaviors',{'grooming','rearing','head_scan','Trial_Start','Trial_End'});
 parse(p,varargin{:});
 
 clear data
@@ -47,7 +47,7 @@ data.video.CurrentTime=0;
 data.playbackspeed=1;
 
 % set up figure
-F=figure('Name',[data.path],'NumberTitle','off');
+F=figure('Name','subject','NumberTitle','off');
 F.Color=[1 1 1];
 set(F, 'Position', get(0, 'Screensize'));
 
@@ -127,7 +127,14 @@ behavior4 = uicontrol('Parent', F, ...
     'FontSize',15,...
     'FontWeight','bold',...
     'Callback', @(src,event)recordtime_behav4);
-
+behavior5 = uicontrol('Parent', F, ...
+    'Units', 'Normalized', ...
+    'Position', [.85 0.35 0.15 0.05], ...
+    'Style', 'togglebutton', ...
+    'String', data.behaviors{5}, ...
+    'FontSize',15,...
+    'FontWeight','bold',...
+    'Callback', @(src,event)recordtime_behav4);
 
     function play
         if playButton.Value==1
@@ -147,10 +154,10 @@ behavior4 = uicontrol('Parent', F, ...
 
     function playfast
         if playfastButton.Value==1
-            data.playbackspeed=5;
+            data.playbackspeed=9; %was 5, changed by LB 09/june/2019. 9 is max without causing delay. 
             playfastButton.BackgroundColor='r';
         else
-            data.playbackspeed=1;
+            data.playbackspeed=3; %was 1, changed by LB 09/june/2019
             playfastButton.BackgroundColor=[0.9400 0.9400 0.9400];
             
         end
@@ -246,6 +253,18 @@ behavior4 = uicontrol('Parent', F, ...
         data.(data.behaviors{4})(size(data.(data.behaviors{4}),1)+1,:)=[data.video.CurrentTime,behavior4.Value];
     end
 
+    function recordtime_behav5
+        if behavior5.Value==1
+            behavior5.BackgroundColor='r';
+        else
+            behavior5.BackgroundColor=[0.9400 0.9400 0.9400];
+        end
+        if ~isfield(data,(data.behaviors{5}))
+            data.(data.behaviors{5})(1,:)=[data.video.CurrentTime,behavior5.Value];
+            return
+        end
+        data.(data.behaviors{5})(size(data.(data.behaviors{5}),1)+1,:)=[data.video.CurrentTime,behavior4.Value];
+    end
 end
 
 
