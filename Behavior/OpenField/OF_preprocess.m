@@ -54,6 +54,8 @@ params.entries{1}=[];
 params.HBclass{1}=[];
 params.HBBound{1}=[];
 params.slowInHB{1}=[];
+params.HBstops{1}=[];
+params.HBdist2Cue{1}=[];
 
 %% SMOOTH & TRANSFORM COORDINATES
 
