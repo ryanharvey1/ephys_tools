@@ -8,7 +8,6 @@ files = dir([path_to_files,'\**\*.avi']);
 for i=1:size(files,1)
     path=fullfile(files(i).folder,filesep,files(i).name);
     behavior_coding('path',path,'behaviors',{'grooming','rearing','head_scan','Trial_start','Trial_end'}) 
-
     pause
     
 end

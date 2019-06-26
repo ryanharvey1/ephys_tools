@@ -30,7 +30,7 @@ p.addParameter('path',[]);
 p.addParameter('behaviors',{'grooming','rearing','head_scan','Trial_Start','Trial_End'});
 parse(p,varargin{:});
 
-clear data
+clear global
 global data
 
 data.path = p.Results.path;
@@ -134,7 +134,7 @@ behavior5 = uicontrol('Parent', F, ...
     'String', data.behaviors{5}, ...
     'FontSize',15,...
     'FontWeight','bold',...
-    'Callback', @(src,event)recordtime_behav4);
+    'Callback', @(src,event)recordtime_behav5);
 
     function play
         if playButton.Value==1
@@ -186,6 +186,7 @@ behavior5 = uicontrol('Parent', F, ...
         save_data(data)
         
         clear data
+        clear global
         disp('closing main fig')
         close(F);
     end
@@ -263,7 +264,7 @@ behavior5 = uicontrol('Parent', F, ...
             data.(data.behaviors{5})(1,:)=[data.video.CurrentTime,behavior5.Value];
             return
         end
-        data.(data.behaviors{5})(size(data.(data.behaviors{5}),1)+1,:)=[data.video.CurrentTime,behavior4.Value];
+        data.(data.behaviors{5})(size(data.(data.behaviors{5}),1)+1,:)=[data.video.CurrentTime,behavior5.Value];
     end
 end
 
