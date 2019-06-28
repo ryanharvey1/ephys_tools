@@ -1,5 +1,10 @@
 % inspect_decoding_results
+
 files=dir('D:\Projects\PAE_PlaceCell\decoding\*.mat');
+
+control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
+pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
+
 for i =1:length(files)
     load(fullfile(files(i).folder,files(i).name))
     if exist('mse','var')
