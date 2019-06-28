@@ -91,7 +91,6 @@ disp([num2str(size(uCA,1)),' control ca1 cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca1id);
 disp([num2str(size(uCA,1)),' pae ca1 cells'])
 
-
 [uCA,~,~] = uniqueRowsCA(group1ca3id);
 disp([num2str(size(uCA,1)),' control ca3 cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
@@ -122,40 +121,57 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 %
 % scatter(group1ca3(:,contains(varnames,'spikewidth'),1),group1ca3(:,contains(varnames,'burstIdx'),1),'k','Filled')
 %
-[group1ca1,group1ca1id]=preshuffle_placefieldfilter(group1ca1,group1ca1id,varnames);
-[group2ca1,group2ca1id]=preshuffle_placefieldfilter(group2ca1,group2ca1id,varnames);
-[group1ca3,group1ca3id]=preshuffle_placefieldfilter(group1ca3,group1ca3id,varnames);
-[group2ca3,group2ca3id]=preshuffle_placefieldfilter(group2ca3,group2ca3id,varnames);
-[group1dg,group1dgid]=preshuffle_placefieldfilter(group1dg,group1dgid,varnames);
-[group2dg,group2dgid]=preshuffle_placefieldfilter(group2dg,group2dgid,varnames);
+% [group1ca1,group1ca1id]=preshuffle_placefieldfilter(group1ca1,group1ca1id,varnames);
+% [group2ca1,group2ca1id]=preshuffle_placefieldfilter(group2ca1,group2ca1id,varnames);
+% [group1ca3,group1ca3id]=preshuffle_placefieldfilter(group1ca3,group1ca3id,varnames);
+% [group2ca3,group2ca3id]=preshuffle_placefieldfilter(group2ca3,group2ca3id,varnames);
+% [group1dg,group1dgid]=preshuffle_placefieldfilter(group1dg,group1dgid,varnames);
+% [group2dg,group2dgid]=preshuffle_placefieldfilter(group2dg,group2dgid,varnames);
+% 
+% 
+% group1ca1_shuff_pass=shuff(group1ca1id,'runningdir',group1ca1(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% group2ca1_shuff_pass=shuff(group2ca1id,'runningdir',group2ca1(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% group1ca3_shuff_pass=shuff(group1ca3id,'runningdir',group1ca3(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% group2ca3_shuff_pass=shuff(group2ca3id,'runningdir',group2ca3(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% group1dg_shuff_pass=shuff(group1dgid,'runningdir',group1dg(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% group2dg_shuff_pass=shuff(group2dgid,'runningdir',group2dg(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% 
+% 
+% fig=figure;fig.Color=[1 1 1];
+% AllStatsca1=stat_plot(group1ca1(logical(group1ca1_shuff_pass),:),...
+%     group2ca1(logical(group2ca1_shuff_pass),:),{'Sacc','PAE'},varnames)
+% AllStatsca1=stat_plot(group1ca3(logical(group1ca3_shuff_pass),:),...
+%     group2ca3(logical(group2ca3_shuff_pass),:),{'Sacc','PAE'},varnames)
+% 
+% visualize_cells(uniqueRowsCA(group1ca1id(logical(group1ca1_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1ca1_shuff_pass','dpi','-r80')
+% visualize_cells(uniqueRowsCA(group2ca1id(logical(group2ca1_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2ca1_shuff_pass','dpi','-r80')
+% visualize_cells(uniqueRowsCA(group1ca3id(logical(group1ca3_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1ca3_shuff_pass','dpi','-r80')
+% visualize_cells(uniqueRowsCA(group2ca3id(logical(group2ca3_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2ca3_shuff_pass','dpi','-r80')
+% visualize_cells(uniqueRowsCA(group1dgid(logical(group1dg_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1dg_shuff_pass','dpi','-r80')
+% visualize_cells(uniqueRowsCA(group2dgid(logical(group2dg_shuff_pass),:)),...
+%     'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2dg_shuff_pass','dpi','-r80')
 
+%% interneuron filter
 
-group1ca1_shuff_pass=shuff(group1ca1id,'runningdir',group1ca1(:,contains(varnames,'runningdir')),'feature',{'ic'});
-group2ca1_shuff_pass=shuff(group2ca1id,'runningdir',group2ca1(:,contains(varnames,'runningdir')),'feature',{'ic'});
-group1ca3_shuff_pass=shuff(group1ca3id,'runningdir',group1ca3(:,contains(varnames,'runningdir')),'feature',{'ic'});
-group2ca3_shuff_pass=shuff(group2ca3id,'runningdir',group2ca3(:,contains(varnames,'runningdir')),'feature',{'ic'});
-group1dg_shuff_pass=shuff(group1dgid,'runningdir',group1dg(:,contains(varnames,'runningdir')),'feature',{'ic'});
-group2dg_shuff_pass=shuff(group2dgid,'runningdir',group2dg(:,contains(varnames,'runningdir')),'feature',{'ic'});
+% [group1ca1_in,group1ca1id_in]=interneuron_filter(group1ca1,group1ca1id,varnames);
+% [group2ca1_in,group2ca1id_in]=interneuron_filter(group2ca1,group2ca1id,varnames);
+% [group1ca3_in,group1ca3id_in]=interneuron_filter(group1ca3,group1ca3id,varnames);
+% [group2ca3_in,group2ca3id_in]=interneuron_filter(group2ca3,group2ca3id,varnames);
+% [group1dg_in,group1dgid_in]=interneuron_filter(group1dg,group1dgid,varnames);
+% [group2dg_in,group2dgid_in]=interneuron_filter(group2dg,group2dgid,varnames);
+% 
+% fig=figure;fig.Color=[1 1 1];
+% AllStatsca1=stat_plot(group1ca1_in,group2ca1_in,{'Sacc','PAE'},varnames)
+% fig=figure;fig.Color=[1 1 1];
+% AllStatsca3=stat_plot(group1ca3_in,group2ca3_in,{'Sacc','PAE'},varnames)
+% fig=figure;fig.Color=[1 1 1];
+% AllStatsdg=stat_plot(group1dg_in,group2dg_in,{'Sacc','PAE'},varnames)
 
-
-fig=figure;fig.Color=[1 1 1];
-AllStatsca1=stat_plot(group1ca1(logical(group1ca1_shuff_pass),:),...
-    group2ca1(logical(group2ca1_shuff_pass),:),{'Sacc','PAE'},varnames)
-AllStatsca1=stat_plot(group1ca3(logical(group1ca3_shuff_pass),:),...
-    group2ca3(logical(group2ca3_shuff_pass),:),{'Sacc','PAE'},varnames)
-
-visualize_cells(uniqueRowsCA(group1ca1id(logical(group1ca1_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1ca1_shuff_pass','dpi','-r80')
-visualize_cells(uniqueRowsCA(group2ca1id(logical(group2ca1_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2ca1_shuff_pass','dpi','-r80')
-visualize_cells(uniqueRowsCA(group1ca3id(logical(group1ca3_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1ca3_shuff_pass','dpi','-r80')
-visualize_cells(uniqueRowsCA(group2ca3id(logical(group2ca3_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2ca3_shuff_pass','dpi','-r80')
-visualize_cells(uniqueRowsCA(group1dgid(logical(group1dg_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group1dg_shuff_pass','dpi','-r80')
-visualize_cells(uniqueRowsCA(group2dgid(logical(group2dg_shuff_pass),:)),...
-    'D:\Projects\PAE_PlaceCell\Figures\shufflepass\group2dg_shuff_pass','dpi','-r80')
 %% PLACE CELL FILTER
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
@@ -164,6 +180,19 @@ visualize_cells(uniqueRowsCA(group2dgid(logical(group2dg_shuff_pass),:)),...
 [group1dg,group1dgid]=placefieldfilter(group1dg,group1dgid,varnames);
 [group2dg,group2dgid]=placefieldfilter(group2dg,group2dgid,varnames);
 
+
+
+%% sessions for decoding
+decode=[unique(group1ca1id(:,1));...
+unique(group2ca1id(:,1));...
+unique(group1ca3id(:,1));...
+unique(group2ca3id(:,1));...
+unique(group1dgid(:,1));...
+unique(group2dgid(:,1))];
+save('D:\Projects\PAE_PlaceCell\decoding\decode','decode')
+
+
+%%
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 place cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca1id);
@@ -481,28 +510,23 @@ results.com(rowstodelete,:)=[];
 end
 
 
-
-
-
-
 function [group,groupid]=placefieldfilter(group,groupid,varnames)
-% 1) Minimum peak firing rate of 1 Hz,
-% 2) Minimum field width of 8 cm,
-% 3) Maximum field width of 80 cm,
-% 4) at least 10 trials with consistent behavior.
-% 5) at least 100 spikes
 
-groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
+idx=group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=80 &...
     group(:,contains(varnames,'nlaps'))>=10 &...
-    group(:,contains(varnames,'nSpikes'))>=100,:);
+    group(:,contains(varnames,'nSpikes'))>=100;
+groupid=groupid(idx,:);
 
-group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
-    group(:,contains(varnames,'FieldWidth'))>=8 &...
-    group(:,contains(varnames,'FieldWidth'))<=80 &...
-    group(:,contains(varnames,'nlaps'))>=10 &...
-    group(:,contains(varnames,'nSpikes'))>=100,:);
+group=group(idx,:);
+end
+
+function [group,groupid]=interneuron_filter(group,groupid,varnames)
+idx=group(:,contains(varnames,'spikewidth'))<=.25;
+groupid=groupid(idx,:);
+
+group=group(idx,:);
 end
 
 function [group,groupid]= preshuffle_placefieldfilter(group,groupid,varnames)
