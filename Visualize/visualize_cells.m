@@ -43,7 +43,7 @@ for i=1:length(sessions)
     
     data=load(sessions{i});
     
-    postprocessFigures.main(data,{groupid(idx,2),str2double(groupid(idx,3))});
+    postprocessFigures.main(data,'cellid',{groupid(idx,2),str2double(groupid(idx,3))});
     
     FigList=findobj(allchild(0), 'flat', 'Type', 'figure');
     for iFig=1:length(FigList)
