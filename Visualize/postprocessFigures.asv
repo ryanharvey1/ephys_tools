@@ -188,7 +188,7 @@ classdef postprocessFigures
                             % PHASE COLORMAP
                             p(7, ns).select();
                             ax=gca;
-                            postprocessFigures.phase_colormap(colorcode)
+                            postprocessFigures.phase_colormap(ax)
                         end
                         
                     elseif (contains(data.mazetypes{round(ns/2)},'box','IgnoreCase',true) ||...
@@ -584,10 +584,7 @@ classdef postprocessFigures
                 measures(contains(varnames,["IsolationDistance","ShortISI"]))))
         end
         
-        function phase_colormap(colorcode)
-            % input: 
-            %   colorcode: just the title of the plot
-            %
+        function phase_colormap(ax)
             % Set parameters (these could be arguments to a function)
             rInner = 250;     % inner radius of the colour ring
             rOuter = 500;    % outer radius of the colour ring
@@ -609,9 +606,6 @@ classdef postprocessFigures
             end
             imshow(flip(rgb,2));
             axis image
-            if exist('colorcode','var')
-                title(colorcode)
-            end
             
 %             % set up colormap
 %             theta=0:.01:2*pi;
