@@ -594,6 +594,6 @@ save(fullfile(strjoin(processedpath,filesep),'ProcessedData',[data.rat,'_',data.
 % -------------------------------CREATING PLOTS----------------------------
 if figures==1
     close all
-    postprocessFigures.main(data);
+    postprocessFigures.main(data,'colorcode','HD');
 end
 disp 'DONE'
