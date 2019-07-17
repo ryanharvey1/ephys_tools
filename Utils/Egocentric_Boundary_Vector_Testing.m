@@ -24,12 +24,15 @@ c=hsv(length(theta));
 ts=data.frames(data.frames(:,1)>data.events(1,session) & data.frames(:,1)<data.events(2,session),1);
 x=data.frames(data.frames(:,1)>data.events(1,session) & data.frames(:,1)<data.events(2,session),2);
 y=data.frames(data.frames(:,1)>data.events(1,session) & data.frames(:,1)<data.events(2,session),3);
+hd=data.frames(data.frames(:,1)>data.events(1,session) & data.frames(:,1)<data.events(2,session),4);
 vel=data.frames(data.frames(:,1)>data.events(1,session) & data.frames(:,1)<data.events(2,session),5);
 
 ts(isnan(x))=[];
+hd(isnan(x))=[];
 x(isnan(x))=[];
 y(isnan(y))=[];
 vel(isnan(vel))=[];
+
 
 in=contiguousframes(vel<5,1);
 
@@ -57,6 +60,8 @@ angle=[angle;angle(end)];
 angle(angle==0 | angle==180)=NaN;
 % smooth over no movement 
 angle=wrapTo360(fixNLXangle(angle,round(0.1667*data.samplerate)));
+
+% angle=hd';
 
 % filter out low velocity 
 ts(in)=[];
