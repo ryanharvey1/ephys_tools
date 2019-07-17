@@ -464,7 +464,7 @@ classdef postprocessFigures
             axis tight
             hold on;box off;
             colormap(ax,viridis(255))
-            title(sprintf('Info Content: %4.2f Peak Rate: %4.2f',...
+            title(sprintf('IC: %4.2f  %4.2f hz',...
                 measures(contains(varnames,["InformationContent","PeakRate"]))))
         end
         
@@ -475,7 +475,7 @@ classdef postprocessFigures
             imagesc(ratemap,'AlphaData',imAlpha);
             axis xy; axis off; hold on; box off; axis image;
             colormap(ax,viridis(255))
-            title(sprintf('Info Content: %4.2f Peak Rate: %4.2f',...
+            title(sprintf('IC: %4.2f  %4.2f hz',...
                 measures(contains(varnames,["InformationContent","PeakRate"]))))
         end
         
@@ -566,7 +566,7 @@ classdef postprocessFigures
             plot(thetaautocorr,'LineWidth',2, 'color','k');
             axis tight
             hold on;box off; axis off
-            title(sprintf('Theta modulation: %4.2f',...
+            title(sprintf('Theta mod: %4.2f',...
                 measures(contains(varnames,'thetaindex'))))
         end
         
