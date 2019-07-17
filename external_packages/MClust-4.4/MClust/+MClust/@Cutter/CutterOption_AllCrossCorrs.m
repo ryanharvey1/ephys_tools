@@ -28,8 +28,9 @@ for iC = 1:nToShow
 		C0 = self.Clusters{showIt(iC)}; T0 = C0.GetSpikeTimes();
 		C1 = self.Clusters{showIt(jC)}; T1 = C1.GetSpikeTimes();
 		ax = subplot(nToShow, nToShow, (iC-1)*nToShow+jC); 
-		MClust.CrossCorr(T0, T1, 'axesHandle', ax, ...
-			'myTitle', sprintf('%2d x %2d', showIt(iC), showIt(jC)));
+        MClust.CrossCorr(T0, T1, 'axesHandle', ax, ...
+			'myTitle', sprintf('%2d x %2d', showIt(iC), showIt(jC)),...
+            'width',.05); % RH 2019 50ms instead of 500ms
 		axis off
 		set(ax, 'XTick', [], 'YTick', []);
 		set(ax, 'box', 'on')
