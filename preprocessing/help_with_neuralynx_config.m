@@ -1,6 +1,7 @@
 % help_with_neuralynx_config
+number_of_tetrodes=8;
 
-nchannels=4*14;
+nchannels=4*number_of_tetrodes;
 chan_num=0:nchannels;
 clc
 for i=1:nchannels
