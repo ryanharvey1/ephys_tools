@@ -6,10 +6,9 @@
 %
 % cd to data and get file names
 clear;clc;close all
-addpath(genpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/CircStat2012a'))
-addpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis')
 
-path='/Users/ryanharvey/Dropbox/FSU Collab/';
+
+path='D:\Projects\HD_decoding\Ryan_RawData_Redo';
 
 cd(path)
 files=dir( '**/*.r');
@@ -55,21 +54,21 @@ for a=1:length(folders)
         % remove non-detects in the first 4 xy columns
         frames(frames(:,2)==255 | frames(:,3)==255 | frames(:,4)==255 | frames(:,5)==255,2:5)=NaN;
         % add one to elimate zeros (zeros typically represent tracker non-detects)
-        frames(:,2:5)=frames(:,2:5)+1;
+%         frames(:,2:5)=frames(:,2:5)+1;
         % smooth position
-        [frames(:,2),frames(:,3)]=FixPos(frames(:,2),frames(:,3),frames(:,1),round(0.1667*60));
-        [frames(:,4),frames(:,5)]=FixPos(frames(:,4),frames(:,5),frames(:,1),round(0.1667*60));
+%         [frames(:,2),frames(:,3)]=FixPos(frames(:,2),frames(:,3),frames(:,1),round(0.1667*60));
+%         [frames(:,4),frames(:,5)]=FixPos(frames(:,4),frames(:,5),frames(:,1),round(0.1667*60));
         % calculate head direction 
-        frames(:,10)=wrapTo2Pi(deg2rad(atan2d(frames(:,5)-frames(:,3),frames(:,4)-frames(:,2))));
+%         frames(:,10)=wrapTo2Pi(deg2rad(atan2d(frames(:,5)-frames(:,3),frames(:,4)-frames(:,2))));
         % calculate distance between LEDs
-        frames(:,11)=sqrt((frames(:,4)-frames(:,2)).^2+(frames(:,5)-frames(:,3)).^2);
+%         frames(:,11)=sqrt((frames(:,4)-frames(:,2)).^2+(frames(:,5)-frames(:,3)).^2);
         
         % create expanded frames with spikes included
-        framesEXP_smooth=make_framesEXP(frames);
+%         framesEXP_smooth=make_framesEXP(frames);
 
         % save data
-        data.(id).(cell).frames_w_spk_smooth=framesEXP_smooth;
-        data.(id).(cell).frames_smooth=frames;
+%         data.(id).(cell).frames_w_spk_smooth=framesEXP_smooth;
+%         data.(id).(cell).frames_smooth=frames;
         
         
         %% CREATE TUNING CURVE

@@ -10,7 +10,7 @@ clear;clc;close all
 % addpath('/Users/RyanHarvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis')
 
 % path='/Users/ryanharvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis/HD_CELL_PROJECT/PHC HD Cells';
-path='/Users/ryanharvey/GoogleDrive/MatlabDir/BClarkToolbox/Analysis/HD_CELL_PROJECT/other/PHC HD Cells';
+path='D:\Projects\HD_decoding\Ryan_RawData_Redo';
 cd(path)
 filenames=dir;
 filenames={filenames.name}';
@@ -43,7 +43,7 @@ for i=1:length(filenames)
     % remove non-detects in the first 4 xy columns
     frames(frames(:,2)==255 | frames(:,3)==255 | frames(:,4)==255 | frames(:,5)==255,:)=NaN;
     
-    [frames(:,2),frames(:,3)]=FixPos(frames(:,2),frames(:,3),frames(:,1),round(0.1667*60));
+%     [frames(:,2),frames(:,3)]=FixPos(frames(:,2),frames(:,3),frames(:,1),round(0.1667*60));
 
 %     [thetaout]=smoothangle(frames(:,10),10);
 
