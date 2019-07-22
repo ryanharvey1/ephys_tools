@@ -6,17 +6,19 @@
 %
 % cd to data and get file names
 clear;clc;close all
-com=which('HD_Project_TuningCurve_v2');
-com=strsplit(com,filesep);
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-addpath([basedir,filesep,filesep,'CircStat2012a'],...
-    [basedir,filesep,'BClarkToolbox',filesep, 'Analysis']);
+% com=which('HD_Project_TuningCurve_v2');
+% com=strsplit(com,filesep);
+% basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
+% addpath([basedir,filesep,filesep,'CircStat2012a'],...
+%     [basedir,filesep,'BClarkToolbox',filesep, 'Analysis']);
 
 if ismac
     path='/Users/ryanharvey/Downloads/HeadDIrectionCells_LauraRyan';
 else
     path='D:\Projects\Multi_Region_HD\HeadDIrectionCells_LauraRyan';
 end
+path='D:\Dropbox\school work\UNM\Lab\Projects\Multi_Region_HDcells';
+
 % path='d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\Ben_HDCProject\Data';
 cd(path)
 files=dir( '**/*.r');
@@ -142,7 +144,7 @@ for a=1:length(folders)
                 
         HDdata.(areas{a}).ratemap{i,1}=SmoothRateMap;
         
-        [BW,maskedImage,x,y,fieldarea,X] = segmentImage('map',inpaint_nans(SmoothRateMap,2),'binsize',binsize);
+        [BW,maskedImage,x,y,fieldarea,X] = segmentImage('map',SmoothRateMap,'binsize',binsize);
         HDdata.(areas{a}).nfields(i,1)=length(fieldarea);
         HDdata.(areas{a}).fieldarea{i,1}=fieldarea;
 
@@ -184,7 +186,7 @@ for a=1:length(folders)
         HDdata.(areas{a}).gridscore(i,1)=gridout.maxSinuGrid;
         
         %% INFO CONTENT
-        HDdata.(areas{a}).informationContent(i,1)=infocontent(SmoothRateMap,occ);
+        HDdata.(areas{a}).informationContent(i,1)=place_cell_analysis.SpatialInformation('ratemap',SmoothRateMap,'occupancy',occ);
         
 %         %% SHUFFLE SPATIAL SCORES
 %         
@@ -342,6 +344,33 @@ for a=1:length(folders)
         %% COMPUTE R LENGTH
         rlength(i,1)=circ_r(angBins',hdTuning',deg2rad(6));
         
+        %% some plots
+        fig=figure;fig.Color=[1 1 1];
+        x=median([framesEXP(:,2),framesEXP(:,4)],2);
+        y=median([framesEXP(:,3),framesEXP(:,5)],2);
+        plot(x,y,'Color',[.7 .7 .7],'LineWidth',2)
+        hold on
+        
+        theta=0:.01:2*pi;
+        color=hsv(length(theta));
+        scatter(x(framesEXP(:,6)==1),y(framesEXP(:,6)==1),20,framesEXP(framesEXP(:,6)==1,10),'Filled')
+        colormap(gca,color)
+        
+        xlabel('x')
+        ylabel('y')
+        title(filenames{i})
+        axis tight
+        
+        fig=figure;fig.Color=[1 1 1];
+        plot(framesEXP(:,1),framesEXP(:,10),'Color',[.7 .7 .7])
+        hold on
+        
+        plot(framesEXP(framesEXP(:,6)==1,1),framesEXP(framesEXP(:,6)==1,10),'.k')
+        xlabel('time')
+        ylabel('angles (rad)')
+        title(filenames{i})
+        axis tight
+
         %% CIRCSHIFT SO PEAK IS IN THE MIDDLE
         [M,I]=max(hdTuning);
         middlebin=round(median(1:length(hdTuning)));
