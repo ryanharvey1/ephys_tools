@@ -375,23 +375,24 @@ for event=1:size(data.events,2)
                 end
                 
                 % calculate egocentric and border modulation based on (Peyrache, Schieferstein, Buzsaki, 2017)
-                if contains(data.mazetypes{event},'Box')
-                    out=egocentricmodulation(data_video_spk(:,2),data_video_spk(:,3),...
-                        data_video_spk(:,4),data_video_spk,length(ratemap),data.samplerate,3);
-                    egomod=max(out);
-                    
-                    bordermod=bordermodulation(length(ratemap),data_video_spk(:,1),...
-                        data_video_spk(:,2),data_video_spk(:,3),data.samplerate,logical(data_video_spk(:,6)),3);
-                    bordermod=max(bordermod);
-                else
-                    out=egocentricmodulation_circ(data_video_spk(:,2),data_video_spk(:,3),...
-                        data_video_spk(:,4),data_video_spk,length(ratemap),data.samplerate,3);
-                    egomod=max(out);
-                    bordermod=bordermodulation_circ(ratemap,data_video_spk(:,1),...
-                        data_video_spk(:,2),data_video_spk(:,3),data.samplerate,logical(data_video_spk(:,6)),3);
-                    bordermod=max(bordermod);
-                    
-                end
+%                 if contains(data.mazetypes{event},'Box')
+%                     out=egocentricmodulation(data_video_spk(:,2),data_video_spk(:,3),...
+%                         data_video_spk(:,4),data_video_spk,length(ratemap),data.samplerate,3);
+%                     egomod=max(out);
+%                     
+%                     bordermod=bordermodulation(length(ratemap),data_video_spk(:,1),...
+%                         data_video_spk(:,2),data_video_spk(:,3),data.samplerate,logical(data_video_spk(:,6)),3);
+%                     bordermod=max(bordermod);
+%                 else
+%                     out=egocentricmodulation_circ(data_video_spk(:,2),data_video_spk(:,3),...
+%                         data_video_spk(:,4),data_video_spk,length(ratemap),data.samplerate,3);
+%                     egomod=max(out);
+%                     bordermod=bordermodulation_circ(ratemap,data_video_spk(:,1),...
+%                         data_video_spk(:,2),data_video_spk(:,3),data.samplerate,logical(data_video_spk(:,6)),3);
+%                     bordermod=max(bordermod);
+%                 end
+                egomod=NaN;
+                bordermod=NaN;
             else
                 % LINEAR
                 for fie=1:length(fields{1})
