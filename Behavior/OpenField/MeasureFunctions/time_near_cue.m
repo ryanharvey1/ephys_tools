@@ -1,7 +1,7 @@
 % time_near_cue
 % Ryan Harvey 2019
-load('D:\Projects\TG_largeOpenField\params_V12.mat')
-
+load('D:\Projects\TG_largeOpenField\params_V17.mat')
+tic
 for i=1:size(params.subID)
     
     if any(isnan(params.cueCM{i}))
@@ -118,3 +118,4 @@ for i=1:size(params.subID)
     params.time_out_zone{i}=sum(~inbound)/30;
 
 end
+toc
