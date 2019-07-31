@@ -50,6 +50,10 @@ thetaout(~isnan(thetaout)) = [thetain(find(~isnan(thetain),1,'first'));...
 thetaout=atan2(sin(thetaout),cos(thetaout)); % bring back to radians bound by [-pi, pi)
 
 thetaout=(thetaout*180)./pi;
+
+if iscolumn(thetaout)
+    thetaout=thetaout';
+end
 end
 
 function x = RemoveJumpsAndSmooth(x, max_allowed_flips, jitter_threshold, smooth_std,filter_def)
@@ -93,28 +97,28 @@ if ~exist('filter_def','var'), filter_def = -6:6;end
 % cut out any jumps that are too long
 
 flips = findOnsetsAndOffsets(isnan(x));
-
-flips(:,2) = flips(:,2)+1;
-
-flips = [flips(:); find(abs(diff(x))>jitter_threshold)+1]; % all flip points
-
-flips = sort(unique(flips)); % indeces of NaNs or jumps
-
-flips = [flips(1:end-1), flips(2:end)];  % epochs formation
-
-flips(:,2) = flips(:,2)-1; % adjust for diff shift
-
-flips(flips(:,2)-flips(:,1)>max_allowed_flips-1,:) = []; % remove those greater than max_allowed_flips
-
-flips = mat2cell(flips, ones(size(flips,1),1),2); % convert to pairs corresponding to steps
-
-flips = cellfun(@(c) c(1):c(2), flips, 'unif', 0); % convert to indices
-
-x([flips{:}]) = []; % remove samples in ts and x
-ts([flips{:}]) = [];
-
-x = interp1(ts, x, ts2);
-
+if ~isempty(flips)
+    flips(:,2) = flips(:,2)+1;
+    
+    flips = [flips(:); find(abs(diff(x))>jitter_threshold)+1]; % all flip points
+    
+    flips = sort(unique(flips)); % indeces of NaNs or jumps
+    
+    flips = [flips(1:end-1), flips(2:end)];  % epochs formation
+    
+    flips(:,2) = flips(:,2)-1; % adjust for diff shift
+    
+    flips(flips(:,2)-flips(:,1)>max_allowed_flips-1,:) = []; % remove those greater than max_allowed_flips
+    
+    flips = mat2cell(flips, ones(size(flips,1),1),2); % convert to pairs corresponding to steps
+    
+    flips = cellfun(@(c) c(1):c(2), flips, 'unif', 0); % convert to indices
+    
+    x([flips{:}]) = []; % remove samples in ts and x
+    ts([flips{:}]) = [];
+    
+    x = interp1(ts, x, ts2);
+end
 % gaussian_filter = pdf('Normal',-5*smooth_std:5*smooth_std,0,smooth_std);
 if smooth_std>0
     x = ndnanfilter(x, normpdf(filter_def, 0, smooth_std)', [], 1, {}, {}, 1); % convolve with gaussian and ignore NaNs
