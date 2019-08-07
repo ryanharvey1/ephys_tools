@@ -152,6 +152,14 @@ clear StartofRec EndofRec
 disp('Have patience...Loading LFP')
 channels=table2cell(struct2table(dir([path,filesep,'*.ncs'])));
 lfpfile=[strcat(channels(:,2),filesep,channels(:,1))];
+
+if length(dir(fullfile(path,'*.ncs'))) ~= length(dir(fullfile(path,'*.ntt')))   
+    clear lfpfile
+    for ch=1:length(dir(fullfile(path,'*.ntt')))
+        lfpfile{ch,1}=fullfile(path,['CSC',num2str(ch),'.ncs']);
+    end
+end
+
 [data]=downsampleLFP(lfpfile,data);
 clear tetrodes lfpfile
 
@@ -217,9 +225,9 @@ for event=1:size(data.events,2)
         temporal_stability=temporalstability(data_video_spk(data_video_spk(:,6)==1,1),data_video_spk(:,1));
         
         % calculate IFR
-        [ifr,~]=instantfr(data.Spikes{i}(data.Spikes{i}>data.events(1,event)...
-            & data.Spikes{i}<data.events(2,event)),data_video_spk(1,1):.2:data_video_spk(end,1));
-        
+        [ifr,~]=instantfr(unique(data.Spikes{i}(data.Spikes{i}>data.events(1,event)...
+            & data.Spikes{i}<data.events(2,event))),data_video_spk(1,1):.2:data_video_spk(end,1));
+
         % correlation ifr to average running speed to see if firing rate
         % increases as a function of running speed
         b=data.binned_vel{event}; % the averaged vector
