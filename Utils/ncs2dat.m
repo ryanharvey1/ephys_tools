@@ -1,7 +1,11 @@
 function ncs2dat(channels,targetfile,varargin)
 % based on python file ncs2dat.py
+cd (targetfile)
 
-Args = struct('basename','CSC','zeropad',0,'pyFileLoc','python C:\Users\ryanh\GoogleDrive\Python\ncs2dat.py','fileExt','.ncs');
+pathsplt=strsplit(targetfile,filesep);
+targetfile=fullfile(targetfile,pathsplt{end});
+
+Args = struct('basename','CSC','zeropad',0,'pyFileLoc','python D:\ryanh\GoogleDrive\Python\ncs2dat.py','fileExt','.ncs');
 Args.flags = {'zeropad'};
 [Args,~] = getOptArgs(varargin,Args,'remove',{});
 
@@ -25,7 +29,7 @@ if status == 0
     display(['saved ' pwd filesep targetfile])
 else
     display('ERROR ERROR ERROR ERROR')
-    save('ncs2datError.mat','cmdout')
+%     save('ncs2datError.mat','cmdout')
     
 end
 
