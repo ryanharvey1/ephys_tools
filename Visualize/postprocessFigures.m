@@ -299,13 +299,15 @@ classdef postprocessFigures
             
             subplot(3,2,5)
             % find rows with all zeros
-            idx=sum(data.lfp.signal==0,2)~=size(data.lfp.signal,2);
+%             idx=sum(data.lfp.signal==0,2)~=size(data.lfp.signal,2);
+            [~,b,c]=unique(data.spikesID.TetrodeNum);
+            idx=str2double(regexp(data.spikesID.TetrodeNum{b(mode(c))},'\d*','Match'));
             % power spectrum
-            pspectrum(median(data.lfp.signal(idx,:)),1000,'spectrogram','FrequencyLimits',[0, 100],'TimeResolution', 10);
+            pspectrum(data.lfp.signal(idx,:),1000,'spectrogram','FrequencyLimits',[0, 100],'TimeResolution', 10);
             
             subplot(3,2,6)
             % power by freq
-            pspectrum(median(data.lfp.signal(idx,:)),1000,'power','FrequencyLimits',[0, 100]);
+            pspectrum((data.lfp.signal(idx,:)),1000,'power','FrequencyLimits',[0, 100]);
             
             colormap(viridis(255))
         end
