@@ -126,9 +126,13 @@ while contains(moresessions,'y')
         AnimalMetadata.RecordingLogs.(sessiondate).MazeTypes=input('MazeTypes  ','s');
         sessions=fieldnames(AnimalMetadata.RecordingLogs);
         for i=1:length(AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Anteroposterior)
-            AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral(i,1)=input('Number of Turns  ')...
+           try
+               AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral(i,1)=input('Number of Turns  ')...
                 *AnimalMetadata.ExtracellEphys.Probes.mmPerScrewTurn+...
                 AnimalMetadata.RecordingLogs.(sessions{end-1}).DorsalVentral(i);
+           catch
+               AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral(i,1)=0;
+           end
         end
         if contains(input('View current coordinates over brain atlas? (''y'',''n'') ','s'),'y')
             brainAtlas([AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Mediolateral,...
