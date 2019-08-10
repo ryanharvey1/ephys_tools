@@ -1,11 +1,19 @@
-function ncs2dat(channels,targetfile,varargin)
-% based on python file ncs2dat.py
-cd (targetfile)
+function ncs2dat(varargin)
+% ncs2dat: calls python file ncs2dat.py
+% to run, cd to session folder and run this function
 
+channels=1:length(dir('*.ncs'));
+
+targetfile=pwd;
+
+% create target file name (session folder name)
 pathsplt=strsplit(targetfile,filesep);
 targetfile=fullfile(targetfile,pathsplt{end});
 
-Args = struct('basename','CSC','zeropad',0,'pyFileLoc','python D:\ryanh\GoogleDrive\Python\ncs2dat.py','fileExt','.ncs');
+% locate ncs2dat.py (should be within Utils)
+py_loc=which('ncs2dat.py');
+
+Args = struct('basename','CSC','zeropad',0,'pyFileLoc',['python ', py_loc],'fileExt','.ncs');
 Args.flags = {'zeropad'};
 [Args,~] = getOptArgs(varargin,Args,'remove',{});
 
