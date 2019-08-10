@@ -301,10 +301,16 @@ classdef after_spikesort_cleanup
                 wf = getWaveForms(gwfparams);
                 
                 for u=1:size(wf.waveFormsMean,1)
-                    avgwf=squeeze(wf.waveFormsMean(u,[i+1:i+4],:));
-                    for ch=1:4
-                        means{u}(ch,:)=interp1(1:size(avgwf,2),avgwf(ch,:),...
-                            linspace(1,size(avgwf,2),150),'spline');
+                    ch_num=1;
+                    for ch=[i+1:i+4]
+                        try
+                            means{u}(ch_num,:)=interp1(1:size(wf.waveFormsMean,3),...
+                                squeeze(wf.waveFormsMean(u,ch,:)),...
+                                linspace(1,size(wf.waveFormsMean,3),150),'spline');
+                        catch
+                            means{u}(ch_num,:)=zeros(1,150);
+                        end
+                        ch_num=ch_num+1;
                     end
                 end
                 
