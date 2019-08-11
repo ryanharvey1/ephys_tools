@@ -21,17 +21,14 @@ classdef after_spikesort_cleanup
             % Ryan Harvey
             %
             
-            % MClust
             if exist(fullfile(pwd,'FD'),'file')
                 
                 after_spikesort_cleanup.handle_tfiles
                 
-            % Spikesort3D    
             elseif contains(pwd,'Sorted')
                 
                 after_spikesort_cleanup.handle_ntt
                 
-            % Kilosort2 / phy    
             elseif exist(fullfile(pwd,'spike_times.npy'),'file')
                 
                 after_spikesort_cleanup.handle_phy
@@ -220,8 +217,6 @@ classdef after_spikesort_cleanup
             % calcuate cluster quality metrics
             % save all to .mat files in currently used format
             
-            tic
-            
             myKsDir=pwd;
             
             disp(myKsDir)
@@ -294,7 +289,6 @@ classdef after_spikesort_cleanup
                 if isempty(output)
                     continue
                 end
-                
                 % convert seconds to microseconds, add the first video ts, 
                 % and then subtract video sample rate
                 output(:,1)=(output(:,1)*10^6+ts(1))-mean(diff(ts));
@@ -352,8 +346,8 @@ classdef after_spikesort_cleanup
                 clear means grades ISI_store
                 
             end
-            toc
             disp('finished... go post process this session :)')
+            
         end
     end
     
