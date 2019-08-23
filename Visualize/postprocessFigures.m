@@ -51,13 +51,7 @@ classdef postprocessFigures
             if sum(contains(data.mazetypes,'track'))>1
                 nsessions=sum(contains(data.mazetypes,'track'))*2+sum(~contains(data.mazetypes,'track'));
             end
-            % set up colormap
-            %             theta=0:.01:2*pi;
-            %             c=hsv(length(theta));
-            
-            %             if any(any(contains(data.mazetypes,'circ track') | contains(data.mazetypes,'LinearTrack')))
-            %                 unlinear=data.linear_track.nonlinearFrames;
-            %             end
+         
             
             if ~isempty(cellid)
                 cells_to_find=strcat(cellid{1},num2str(cellid{2}));
@@ -290,7 +284,6 @@ classdef postprocessFigures
             spiketimes=vertcat(data.Spikes{:});
             % BIN SPIKE TIMES FROM ALL CELLS OVER 500MS
             edges=linspace(min(spiketimes),max(spiketimes),round(data.frames(end,1)/3));
-            %     plot(edges(1:end-1),histcounts(spiketimes,edges),'k');
             histogram(spiketimes,edges)
             box off;axis tight
             xlabel('Time(sec)')
@@ -299,7 +292,6 @@ classdef postprocessFigures
             
             subplot(3,2,5)
             % find rows with all zeros
-%             idx=sum(data.lfp.signal==0,2)~=size(data.lfp.signal,2);
             [~,b,c]=unique(data.spikesID.TetrodeNum);
             idx=str2double(regexp(data.spikesID.TetrodeNum{b(mode(c))},'\d*','Match'));
             % power spectrum
@@ -435,18 +427,9 @@ classdef postprocessFigures
             axis image
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
-%                 txya=dataspks(dataspks(:,6)==0,:);
-%                 [~,idx]=unique(txya(:,1));
-%                 txya= txya(idx,:);
-%                 scatter(x(spkbinary),y(spkbinary),20,...
-%                     interp1(txya(:,1),...
-%                     txya(:,4),ts(spkbinary)','linear'),'filled');
-                
                  scatter(x(spkbinary),y(spkbinary),20,...
                     interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
-                
             elseif strcmp(colorcode,'phase')
-%                 scatter(x(spkbinary),y(spkbinary),20,interp1(lfp_ts,theta_phase,ts(spkbinary)','linear'),'filled');
                 scatter(x(spkbinary),y(spkbinary),20,...
                     interp1(theta',...
                     color,interp1(lfp_ts,theta_phase,ts(spkbinary)')),'filled');
@@ -488,13 +471,6 @@ classdef postprocessFigures
             phase=interp1(lfp_ts,theta_phase,dataspks(logical(dataspks(:,6)),1)','linear');
             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],[phase';phase'+2*pi]*180/pi,15,'Filled','k');
             
-%             txya=dataspks(dataspks(:,6)==0,:);
-%             [~,idx]=unique(txya(:,1));
-%             txya= txya(idx,:);
-%             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],...
-%                 [phase';phase'+2*pi]*180/pi,20,...
-%                 [interp1(txya(:,1),txya(:,4),dataspks(logical(dataspks(:,6)),1));interp1(txya(:,1),txya(:,4),dataspks(logical(dataspks(:,6)),1))],'filled');
-%             
             box off;axis off
             xlim([min(x) max(x)])
             set(ax,'YTick',0:360:720,'YTickLabel',[{'0'},{'2\pi'},{'4\pi'}])
@@ -614,19 +590,6 @@ classdef postprocessFigures
             if exist('colorcode','var')
                 title(colorcode)
             end
-            
-%             % set up colormap
-%             theta=0:.01:2*pi;
-%             color=hsv(length(theta));
-%             
-%             imagesc(theta);hold on
-%             colormap(ax,color)
-%             set(ax,'XTick',linspace(0,length(theta),2),'XTickLabel',...
-%                 [{'0'} {'2\pi'}],'TickLength',[0,0],'YTick',[.5 1 1.5],'YTickLabel',[])
-%             x = 0:1:length(theta);
-%             y = rescale(gaussmf(x,[median([1,length(theta)/2]) length(theta)/2]),.5,1.5);
-%             plot(x,y,'w')
-%             axis square
         end
         
         function plot_HD_tuning(data,session,cell)
@@ -635,14 +598,6 @@ classdef postprocessFigures
 
             [r,~,Ispk,~,~,tuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),...
                 data_video_spk(data_video_spk(:,6)==1,4),data.samplerate);
-            %             angBins=0:6:360;
-            %             bin_centers=movmedian(angBins,2);
-            %             bin_centers(1)=[];
-            %             polarplot(deg2rad(bin_centers),tuning,'k')
-            %             ax=gca;
-            %             set(ax,'RGrid','off','ThetaGrid','off','ThetaTick',[0 90],...
-            %                 'ThetaTickLabels',[0 90],'RTick',max(tuning),'RTickLabel',max(tuning),'LineWidth',3);
-            %             axis tight
             
             angBins=0:6:360;
             bin_centers=movmedian(angBins,2);
