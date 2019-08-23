@@ -382,16 +382,15 @@ classdef postprocessFigures
             [ts,idx]=unique(unlinear_together(:,1));
             if strcmp(colorcode,'HD')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
-                    interp1(ts,unlinear_together(idx,4),spkts,'linear'),'filled');  
+                    interp1(rad2deg(theta)',color,interp1(ts,unlinear_together(idx,4),spkts)),'filled');  
             elseif strcmp(colorcode,'phase')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
-                    interp1(lfp_ts,theta_phase,spkts,'linear'),'filled');
+                    interp1(theta',color,interp1(lfp_ts,theta_phase,spkts)),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),interp1(ts,unlinear_together(idx,3),spkts),10,...
                     'r','filled');
             end
             box off;axis image; axis off
-            colormap(ax,color)
             title(['nSpikes: ',num2str(length(spkts))]);
         end
         
@@ -410,20 +409,15 @@ classdef postprocessFigures
             axis tight
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
-                txya=dataspks(dataspks(:,6)==0,:);
-                [~,idx]=unique(txya(:,1));
-                txya= txya(idx,:);
                 scatter(x(spkbinary),ts(spkbinary),20,...
-                    interp1(txya(:,1),...
-                    txya(:,4),ts(spkbinary)','linear'),'filled');
+                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),ts(spkbinary),20,...
-                    interp1(lfp_ts,...
-                    theta_phase,ts(spkbinary)','linear'),'filled');
+                    interp1(theta',...
+                    color,interp1(lfp_ts,theta_phase,ts(spkbinary)')),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),ts(spkbinary),20,'r','filled');
             end
-            colormap(ax,color)
         end
         
         function spikesonpath_2d(ax,dataspks,lfp_ts,theta_phase,colorcode)
@@ -441,18 +435,24 @@ classdef postprocessFigures
             axis image
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
-                txya=dataspks(dataspks(:,6)==0,:);
-                [~,idx]=unique(txya(:,1));
-                txya= txya(idx,:);
-                scatter(x(spkbinary),y(spkbinary),20,...
-                    interp1(txya(:,1),...
-                    txya(:,4),ts(spkbinary)','linear'),'filled');
+%                 txya=dataspks(dataspks(:,6)==0,:);
+%                 [~,idx]=unique(txya(:,1));
+%                 txya= txya(idx,:);
+%                 scatter(x(spkbinary),y(spkbinary),20,...
+%                     interp1(txya(:,1),...
+%                     txya(:,4),ts(spkbinary)','linear'),'filled');
+                
+                 scatter(x(spkbinary),y(spkbinary),20,...
+                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
+                
             elseif strcmp(colorcode,'phase')
-                scatter(x(spkbinary),y(spkbinary),20,interp1(lfp_ts,theta_phase,ts(spkbinary)','linear'),'filled');
+%                 scatter(x(spkbinary),y(spkbinary),20,interp1(lfp_ts,theta_phase,ts(spkbinary)','linear'),'filled');
+                scatter(x(spkbinary),y(spkbinary),20,...
+                    interp1(theta',...
+                    color,interp1(lfp_ts,theta_phase,ts(spkbinary)')),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),y(spkbinary),20,'r','filled');
             end
-            colormap(ax,color)
             title(['nSpikes: ',num2str(sum(dataspks(:,6)==1))]);
         end
         
