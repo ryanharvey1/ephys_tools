@@ -366,9 +366,8 @@ classdef postprocessFigures
             
             spkts=spkframes(spkframes(:,6)==1,1);
             unlinear_together=vertcat(unlinear_{:});
-            if contains(mazetypes{1},'LinearTrack')
-                [unlinear_together(:,2),unlinear_together(:,3)]=...
-                    ParameterizeToLinearTrack2(unlinear_together(:,2),unlinear_together(:,3));
+            if contains(mazetypes{1},'LinearTrack') 
+                [~,unlinear_together(:,2:3),~] = pca([unlinear_together(:,2),unlinear_together(:,3)]);
             end
             plot(unlinear_together(:,2),unlinear_together(:,3),'.k');hold on
             [ts,idx]=unique(unlinear_together(:,1));

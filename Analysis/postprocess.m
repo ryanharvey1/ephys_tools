@@ -111,21 +111,22 @@ tempangle(tempangle<0)=tempangle(tempangle<0)+360;
 
 data_video=[ts',xtemp,ytemp,tempangle]; clear xtemp ytemp ts
 
+% make circular and linear track coords linear 
 if any(contains(data.mazetypes,'track','IgnoreCase',true))
     for nmaze=find(contains(data.mazetypes,'track','IgnoreCase',true))
         templinear=data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),:);
         data.linear_track{nmaze}.nonlinearFrames=templinear;
         if contains(data.mazetypes{nmaze},'circ track')
             [X,Y]=ParamToHorseshoeTrack(templinear(:,2),templinear(:,3));
+            data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),2:3)=[X Y];
         elseif contains(data.mazetypes{nmaze},'Linear','IgnoreCase',true)
-            [X,Y]=ParameterizeToLinearTrack2(templinear(:,2),templinear(:,3));
+            [~,XY,~] = pca([templinear(:,2),templinear(:,3)]);
+            data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),2:3)=XY;
         end
-        data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),2:3)=[X Y];
     end
 end
 
 % FIND MAX DIM OF MAZE TO CALCULATE VELOCITY
-
 if sum(contains(path,'HPCatn'))>0 && any(contains(data.mazetypes,'track'))
     mazesize=360;
 elseif sum(contains(path,'HPCatn'))==0 && size(StartofRec,2)==1 && mazesize~=90
