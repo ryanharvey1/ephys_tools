@@ -39,7 +39,8 @@ else
     idtn = inf;%tt(end)-tt0(end);
     ifr0 = 1./[idt1 idt1 idt(2:end-1) idtn idtn];
     tt0 = [tt(1) tt0 tt(end)];
-    ifr = interp1(tt0,ifr0,tt,'linear');
+    [tt0,I]=unique(tt0);
+    ifr = interp1(tt0,ifr0(I),tt,'linear');
     if size(tt,1)==1
         ifr=ifr';
     end
