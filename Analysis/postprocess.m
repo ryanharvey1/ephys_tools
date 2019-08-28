@@ -4,7 +4,15 @@
 %
 % Ryan E. Harvey
 %
-function data=postprocess(path,figures)
+function data=postprocess(varargin)
+p = inputParser;
+p.addParameter('path',pwd);
+p.addParameter('figures',1);
+p.parse(varargin{:});
+
+path = p.Results.path;
+figures = p.Results.figures;
+
 
 % load spike data
 [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path);
