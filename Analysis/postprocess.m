@@ -4,7 +4,7 @@
 %
 % Ryan E. Harvey
 %
-function data=postprocess(path,mazesize,linear_track,figures)
+function data=postprocess(path,figures)
 
 % load spike data
 [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path);
@@ -50,7 +50,6 @@ data.events=[StartofRec;EndofRec];
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % pull maze type from meta data if it exists
 data.mazetypes=get_maze_type(data);
-
 
 % SET UP VARIABLE NAMES & DATA STRUCTURE
 data.varnames={'InformationContent','Coherence','Sparsity','PeakRate',...
@@ -108,15 +107,11 @@ if any(contains(data.mazetypes,'track','IgnoreCase',true))
 end
 
 % FIND MAX DIM OF MAZE TO CALCULATE VELOCITY
-if sum(contains(path,'HPCatn'))>0 && any(contains(data.mazetypes,'track'))
-    mazesize=360;
-elseif sum(contains(path,'HPCatn'))==0 && size(StartofRec,2)==1 && mazesize~=90
-    mazesize=120;
-elseif any(contains(data.mazetypes,'box'))
-    mazesize=100;
-elseif contains(linear_track,'no')
-    mazesize=76.5;
-end
+load('mazesize.mat','mazesize')
+
+data.maze_size_cm=[mazesize{ismember([mazesize{:,1}]',data.mazetypes),2}];
+
+mazesize=max(data.maze_size_cm);
 
 % GET VELOCITY
 [vel_cmPerSec,~,pixelDist]=InstaVel([data_video(:,2),data_video(:,3)],mazesize,data.samplerate);
@@ -173,14 +168,6 @@ for event=1:size(data.events,2)
         disp('SESSION TOO SHORT...SKIPPING');
         continue;
     end
-    
-    % Arena diameter
-    if contains(data.mazetypes{event},'box','IgnoreCase',true)
-        mazesize = 100;
-    elseif contains(data.mazetypes{event},'Cylinder','IgnoreCase',true)
-        mazesize = 76.5;
-    end
-    data.maze_size_cm(event)=mazesize;
     
     % GET VELOCITY
     vel_cmPerSec=data_video(:,5);
