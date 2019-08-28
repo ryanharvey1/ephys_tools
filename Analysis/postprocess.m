@@ -49,27 +49,8 @@ data.events=[StartofRec;EndofRec];
 % MAZE TYPES
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % pull maze type from meta data if it exists
-try
-    data.mazetypes=get_maze_type(data);
-catch
-    for mt=1:length(StartofRec)
-        if mt<5 && contains(path,'ClarkP30')
-            mazetype{mt}='Cylinder';
-        elseif mt>=5 && contains(path,'ClarkP30')
-            mazetype{mt}=input(['Maze Type for Session: ',num2str(mt),'  '],'s');
-        end
-        if contains(linear_track,'yes') && ~contains(path,'HPCatn') && mt==1
-            mazetype{mt}='LinearTrack';
-        elseif contains(linear_track,'yes') && contains(path,'HPCatn') && mt==1
-            mazetype{mt}='circ track';
-        elseif contains(linear_track,'yes') && ~contains(path,'HPCatn') && mt>1
-            mazetype{mt}='Cylinder';
-        elseif contains(linear_track,'yes') && contains(path,'HPCatn') && mt>1
-            mazetype{mt}='Box';
-        end
-    end
-    data.mazetypes=mazetype; clear mt mazetypes
-end
+data.mazetypes=get_maze_type(data);
+
 
 % SET UP VARIABLE NAMES & DATA STRUCTURE
 data.varnames={'InformationContent','Coherence','Sparsity','PeakRate',...
