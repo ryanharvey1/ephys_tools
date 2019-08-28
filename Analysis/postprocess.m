@@ -156,9 +156,9 @@ for event=1:size(data.events,2)
     % SET UP SOME BASIC INFO ABOUT THE SESSION
     % LINEAR TRACK OR NOT
     if contains(data.mazetypes{event},'track','IgnoreCase',true)
-        linear_track='yes';
+        track=1;
     else
-        linear_track='no';
+        track=0;
     end
     
     % RESTRICT DATA BY START AND END OF EVENT TO CALCULATE SESSION
@@ -224,13 +224,13 @@ for event=1:size(data.events,2)
         clear ifr b I
         
         % SPLIT UP DATA BY RIGHT AND LEFT RUNS FOR LINEAR TRACK DATA
-        if isequal(linear_track,'yes')
+        if track==1
             
             runiteration=2;
             
             [right,left,DirectionalityIndex,Displacement,nlaps,rateoverlap,...
                 fieldoverlap,spatialcorrelation,startgoodrun,stopgoodrun,laps]=...
-                RightVsLeft(data_video_nospk,data_video_spk,mazesize,data.samplerate,data,event);
+                RightVsLeft(data_video_nospk,data_video_spk,data.maze_size_cm(event),data.samplerate,data,event);
             
             if ~isfield(data.linear_track{event},'lapinfo')
                 data.linear_track{event}.lapinfo.startgoodrun=startgoodrun;
@@ -251,7 +251,7 @@ for event=1:size(data.events,2)
             runiteration=1;
         end
         for iruns=1:runiteration
-            if isequal(linear_track, 'yes') % UNPACK STRUCTURE
+            if track==1 % UNPACK STRUCTURE
                 direction={'right','left'};
                 
                 occ=splitruns.(direction{iruns}).occ; 
@@ -278,12 +278,12 @@ for event=1:size(data.events,2)
             [thetaindex,thetapeak,cor,~]=thetamodulation(spks_VEL(:,1));
             
             % BIN & SMOOTH OPEN FIELD DATA
-            if isequal(linear_track,'no')
+            if track==0
                 [ratemap,nBinsx,nBinsy,occ,Coherence]=bindata(data_video_nospk,...
-                    data.samplerate,spks_VEL,linear_track,mazesize);
+                    data.samplerate,spks_VEL,track,data.maze_size_cm(event));
                 SmoothRateMap2=ratemap;
                 [field,FieldWidth]=FindFF2D(SmoothRateMap2);
-                FieldWidth=FieldWidth*(mazesize/length(field));
+                FieldWidth=FieldWidth*(data.maze_size_cm(event)/length(field));
                 if isnan(field)==0
                     % in field / out field FR
                     nanPlacement=isnan(SmoothRateMap2);
@@ -321,7 +321,7 @@ for event=1:size(data.events,2)
                 end
                 
                 [borderScore,Field2Wall]=BorderScore(SmoothRateMap2);
-                Field2Wall=Field2Wall*(mazesize/length(ratemap));
+                Field2Wall=Field2Wall*(data.maze_size_cm(event)/length(ratemap));
                 
                 % find field
                 [row,col]=find(field);k=boundary(row,col);
@@ -334,7 +334,7 @@ for event=1:size(data.events,2)
                 end
                 
                 % format data in a open field for phase precession
-                [~, filename] = fileparts(ID{i});
+                [~, filename] = fileparts(data.spikesID.paths{i});
                 trodeID = str2double(extractAfter(filename,'TT'));
                 
                 % Implementation of the pass index technique for examination of open-field phase precession
@@ -373,7 +373,7 @@ for event=1:size(data.events,2)
                 [~,I]=max(PR);
                 field=zeros(1,length(ratemap));
                 field(fields{1, 1}{I}.start:fields{1, 1}{I}.stop)=1;
-                FieldWidth=fields{1, 1}{I}.width*(mazesize/length(field));
+                FieldWidth=fields{1, 1}{I}.width*(data.maze_size_cm(event)/length(field));
                 
                 clear temp PR
                 
@@ -391,7 +391,7 @@ for event=1:size(data.events,2)
             
             % LFP ANALYSIS
             % Create name of CSC file from cell and path name
-            [~, filename] = fileparts(ID{i});
+            [~, filename] = fileparts(data.spikesID.paths{i});
             trodeID = str2double(extractAfter(filename,'TT'));
             
             if size(data.events,2)>1
@@ -411,7 +411,7 @@ for event=1:size(data.events,2)
             end
             
             % calc phase precession stats
-            if isequal(linear_track,'yes')
+            if track==1
                 % for linear track lets look at precession for every existing field
                 for f=1:size(fieldbound)
                     rescale_x=rescale(data_video_spk(:,2),0,1);
@@ -440,9 +440,9 @@ for event=1:size(data.events,2)
             
             
             % Calculate the distance from place field to wall - peaks method
-            if isequal(linear_track,'yes')
+            if track==1
                 [~, x_max]=find(ratemap==max(ratemap(:)));
-                Field2Wall=min([nBinsx-x_max x_max-0])*(mazesize/length(ratemap));
+                Field2Wall=min([nBinsx-x_max x_max-0])*(data.maze_size_cm(event)/length(ratemap));
             end
             
             % Get Sparsity
@@ -461,7 +461,7 @@ for event=1:size(data.events,2)
             %             end
             
             % INTRA-TRIAL STABILITY
-            IntraTrialR=place_cell_analysis.IntraTrialStability(data_video_spk,linear_track,mazesize);
+            IntraTrialR=place_cell_analysis.IntraTrialStability(data_video_spk,track,data.maze_size_cm(event));
             
             % SPIKE DIRECTION
             [r,~,Direct_infoContent,~,preferred_Direction,~]=...
@@ -471,7 +471,7 @@ for event=1:size(data.events,2)
             [spkBurstIx,burstLg,burstIdx]=BurstSpikes(spks_VEL(:,1));
             
             % pack results for NaN measures given maze type
-            if isequal(linear_track,'no')
+            if track==0
                 DirectionalityIndex=NaN;
                 nlaps=NaN;
                 rateoverlap=NaN;
@@ -545,11 +545,7 @@ for event=1:size(data.events,2)
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
             end
         end
-        clearvars -except path data_video SpikeFile mclustpath tfile mazesize...
-            linear_track SmoothRateMap_Right SmoothRateMap_Left figures S...
-            i Overall_DirectionalityIndex event...
-            timestamps vel_cmPerSec pixelDist grade data ratID video clusterquality prop ID...
-            EEG_DownSampledTimestamps EEGthetaData EEG_DownSampledData root
+        clearvars -except track figures i event data clusterquality prop pixelDist
     end
 end
 clearvars -except data figures

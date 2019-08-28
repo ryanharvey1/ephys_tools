@@ -1,7 +1,7 @@
-function [ SmoothRateMap,nBinsx,nBinsy,occ,Coherence] = bindata(occMatrix,sampleRate,spks_VEL,linear_track,track_length)
+function [ SmoothRateMap,nBinsx,nBinsy,occ,Coherence] = bindata(occMatrix,sampleRate,spks_VEL,track,track_length)
 %bindata: Creates smoothed ratemaps of linear track and open field enviorments
 
-if isequal(linear_track, 'yes')
+if track==1
     nBinsx = round(track_length/3); nBinsy = 1;
     if isempty(occMatrix)
         SmoothRateMap=zeros(nBinsy,nBinsx);
@@ -42,7 +42,7 @@ if isequal(linear_track, 'yes')
     % COHERENCE
     Coherence=corr2(FilledRateMatrix,SmoothRateMap);
     
-elseif isequal(linear_track,'no') % FOR ARENA
+elseif track==0 % FOR ARENA
     nBinsx = round(track_length/3); nBinsy = round(track_length/3);
     MinY = min(occMatrix(:,3));
     MaxY = max(occMatrix(:,3));

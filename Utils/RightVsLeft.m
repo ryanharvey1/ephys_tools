@@ -146,10 +146,10 @@ left.spks_VEL=lefts(lefts(:,6)==1,:);
 left.num_spikes=size(left.spks_VEL,1);
 
 % BIN DATA
-[right.SmoothRateMap,right.nBinsx,right.nBinsy,right.occ,right.Coherence]=bindata(right.datavid,sampleRate,right.spks_VEL,'yes',track_length);
+[right.SmoothRateMap,right.nBinsx,right.nBinsy,right.occ,right.Coherence]=bindata(right.datavid,sampleRate,right.spks_VEL,1,track_length);
 
 % SAME COMMENTS AS ABOVE, BUT OPPOSITE DIRECTION
-[left.SmoothRateMap,left.nBinsx,left.nBinsy,left.occ,left.Coherence]=bindata(left.datavid,sampleRate,left.spks_VEL,'yes',track_length);
+[left.SmoothRateMap,left.nBinsx,left.nBinsy,left.occ,left.Coherence]=bindata(left.datavid,sampleRate,left.spks_VEL,1,track_length);
 
 % CALCULATE DIRECTIONALITY INDEX (Ravassard, 2013)
 % DirectionalityIndex=(right.SmoothRateMap-left.SmoothRateMap)/(right.SmoothRateMap+left.SmoothRateMap);

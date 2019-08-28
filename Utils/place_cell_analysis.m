@@ -277,17 +277,17 @@ classdef place_cell_analysis
         end
         
         
-        function r=IntraTrialStability(mat,linear_track,track_length)
+        function r=IntraTrialStability(mat,track,track_length)
             
             if isempty(mat)
                 r=NaN;
                 return
             end
             
-            if isequal(linear_track,'yes')
+            if track==1
                 nBinsy=1;
                 filtWidth=[1,5];
-            elseif isequal(linear_track,'no')
+            elseif track==0
                 nBinsy=round(track_length/3);
                 filtWidth = [5 5];
             end
