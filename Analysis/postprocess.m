@@ -116,10 +116,10 @@ end
 
 % FIND MAX DIM OF MAZE TO CALCULATE VELOCITY
 load('mazesize.mat','mazesize')
-
-data.maze_size_cm=[mazesize{ismember([mazesize{:,1}]',data.mazetypes),2}];
-
+[~,b]=ismember(data.mazetypes,[mazesize{:,1}]');
+data.maze_size_cm=[mazesize{b,2}];
 mazesize=max(data.maze_size_cm);
+clear b
 
 % GET VELOCITY
 [vel_cmPerSec,~,pixelDist]=InstaVel([data_video(:,2),data_video(:,3)],mazesize,data.samplerate);
@@ -545,7 +545,7 @@ for event=1:size(data.events,2)
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
             end
         end
-        clearvars -except track figures i event data clusterquality prop pixelDist
+        clearvars -except track figures i event data clusterquality prop pixelDist path
     end
 end
 clearvars -except data figures
