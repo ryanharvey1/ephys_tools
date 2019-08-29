@@ -1,6 +1,7 @@
 # ephys_tools
 
-### Ephys toolbox for the BClark Lab 
+### Ephys toolbox for the [BClark Lab](https://bclark-lab.com/ "lab website")
+
 
 by Ryan Harvey & Laura Berkowitz
 
