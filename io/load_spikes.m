@@ -1,5 +1,5 @@
 function [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path)
-% load_spikes: loads SNAPSorter format spike times and spike info 
+% load_spikes: loads SNAPSorter* format spike times and spike info 
 %
 %   Input
 %           path: path to spike data (TT*.ntt, TT*_info.mat, & TT*.mat files
@@ -11,10 +11,15 @@ function [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path)
 %           cellnum: cell number
 %           tetrode: tetrode number
 %
+% *After testing, I really don't recommend using SNAPSorter
+%
 % Ryan Harvey
 
 
 % sets path to snap folder & looks within for mat files
+if ~exist([path,filesep,'Sorted'],'dir')
+    error('Make sure to run after_spikesort_cleanup.m and cd to session dir')
+end
 cd([path,filesep,'Sorted']);
 file=struct2table(dir( '**/*.mat'));
 t=table2cell(file(:,1));
