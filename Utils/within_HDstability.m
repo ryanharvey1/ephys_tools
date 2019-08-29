@@ -4,7 +4,6 @@ function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,sa
 
 %INPUT: 
 %       -data_video_spk: timestamps interpolated with spike timestamps
-%       -data_video_nospk: initial timestamps for occupancy 
 %       -sampleRate: video sample rate (in hz)
 %       -Angle: 
 %       -Spike: 
@@ -18,22 +17,29 @@ function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,sa
 
 % Created by LBerkowitz March 2018, updated by LB July 2018 
 
-time=[.25,.5,.75,1];
+time = [.25,.5,.75,1];
 
-block=[data_video_spk(1,1),data_video_spk(end,1)*time];
+start = min(data_video_spk(:,1));
+stop = max(data_video_spk(:,1));
+blocking_factor = stop-start; 
 
-for i=1:length(block)-1
-    tempSpk=data_video_spk(data_video_spk(:,1)>block(i) & data_video_spk(:,1)<block(i+1),:);
+block = blocking_factor*time;
+
+clear blocking_factor start stop time
+
+block = [data_video_spk(1,1) data_video_spk(1,1)+block];
+
+for i = 1:length(block)-1
+    tempSpk = data_video_spk(data_video_spk(:,1) > block(i) & data_video_spk(:,1) < block(i+1),:);
     
-    [~,~,~,~,~,hdTuning]=tuningcurve(tempSpk(tempSpk(:,6)==0,4),tempSpk(tempSpk(:,6)==1,4),sampleRate);
+    [~,~,~,~,~,hdTuning] = tuningcurve(tempSpk(tempSpk(:,6)==0,4),tempSpk(tempSpk(:,6)==1,4),sampleRate);
 
-    within.hdTuning{i,1}=hdTuning;
-        
-%     figure;
-%     plot(tempSpk(:,2),tempSpk(:,3),'.k');hold on
-%     scatter(tempSpk(tempSpk(:,6)==1,2),tempSpk(tempSpk(:,6)==1,3),'Filled','r');
+    within.hdTuning{i,1} = hdTuning;
+ 
 end
-
+ clear block
+ 
+ %calculate correlation for all pairs
 first=corr2(within.hdTuning{1,1},within.hdTuning{2,1});
 second=corr2(within.hdTuning{1,1},within.hdTuning{3,1});
 third=corr2(within.hdTuning{1,1},within.hdTuning{4,1});
@@ -41,8 +47,9 @@ fourth=corr2(within.hdTuning{2,1},within.hdTuning{3,1});
 fifth=corr2(within.hdTuning{2,1},within.hdTuning{4,1});
 sixth=corr2(within.hdTuning{3,1},within.hdTuning{4,1});
 
+%warning if data is nan
 if sum(isnan([first,second,third,fourth,fifth,sixth]))>1
-    test=1;
+    warning('NaNs within the data are preventing an accurate calculation of stability. Check your data')
 end
 
 normTemp=[];
