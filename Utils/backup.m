@@ -1,4 +1,4 @@
-function backup(BackUpSourceDirs,DestDir)
+function backup(BackUpSourceDirs,DestDir,varargin)
 %file backup program
 %Written by Matt Becker
 %email:  mrmattbecker@hotmail.com
@@ -43,8 +43,17 @@ function backup(BackUpSourceDirs,DestDir)
 % modified by Ryan H 2019
 
 tic;
-ChangeAttribIfHidden = 1;
-SkipMessage = 1;    %initalizes flag to display warning message
+
+p = inputParser;
+p.addParameter('ignore_path',[]);
+p.addParameter('ChangeAttribIfHidden',1);
+p.addParameter('SkipMessage',1); %initalizes flag to display warning message
+p.parse(varargin{:});
+
+ignore_path = p.Results.ignore_path;
+ChangeAttribIfHidden = p.Results.ChangeAttribIfHidden;
+SkipMessage = p.Results.SkipMessage;
+
 
                
 NumFiles = 0;             %Initialize to zero
@@ -110,13 +119,26 @@ disp('Analyzing Destination Directories....');
 if(strcmp(DestDir(end),filesep))
     DestDir(end) = [];
 end
-BackUpDestDirs = BackUpSourceDirs;    %initializes BackUpDestDirs
-for i=1:length(BackUpDestDirs)
-    if(~isempty(BackUpDestDirs{i}))
-        BackUpDestDirs{i} = [DestDir BackUpSourceDirs{i}];
-        BackUpDestDirs{i}(length(DestDir)+1:length(DestDir)+2) = [];
+
+if ~isempty(ignore_path)
+    BackUpDestDirs = BackUpSourceDirs;    %initializes BackUpDestDirs
+    for i=1:length(BackUpDestDirs)
+        if(~isempty(BackUpDestDirs{i}))
+            file_parts=strsplit(BackUpSourceDirs{i},filesep);
+            BackUpDestDirs{i} = [DestDir fullfile(file_parts{~contains(file_parts,ignore_path)})];
+            BackUpDestDirs{i}(length(DestDir)+1:length(DestDir)+2) = [];
+        end
+    end
+else
+    BackUpDestDirs = BackUpSourceDirs;    %initializes BackUpDestDirs
+    for i=1:length(BackUpDestDirs)
+        if(~isempty(BackUpDestDirs{i}))
+            BackUpDestDirs{i} = [DestDir BackUpSourceDirs{i}];
+            BackUpDestDirs{i}(length(DestDir)+1:length(DestDir)+2) = [];
+        end
     end
 end
+
 %Now make sure each destination directory exits and create if not
 for i=1:length(BackUpDestDirs)
     if(~isempty(BackUpDestDirs{i}))
