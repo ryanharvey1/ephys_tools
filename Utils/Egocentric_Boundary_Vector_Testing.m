@@ -61,7 +61,7 @@ angle(angle==0 | angle==180)=NaN;
 % smooth over no movement 
 angle=wrapTo360(fixNLXangle(angle,round(0.1667*data.samplerate)));
 
-% angle=hd';
+angle=hd';
 
 % filter out low velocity 
 ts(in)=[];

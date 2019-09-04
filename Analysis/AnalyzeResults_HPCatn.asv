@@ -74,10 +74,9 @@ control{4}='HPCatn07';
 
 %% add inactivation data to lesion group
 group2=[group2;HPCatn06_inactivation;HPCatn07_inactivation];
-group2id=[group2id;HPCatn06_inactivation_id;HPCatn07_inactivation_id];
-lesion{3}='HPCatn06';
-lesion{4}='HPCatn07';
-
+group1id=[group2id;HPCatn06_inactivation_id;HPCatn07_inactivation_id];
+control{3}='HPCatn06';
+control{4}='HPCatn07';
 %% DELETE MEASURES FOR OPEN ARENA
 varnames=data.varnames;
 varnames=[varnames,'runningdir'];
@@ -92,7 +91,7 @@ group2(:,colstodelete,:)=[];
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-cd F:\Projects\HPCatn\AnimalMetadata
+cd D:\Projects\HPCatn\AnimalMetadata
 
 rats=dir('*.mat');
 rats={rats.name};
@@ -117,7 +116,7 @@ cortexidx=strcmp(sess_region(:,3), 'cortex');
 
 ca1=sessionid(ca1idx);
 ca3=sessionid(ca3idx);
-cortex=sessionid(cortexidx); 
+cortex=sessionid(cortexidx);
 
 % split groups between regions
 % ca1
