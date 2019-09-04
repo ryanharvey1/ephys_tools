@@ -5,7 +5,8 @@
 
 %% First, fill in recording logs based on processed data files
 
-dataset='D:\Projects\PAE_PlaceCell\ProcessedData';
+dataset='F:\ClarkP30_Recordings\ProcessedData';
+
 cd(dataset)
 
 files=dir;
@@ -21,6 +22,7 @@ for i=1:length(files)
         continue
     end
     AnimalMetadata.RecordingLogs.(files{i}).MazeTypes='';
+    AnimalMetadata.RecordingLogs.(files{i}).ConditionTypes='';
     AnimalMetadata.RecordingLogs.(files{i}).DorsalVentral=[];
     AnimalMetadata.RecordingLogs.(files{i}).RecordingArea='';
     AnimalMetadata.RecordingLogs.(files{i}).Notes='';

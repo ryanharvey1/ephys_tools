@@ -35,28 +35,33 @@ clearvars -except params
 fr=30; %frame rate
 
 %Initialze table for measures
-params.HBcoords{1}=[];
-params.dwellQuad{1}=[];
-params.noseCM{1}=[];
-params.headCM{1}=[];
-params.backCM{1}=[];
-params.buttCM{1}=[];%initialize column in table for transformed xy coordinates
-params.HBcenter{1}=[];
-params.circuity{1}=[];
-params.proximity{1}=[];
-params.cueCM{1}=[];
-params.hbOcc{1}=[];
-params.hbVel{1}=[];
-params.hbOcc{1}=[];
-params.hbVel{1}=[];
-params.hbXYidx{1}=[];
-params.entries{1}=[];
-params.HBclass{1}=[];
-params.HBBound{1}=[];
-params.slowInHB{1}=[];
-params.HBstops{1}=[];
-params.HBdist2Cue{1}=[];
-
+params.HBcoords{1}=[]; %home base coordinates
+params.dwellQuad{1}=[]; %time spent in maze qudrants 
+params.noseCM{1}=[]; %xy coordinates for nose in centimeters
+params.headCM{1}=[]; %xy coordinates for head in centimeters
+params.backCM{1}=[]; %xy coordinates for back in centimeters
+params.buttCM{1}=[]; %xy coordinates for butt in centimeters
+params.HBcenter{1}=[]; %xy coordiantes for center of home base(s)
+params.circuity{1}=[]; %circuity of path segments when animal is moving
+params.proximity{1}=[]; %proximity of 
+params.cueCM{1}=[]; %coordinates for the cue in centimeters
+params.hbOcc{1}=[]; %time spent in home base
+params.hbVel{1}=[]; %average velocity when rat is in home base
+params.hbXYidx{1}=[]; %index for when animal is in a home base
+params.entries{1}=[]; % number of times animal enters the home base (must be there for a min of 4 seconds)
+params.HBclass{1}=[]; % ratio between time spent in hb and mean velocity in hb. For hb classification. 
+params.HBBound{1}=[]; % xy coordintes of the hb boundary
+params.slowInHB{1}=[]; %time spent slow in home base
+params.HBstops{1}=[]; % number of stops in the home base boundary (determined by each rat's home base)
+params.HBdist2Cue{1}=[]; %distance from hb center to the cue
+params.distHBstop{1}=[]; %average distance from hb center to stopping location
+params.closeHBstop{1}=[]; %Number of stops within a 25cm diameter from HB center
+params.pathLQuad{1}=[]; %path length of distance in pie shaped quadrant
+params.pathDist{1}=[]; %distance between consecutive points in path. 
+params.pathIVQuad{1}=[]; %instantaneous linear velocity within quadrant. 
+params.angVelQuad{1}=[]; %instantaneous angular velocity within quadrant
+params.stopQuad{1}=[]; %time stopped in quadrant. 
+params.numstopQuad{1}=[]; %number of times animal stopped in quadrant.
 %% SMOOTH & TRANSFORM COORDINATES
 
 %transforming coordinates into cm, centered at 0,0
