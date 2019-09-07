@@ -313,7 +313,8 @@ for event=1:size(data.events,2)
                 
                 % CALCULATE LANDMARK CONTROL
                 if event==3 && contains(data.mazetypes{event-1},'Cylinder') && contains(path,'PAE')
-                    [Displacement,DisplacementCorr]=Displacement2(ratemap,...
+                    [
+                        ,DisplacementCorr]=Displacement2(ratemap,...
                         data.ratemap{i,event});
                 elseif event==3 && contains(data.mazetypes{event-1},'Cylinder')
                     [Displacement,DisplacementCorr]=Displacement2(ratemap,...
