@@ -549,12 +549,13 @@ classdef postprocessFigures
         
         function avg_waveforms(avgwave,measures,varnames)
             % PLOT AVERAGE WAVEFORMS
-            waves=zeros(4,150);
+            sam=size(avgwave,2);
+            waves=zeros(4,sam);
             waves(1:size(avgwave,1),:)=avgwave;
-            plot(1:150,waves(1,:),'LineWidth',2, 'color','k');hold on
-            plot(151:300,waves(2,:),'LineWidth',2, 'color','k');
-            plot(1:150,waves(3,:)+max(abs([waves(1,:),waves(2,:)])),'LineWidth',2, 'color','k');
-            plot(151:300,waves(4,:)+max(abs([waves(1,:),waves(2,:)])),'LineWidth',2, 'color','k');
+            plot(1:sam,waves(1,:),'LineWidth',2, 'color','k');hold on
+            plot(sam+1:sam*2,waves(2,:),'LineWidth',2, 'color','k');
+            plot(1:sam,waves(3,:)+max(abs([waves(1,:),waves(2,:)])),'LineWidth',2, 'color','k');
+            plot(sam+1:sam*2,waves(4,:)+max(abs([waves(1,:),waves(2,:)])),'LineWidth',2, 'color','k');
             axis tight
             hold on;box off; axis off
             title(sprintf('ShortISI: %4.2f :IsoDist %4.2f',...
