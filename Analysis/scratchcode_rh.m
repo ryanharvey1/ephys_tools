@@ -174,3 +174,137 @@ writetable(T,...
    'D:\Dropbox\school work\UNM\Classes\Stats_527\HPCatn_data.csv'); %save data
 
 
+%% use bandpass filtered waveforms 
+            
+myKsDir='F:\Projects\PAE_PlaceCell\data\LEM3216\2019-08-23_13-56-19';
+sp.n_channels_dat=64;
+
+datfile=strsplit(myKsDir,filesep);datfile=[datfile{end},'.dat'];
+            gwfparams.dataDir = [myKsDir,filesep];    % KiloSort/Phy output folder
+            gwfparams.fileName = datfile;         % .dat file containing the raw
+            gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
+            gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
+
+% Load .dat and KiloSort/Phy output
+fileName = fullfile(gwfparams.dataDir,gwfparams.fileName);   
+filenamestruct = dir(fileName);
+dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
+nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+mmf = memmapfile(fileName, 'Format', {gwfparams.dataType, [gwfparams.nCh nSamp], 'x'});
+
+chMap = readNPY(fullfile(gwfparams.dataDir, 'channel_map.npy'))+1;% Order in which data was streamed to disk; must be 1-indexed for Matlab
+nChInMap = numel(chMap);
+
+fid = fopen('filtered.dat', 'w');
+
+% [b1,a1] = butter(3,[500/(32000/2) (32000*.475)/(32000/2)])
+[b1, a1] = butter(3, 150/32000*2, 'high')
+
+for i=1:nChInMap
+    
+    dataRAW = mmf.Data.x(i,:);
+            
+    dataRAW = filter(b1, a1, dataRAW);
+    dataRAW = flipud(dataRAW);
+    dataRAW = filter(b1, a1, dataRAW);
+    dataRAW = flipud(dataRAW);
+    
+    fwrite(fid, dataRAW, 'int16');
+    
+end
+fclose(fid);
+
+
+for i=1:64
+    dataRAW = mmf.Data.x(25,:);
+    
+    
+    datr = filter(b1, a1, dataRAW);
+    datr = flipud(datr);
+    datr = filter(b1, a1, datr);
+    datr = flipud(datr);
+    figure;plot(datr(1000:2000))
+    pause(.0001)
+end
+
+
+fileName = 'filtered.dat';   
+gwfparams.nCh=64;
+filenamestruct = dir(fileName);
+dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
+nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+mmf_filt = memmapfile(fileName, 'Format', {gwfparams.dataType, [nSamp gwfparams.nCh  ], 'x'});
+
+figure;plot( mmf_filt.Data.x(1000:2000,25))
+
+
+
+
+fid =fopen('test.dat','w')
+for i=1:10
+        fwrite(fid, [1:100]*i, 'int16');
+ 
+end
+fclose(fid);
+
+fileName = 'test.dat';   
+gwfparams.nCh=100;
+filenamestruct = dir(fileName);
+dataTypeNBytes = numel(typecast(cast(0, 'int16'), 'uint8')); % determine number of bytes per sample
+nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+mmf_test = memmapfile(fileName, 'Format', {'int16', [gwfparams.nCh nSamp], 'x'});
+
+
+
+
+
+
+myKsDir='F:\Projects\HPCatn\data\HPCatn07\2019-09-09_12-22-06';
+sp.n_channels_dat=64;
+
+datfile=strsplit(myKsDir,filesep);datfile=[datfile{end},'.dat'];
+            gwfparams.dataDir = [myKsDir,filesep];    % KiloSort/Phy output folder
+            gwfparams.fileName = datfile;         % .dat file containing the raw
+            gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
+            gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
+
+fileName = fullfile(gwfparams.dataDir,gwfparams.fileName);   
+filenamestruct = dir(fileName);
+dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
+nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+
+% open raw file
+fid_raw = fopen('2019-09-09_12-22-06.dat','r');
+% open filtered file to write to
+fid_filt = fopen('filtered_2.dat', 'w'); % open .dat file for writing
+ntbuff =65600;
+Nbatch      = ceil(nSamp/(ntbuff));
+[b1, a1] = butter(3, 150/32000*2, 'high');
+
+for ibatch = linspace(0,nSamp,Nbatch)
+    fprintf('batch %3.0f of %3.0f \n', ibatch,nSamp);
+
+    fseek(fid_raw, ibatch, 'bof');
+    % read raw file
+    buff=fread(fid_raw,[64,ntbuff],'*int16');
+    
+    dataRAW = gpuArray(buff);
+    dataRAW = dataRAW';
+    dataRAW = single(dataRAW);
+    
+    % subtract the mean from each channel
+    dataRAW = dataRAW - mean(dataRAW, 1);    
+    
+    datr = filter(b1, a1, dataRAW);
+    datr = flipud(datr);
+    datr = filter(b1, a1, datr);
+    datr = flipud(datr);
+    
+    datr = datr - median(datr, 2);
+    
+    % write file
+    datcpu  = gather_try(int16(datr));
+    fwrite(fid_filt, datcpu, 'int16');
+ end
+fclose(fid_raw);
+fclose(fid_filt);
