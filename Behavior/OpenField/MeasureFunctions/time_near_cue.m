@@ -1,17 +1,18 @@
 % time_near_cue
 % Ryan Harvey 2019
-load('D:\Projects\TG_largeOpenField\params_V17.mat')
+load('d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V17.mat')
 tic
 for i=1:size(params.subID)
     
     if any(isnan(params.cueCM{i}))
-        continue
+        % rescale cue by 5 cm
+        scaled_cuecords_x=rescale(params.cueCM{i-1}(:,1),min(params.cueCM{i-1}(:,1))-5,max(params.cueCM{i-1}(:,1))+5);
+        scaled_cuecords_y=rescale(params.cueCM{i-1}(:,2),min(params.cueCM{i-1}(:,2))-5,max(params.cueCM{i-1}(:,2))+5);
+    else
+        % rescale cue by 5 cm
+        scaled_cuecords_x=rescale(params.cueCM{i}(:,1),min(params.cueCM{i}(:,1))-5,max(params.cueCM{i}(:,1))+5);
+        scaled_cuecords_y=rescale(params.cueCM{i}(:,2),min(params.cueCM{i}(:,2))-5,max(params.cueCM{i}(:,2))+5);
     end
-    
-    % rescale cue by 5 cm
-    scaled_cuecords_x=rescale(params.cueCM{i}(:,1),min(params.cueCM{i}(:,1))-5,max(params.cueCM{i}(:,1))+5);
-    scaled_cuecords_y=rescale(params.cueCM{i}(:,2),min(params.cueCM{i}(:,2))-5,max(params.cueCM{i}(:,2))+5);
-    
     % convex hull to close shape of cue
     k = convhull(scaled_cuecords_x,scaled_cuecords_y);
     scaled_cuecords_x=scaled_cuecords_x(k);
