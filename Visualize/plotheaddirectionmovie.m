@@ -4,9 +4,9 @@ siz=60;
 fig=figure;fig.Color=[1 1 1];
 plot(x, y,'.k');hold on
 box off;axis off;axis image
-p=plot(0,0,'r');
+p=plot(0,0,'r','linewidth',2);
 p2=plot(0,0,'*k');
-p3=plot(0,0,'r');
+p3=plot(0,0,'r','linewidth',2);
 xlim([min(x) max(x)])
 ylim([min(y) max(y)])
 for j=1:length(x)

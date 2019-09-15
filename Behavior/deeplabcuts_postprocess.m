@@ -1,11 +1,9 @@
 % deeplabcuts_postprocess RH May 2019, edits by LB June 2019
 
 figs=0;
-% for head direction
-hd_labels={'Nose','Head'};
 
 %Initialize path to DLC output
-path_to_files='G:\Maria\OF\Videos\lgOF_dlc';
+path_to_files='d:\Users\BClarkLab\Desktop\Videos\lgOF_dlc';
 files = dir([path_to_files,'\**\*.csv']);
 
 %Initialize data table and variables
@@ -75,6 +73,9 @@ for i=1:length(files)
     
     %Keep only points that are within the trial start time plus 30min
     tsxy=tsxy(tsxy(:,1)>=tstart & tsxy(:,1)<=tend,:);
+    
+    %Reset timestamps to zero 
+    tsxy(:,1)=(tsxy(:,1)-tsxy(1,1));
     
     % Save data
     params.ts{i}=tsxy(:,1);
