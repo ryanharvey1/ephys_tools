@@ -4,9 +4,9 @@ function field = find_2Dratemap(spikes, positions, boxcar)
 
 b = ones(boxcar, boxcar);
 c = ones(size(positions));
-c( find(positions==0) ) = 0; 
+c( positions==0 ) = 0; 
 denom = filter2(b, c);
-denom(find(denom==0)) = NaN;
+denom(denom==0) = NaN;
 
 fpositions = filter2(b, positions);
 fpositions = fpositions./denom;
@@ -17,4 +17,4 @@ fspikes = fspikes./denom;
 field = fspikes./fpositions;
 
 % set field = 0 in unoccupied locations
-field(find(positions==0) ) = 0;
+field(positions==0 ) = 0;

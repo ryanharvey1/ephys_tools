@@ -15,6 +15,6 @@ else
     denom = squeeze(sum(sum(temp.*times, 2), 3));
     % if denom is 0 (most likely as times=0) we don't know what rate p to predict,
     % if denom < tol, make p small: p = spikes*tol
-    denom( find(denom<tol) ) = 1/tol;
+    denom( denom<tol ) = 1/tol;
     d = squeeze(sum(sum(spikes, 2), 3))./denom;
 end

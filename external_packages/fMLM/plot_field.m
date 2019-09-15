@@ -10,13 +10,15 @@ function field = plot_field(spikes, positions, boxcar)
 field = find_2Dratemap(spikes, positions, boxcar);
 
 % set unnoccupied positions to peak rate in sampled locations to be shown as white
-field(find(positions == 0)) = 0;
-peak_rate = max(max(field));
-field(find(positions == 0)) = (1+1/16)*peak_rate;
+% field(positions == 0) = 0;
+% peak_rate = max(max(field));
+% field(positions == 0) = (1+1/16)*peak_rate;
+% 
+% colormap([colormap(viridis(255)); 1 1 1]);
+% imagesc(field);
+% colorbar;
 
-colormap([jet(32); 1 1 1]);
-imagesc(field);
-colorbar;
+
 
 % find location of peak - y is down!
 % ofset [ x; y] = center of 1st bin, scale = bin width (cm). Peak location is in cm.

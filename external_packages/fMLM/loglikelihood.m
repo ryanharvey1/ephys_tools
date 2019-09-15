@@ -21,6 +21,6 @@ else
     % log diverges for expected number of spikes = 0, if less than tol, replace with tol. 
     %
     expected2 = expected;
-    expected2( find(expected < tol) ) = tol;
+    expected2( expected < tol ) = tol;
     fit = sum(sum(sum( spikes.*log(expected2) - expected - reshape(gammaln(spikes + 1), [nd ny nx]))));
 end

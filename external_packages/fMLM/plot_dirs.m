@@ -7,8 +7,8 @@ function field = plot_dirs(spikes, positions, boxcar)
 % imfilter requires image processing toolbox, takes filter as 2nd argument (unlike filter2)
 field = find_circ_ratemap(spikes, positions, boxcar);
 
-theta = ([1:length(field)]' - 0.5).*(2*pi/length(field));
-
-polar([theta; theta(1)], [field; field(1)]);
+% theta = ([1:length(field)]' - 0.5).*(2*pi/length(field));
+% 
+% polar([theta; theta(1)], [field; field(1)]);
 
 
