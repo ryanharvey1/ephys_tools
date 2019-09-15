@@ -15,7 +15,8 @@ function [within_Coeff,within,normWithin] = within_HDstability(data_video_spk,sa
 %       -normWithin: matrix of normalize tuning curves (row 1= qtr 1, row
 %       2=qtr 2 etc.)
 
-% Created by LBerkowitz March 2018, updated by LB July 2018 
+% Created by LBerkowitz March 2018, updated by LB July 2018, updated by LB fixed bug
+% August 2019
 
 time = [.25,.5,.75,1];
 
