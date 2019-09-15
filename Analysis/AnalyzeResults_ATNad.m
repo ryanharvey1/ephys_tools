@@ -2,8 +2,8 @@
 addpath('D:\Users\BClarkLab\GoogleDrive\MatlabDir\BClarkToolbox\Analysis\Visualize')
 data=compileResults('F:\ClarkP30_Recordings\ProcessedData');
 
-control={'ATN04','ATN05','ATN08','ATN16'};%,{'LB01','LB03','LB05'}{'ATN04','ATN05','ATN08','ATN16'}
-transgenic={'ATN07','ATN09','ATN10','ATN14'}; %,{'LB02','LB04','LB06','LB07'}{'ATN07','ATN09','ATN10','ATN14','ATN15'}
+control={'LB01','LB03','LB05','ATN04','ATN05','ATN08','ATN16','ATN10','ATN17','ATN18'};%,{'LB01','LB03','LB05'}{'ATN04','ATN05','ATN08','ATN16','ATN10'}
+transgenic={'LB04','LB06','LB07','ATN07','ATN09','ATN10','ATN14','ATN15'}; %,{'LB02','LB04','LB06','LB07'}{'ATN07','ATN09','ATN14','ATN15'}
 
 %% COMPILE GROUPS
 data.control.measures=[]; %control measures
@@ -37,74 +37,74 @@ varnames(colstodelete)=[]; group1(:,colstodelete,:)=[]; group2(:,colstodelete,:)
 
 %ITERATE THROUGH PROCESSED DATA TO COMPUTE DISTRIBUTIVE RATIO AND
 %WITHIN-STABILITY
-DR_Group1=nan(size(group1HDid,1),1,6);
-stability_Group1=nan(size(group1HDid,1),1,6);
-within_Coeff2=nan(size(group2HDid,1),1,6);
-for i=1:size(group1HDid,1)
-    temp=load(['F:\ClarkP30_Recordings\ProcessedData\',group1HDid{i,1}],...
-        'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm');
-    
-    cell=find(contains(temp.spikesID.TetrodeNum,group1HDid{i,2}) & ismember(temp.spikesID.CellNum,str2double(group1HDid{i,3})))';
-    ses=size(temp.events,2);  
-        
-    for ii=1:ses
-    
-        if ses>4
-            continue
-        end
-        
-    [data_video_spk,~]=createframes_w_spikebinary(temp,ii,cell);
-    spks_VEL=data_video_spk(data_video_spk(:,6)==1,4);
-     
-    [~,~,~,~,~,hdTuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),spks_VEL,temp.samplerate);
-   
-    DR_Group1(i,1,ii) = HD_cell_analysis.distributiveRatio(temp.ratemap{cell,ii},temp.frames,hdTuning,temp.maze_size_cm(ii));
-    
-    stability_Group1(i,1,ii)=HD_cell_analysis.hd_stability(data_video_spk);
-    
-    [within_Coeff1(i,1,ii),~,~] = within_HDstability(data_video_spk,temp.samplerate);
+% DR_Group1=nan(size(group1HDid,1),1,6);
+% stability_Group1=nan(size(group1HDid,1),1,6);
+% within_Coeff2=nan(size(group2HDid,1),1,6);
+% for i=1:size(group1HDid,1)
+%     temp=load(['F:\ClarkP30_Recordings\ProcessedData\',group1HDid{i,1}],...
+%         'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm');
+%     
+%     cell=find(contains(temp.spikesID.TetrodeNum,group1HDid{i,2}) & ismember(temp.spikesID.CellNum,str2double(group1HDid{i,3})))';
+%     ses=size(temp.events,2);  
+%         
+%     for ii=1:ses
+%     
+%         if ses>4
+%             continue
+%         end
+%         
+%     [data_video_spk,~]=createframes_w_spikebinary(temp,ii,cell);
+%     spks_VEL=data_video_spk(data_video_spk(:,6)==1,4);
+%      
+%     [~,~,~,~,~,hdTuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),spks_VEL,temp.samplerate);
+%    
+%     DR_Group1(i,1,ii) = HD_cell_analysis.distributiveRatio(temp.ratemap{cell,ii},temp.frames,hdTuning,temp.maze_size_cm(ii));
+%     
+%     stability_Group1(i,1,ii)=HD_cell_analysis.hd_stability(data_video_spk);
+%     
+%     [within_Coeff1(i,1,ii),~,~] = within_HDstability(data_video_spk,temp.samplerate);
+% 
+%     end
+%     clear temp data_video_spk
+% end
 
-    end
-    clear temp data_video_spk
-end
-
-DR_Group2=nan(size(group2HDid,1),1,6);
-stability_Group2=nan(size(group2HDid,1),1,6);
-within_Coeff2=nan(size(group2HDid,1),1,6);
-for i=1:size(group2HDid,1)
-    temp=load(['F:\ClarkP30_Recordings\ProcessedData\',group2HDid{i,1}],...
-        'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm');
-    
-    cell=find(contains(temp.spikesID.TetrodeNum,group2HDid{i,2}) & ismember(temp.spikesID.CellNum,str2double(group2HDid{i,3})))';
-    ses=size(temp.events,2);  
-        
-    for ii=1:ses
- 
-        if ses>4
-            continue
-        end
-    [data_video_spk,~]=createframes_w_spikebinary(temp,ii,cell);
-    spks_VEL=data_video_spk(data_video_spk(:,6)==1,4);
-     
-    [~,~,~,~,~,hdTuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),spks_VEL,temp.samplerate);
-   
-    DR_Group2(i,1,ii) = HD_cell_analysis.distributiveRatio(temp.ratemap{cell,ii},temp.frames,hdTuning,temp.maze_size_cm(ii));
-    
-    stability_Group2(i,1,ii)=HD_cell_analysis.hd_stability(data_video_spk);
-    
-    [within_Coeff2(i,1,ii),~,~] = within_HDstability(data_video_spk,temp.samplerate);
-
-    end
-    
-    clear temp
-end
-
-AllStats=CDFplots(stability_Group1(:,1,1),stability_Group2(:,1,1),{'Control','TgF344-AD'},{'Stability _New'}',1)
-AllStats=CDFplots(within_Coeff1(:,1,1),within_Coeff2(:,1,1),{'Control','TgF344-AD'},{'Stability _Classic'}',1)
-AllStats=CDFplots(DR_Group1(:,1,1),DR_Group2(:,1,1),{'Control','TgF344-AD'},{'Distributive Ratio'}',1)
+% DR_Group2=nan(size(group2HDid,1),1,6);
+% stability_Group2=nan(size(group2HDid,1),1,6);
+% within_Coeff2=nan(size(group2HDid,1),1,6);
+% for i=1:size(group2HDid,1)
+%     temp=load(['F:\ClarkP30_Recordings\ProcessedData\',group2HDid{i,1}],...
+%         'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm');
+%     
+%     cell=find(contains(temp.spikesID.TetrodeNum,group2HDid{i,2}) & ismember(temp.spikesID.CellNum,str2double(group2HDid{i,3})))';
+%     ses=size(temp.events,2);  
+%         
+%     for ii=1:ses
+%  
+%         if ses>4
+%             continue
+%         end
+%     [data_video_spk,~]=createframes_w_spikebinary(temp,ii,cell);
+%     spks_VEL=data_video_spk(data_video_spk(:,6)==1,4);
+%      
+%     [~,~,~,~,~,hdTuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),spks_VEL,temp.samplerate);
+%    
+%     DR_Group2(i,1,ii) = HD_cell_analysis.distributiveRatio(temp.ratemap{cell,ii},temp.frames,hdTuning,temp.maze_size_cm(ii));
+%     
+%     stability_Group2(i,1,ii)=HD_cell_analysis.hd_stability(data_video_spk);
+%     
+%     [within_Coeff2(i,1,ii),~,~] = within_HDstability(data_video_spk,temp.samplerate);
+% 
+%     end
+%     
+%     clear temp
+% end
+% 
+% AllStats=CDFplots(stability_Group1(:,1,1),stability_Group2(:,1,1),{'Control','TgF344-AD'},{'Stability _New'}',1)
+% AllStats=CDFplots(within_Coeff1(:,1,1),within_Coeff2(:,1,1),{'Control','TgF344-AD'},{'Stability _Classic'}',1)
+% AllStats=CDFplots(DR_Group1(:,1,1),DR_Group2(:,1,1),{'Control','TgF344-AD'},{'Distributive Ratio'}',1)
 
 
-AllStats=CDFplots(group1HD(:,:,1),group2HD(:,:,1),{'Control','TgF344-AD'},varnames,1);
+% AllStats=CDFplots(group1HD(:,:,1),group2HD(:,:,1),{'Control','TgF344-AD'},varnames,1);
 
 %% ___________________________LOCAL FUNCTION BELOW_________________________
 
