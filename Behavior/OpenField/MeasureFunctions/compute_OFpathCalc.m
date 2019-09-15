@@ -1,4 +1,4 @@
-function [ PathLength, pathIV] = compute_OFpathCalc(x_smooth,y_smooth,fr)
+function [ PathLength, pathIV, pathDist] = compute_OFpathCalc(x_smooth,y_smooth,fr)
 %compute_pathCalc calulates the length of a path given 
 %   Detailed explanation goes here
 x_smooth(isnan(x_smooth))=0;
