@@ -4,7 +4,7 @@ function data=compileResults(ProcessedData)
 % n clusters per animal.
 % 
 %   Input: ProcessedData: path to processed data .mat files. These .mat
-%   files should store the standard bclarklab data structure
+%   files should store the standard ephys_tools data structure
 %
 %   Output: data: structure of measures organized by rat id
 %
@@ -40,13 +40,28 @@ sessions(sessiontodelete)=[];
 disp([num2str(length(nsessions)),' Recording sessions'])
 nsessions=max(nsessions);
 
+%% get varnames (for cases where variables were recently added)
+for i=1:length(sessions)
+    load(sessions{i},'varnames')
+    all_vars{i}=varnames;
+end
+all_varnames=unique([all_vars{:}],'stable');
+c=length(all_varnames);
+
 %% EXTRACT MEASURES AND IDS
 data=[];
 for i=1:length(sessions)
-   load(sessions{i},'measures','rat','spikesID') 
-   [r,c,d]=size(measures);
+   load(sessions{i},'measures','rat','spikesID','varnames') 
+   [r,~,d]=size(measures);
    tempfill=nan(r,c,nsessions);
-   tempfill(:,:,1:d)=measures;
+   % check and pull out each variable 
+   for v=1:c
+       if contains(all_varnames{v},varnames)
+           tempfill(:,v,1:d)=measures(:,ismember(varnames,all_varnames{v}),1:d);
+       else
+           continue
+       end
+   end
    if ~isfield(data,rat)
        data.(rat).measures=tempfill;
        data.(rat).id=[cellstr(repmat(sessions{i},r,1)),spikesID.TetrodeNum,cellstr(num2str(spikesID.CellNum))];
@@ -64,7 +79,6 @@ for i=1:length(rats)
 end
 disp([num2str(sum(nclust)),' Clusters Overall'])
 
-load(sessions{1},'varnames')
-data.varnames=varnames;
+data.varnames=all_varnames;
 
 end
