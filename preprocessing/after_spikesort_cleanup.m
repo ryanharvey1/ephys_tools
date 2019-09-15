@@ -265,14 +265,17 @@ classdef after_spikesort_cleanup
             disp('...')
             
             % set params to extract average waveforms
-            datfile=strsplit(myKsDir,filesep);datfile=[datfile{end},'.dat'];
+            datfile='filtered.dat';
             gwfparams.dataDir = [myKsDir,filesep];    % KiloSort/Phy output folder
             gwfparams.fileName = datfile;         % .dat file containing the raw
             gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
             gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
-            gwfparams.wfWin = [-7 24];              % Number of samples before and after spiketime to include in waveform
+            gwfparams.wfWin = [-7 24]*2;              % Number of samples before and after spiketime to include in waveform
             gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
             
+            if ~exist(datfile,'dir')
+                filter_raw_dat
+            end
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
             [clusterIDs, unitQuality, contaminationRate] = sqKilosort.maskedClusterQuality(myKsDir);
             
@@ -309,17 +312,15 @@ classdef after_spikesort_cleanup
                 gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
                 gwfparams.spikeClusters = clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))));
                 
-                wf = getWaveForms(gwfparams);
+                wf = getWaveForms_filtered(gwfparams);
                 
                 for u=1:size(wf.waveFormsMean,1)
                     ch_num=1;
                     for ch=[i+1:i+4]
                         try
-                            means{u}(ch_num,:)=interp1(1:size(wf.waveFormsMean,3),...
-                                squeeze(wf.waveFormsMean(u,ch,:)),...
-                                linspace(1,size(wf.waveFormsMean,3),150),'spline');
+                            means{u}(ch_num,:)=squeeze(wf.waveFormsMean(u,ch,:));
                         catch
-                            means{u}(ch_num,:)=zeros(1,150);
+                            means{u}(ch_num,:)=zeros(1,length(gwfparams.wfWin(1):gwfparams.wfWin(2)));
                         end
                         ch_num=ch_num+1;
                     end

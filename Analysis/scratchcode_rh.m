@@ -118,7 +118,7 @@ group2cortexid = [group2cortexid,cellstr(num2str(group2cortex(:,end)))];
 
 tempid=[group1ca1id;group2ca1id;group1ca3id;group2ca3id;group1cortexid;group2cortexid];
     
-
+% region
 data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
     arrayfun(@(i1)fullfile((group1ca1id{i1,:})),(1:size(group1ca1id,1))','un',0)),end+1)=1;
 
@@ -139,6 +139,27 @@ data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0)
 
 varnames=[varnames,'brain_region'];
 
+% group
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group1ca1id{i1,:})),(1:size(group1ca1id,1))','un',0)),end+1)=1;
+
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group2ca1id{i1,:})),(1:size(group2ca1id,1))','un',0)),end)=2;
+
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group1ca3id{i1,:})),(1:size(group1ca3id,1))','un',0)),end)=1;
+
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group2ca3id{i1,:})),(1:size(group2ca3id,1))','un',0)),end)=2;
+
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group1cortexid{i1,:})),(1:size(group1cortexid,1))','un',0)),end)=1;
+
+data(ismember(arrayfun(@(i1)fullfile((tempid{i1,:})),(1:size(tempid,1))','un',0),...
+    arrayfun(@(i1)fullfile((group2cortexid{i1,:})),(1:size(group2cortexid,1))','un',0)),end)=2;
+
+varnames=[varnames,'group_id'];
+
 tempid(:,end)=[];
 
 varnames=['rat_session','tt','cell',varnames];
@@ -151,5 +172,6 @@ T.Properties.VariableNames = varnames;
 
 writetable(T,...
    'D:\Dropbox\school work\UNM\Classes\Stats_527\HPCatn_data.csv'); %save data
+
 
 

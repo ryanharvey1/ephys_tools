@@ -118,6 +118,8 @@ while contains(moresessions,'y')
         AnimalMetadata.RecordingLogs.(sessiondate).Notes=input('Notes  ','s');
     else
         disp('Sessions')
+        % reorder RecordingLogs fields by ASCII order
+        AnimalMetadata.RecordingLogs=orderfields(AnimalMetadata.RecordingLogs);
         disp(AnimalMetadata.RecordingLogs)
         disp('---------------------------------------------------------')
         sessiondate=input('Path to Session ','s');
@@ -144,7 +146,11 @@ while contains(moresessions,'y')
     end
     disp('---------------------------------------------------------')
     moresessions=input('More Sessions to input? ("y" or "n")  ','s');
+    
+    % reorder RecordingLogs fields by ASCII order
+    AnimalMetadata.RecordingLogs=orderfields(AnimalMetadata.RecordingLogs);
 end
+
 disp('Saving Infomation...')
 save([basepath,filesep,rat,'_metadata.mat'],'AnimalMetadata')
 disp('done')
