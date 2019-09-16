@@ -273,7 +273,7 @@ classdef after_spikesort_cleanup
             gwfparams.wfWin = [-7 24]*2;              % Number of samples before and after spiketime to include in waveform
             gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
             
-            if ~exist(datfile,'file')
+            if ~isfile(datfile)
                 filter_raw_dat
             end
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
