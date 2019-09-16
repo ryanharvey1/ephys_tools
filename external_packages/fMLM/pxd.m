@@ -51,7 +51,10 @@ else
     end
     
     if( converged == 0 )
+        
         fprintf(1, ' Did not converge, %d spikes, nd=%d ny=%d nx=%d.\n', sum(sum(sum(spikes))), size(spikes));
+        p = NaN; d = NaN; field = NaN; polar_plot = NaN; fit = NaN;
+        
     else
         % for direct comparison with regular fields, normalise area under p and d separately to
         % equal the tot no spikes / tot dwell time.
