@@ -18,4 +18,6 @@ if exist(metadata_file,'file')
     for mt=1:size(data.events,2)
         mazetype{mt}=mtypes{mt};
     end
+    
+    mazetype=strtrim(mazetype);
 end
