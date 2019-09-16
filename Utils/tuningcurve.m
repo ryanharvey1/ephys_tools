@@ -12,7 +12,7 @@ function [r,I,Ispk,peakrate,prefdirec,hdTuning]=tuningcurve(a,spk_a,Fs)
 %       Ispk: Information per spike (bit/spk)
 %       peakrate: peak firing rate
 %       prefdirec: preferred direction 
-%
+%       hdTuning: Tuning curve 
 % Adapted from Adrien Peyrache github.com/PeyracheLab
 % by Ryan Harvey (2018)
 
