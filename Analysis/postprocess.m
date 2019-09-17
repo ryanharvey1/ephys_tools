@@ -465,7 +465,7 @@ for event=1:size(data.events,2)
             IntraTrialR=place_cell_analysis.IntraTrialStability(data_video_spk,track,data.maze_size_cm(event));
             
             % SPIKE DIRECTION
-            [r,~,Direct_infoContent,~,preferred_Direction,~]=...
+            [r,~,Direct_infoContent,~,preferred_Direction,hdTuning]=...
                 tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),spks_VEL(:,4),data.samplerate);
             
             % BURST INDEX
@@ -475,19 +475,28 @@ for event=1:size(data.events,2)
             % Correct for movement artifacts that may modulate position or
             % direction related firing using factorial Maximum Likelihood Model
             if track==0
-                [corrected_p,corrected_d,correction_fit]=FMLM_wrapper(data,i,event);
                 
-                % corrected direction metrics
-                corrected_r=circ_r(deg2rad(3:6:357)',corrected_d,deg2rad(6));
-                corrected_dic=HD_cell_analysis.computeDIC(histcounts(data_video_spk(data_video_spk(:,6)==0,4),0:6:360),...
-                    corrected_d',sum(data_video_spk(:,6))/sum(data_video_spk(:,6)==0)*data.samplerate);
-                
-                % corrected position metrics
-                corrected_info_content=place_cell_analysis.SpatialInformation('ratemap',...
-                    corrected_p,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)));
-                corrected_sparsity=place_cell_analysis.Sparsity('ratemap',corrected_p,'occupancy',occ);
-            end
+               [corrected_p,corrected_d,correction_fit]=FMLM_wrapper(data,i,event);
+
+                if ~isnan(correction_fit)
+                    
+                    % corrected direction metrics
+                    corrected_r = circ_r(deg2rad(3:6:357)',corrected_d,deg2rad(6));
+                    corrected_dic = HD_cell_analysis.computeDIC(histcounts(data_video_spk(data_video_spk(:,6)==0,4),0:6:360),...
+                        corrected_d',sum(data_video_spk(:,6))/sum(data_video_spk(:,6)==0)*data.samplerate);
             
+                    % corrected position metrics
+                    corrected_info_content = place_cell_analysis.SpatialInformation('ratemap',...
+                        corrected_p,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)));
+                    corrected_sparsity = place_cell_analysis.Sparsity('ratemap',corrected_p,'occupancy',occ);
+                else
+                    corrected_r=NaN;
+                    corrected_dic=NaN;
+                    corrected_info_content=NaN;
+                    corrected_sparsity=NaN;
+                    correction_fit=NaN;
+                end
+            end
             % pack results for NaN measures given maze type
             if track==0
                 DirectionalityIndex=NaN;
@@ -509,6 +518,7 @@ for event=1:size(data.events,2)
                 corrected_info_content=NaN;
                 corrected_sparsity=NaN;
                 correction_fit=NaN;
+                corrected_d=NaN;
             end
             if ~exist('Displacement','var');Displacement=NaN;DisplacementCorr=NaN;end
             
@@ -531,41 +541,57 @@ for event=1:size(data.events,2)
                 data.ratemap{i,event}=ratemap;
                 data.thetaautocorr{i,event}=cor;
                 data.ThPrecess{i,event}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event}=hdTuning;
+                data.hdTuning_corrected{i,event}=corrected_d;
             elseif event==1 && iruns>1
                 data.measures(i,:,event+1)=measures;
                 data.ratemap{i,event+1}=ratemap;
                 data.thetaautocorr{i,event+1}=cor;
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event+1}=hdTuning;
+                data.hdTuning_corrected{i,event+1}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'track','IgnoreCase',true) && iruns==1
                 data.measures(i,:,event+1)=measures;
                 data.ratemap{i,event+1}=ratemap;
                 data.thetaautocorr{i,event+1}=cor;
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event+1}=hdTuning;
+                data.hdTuning_corrected{i,event+1}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'track','IgnoreCase',true) && iruns==2
                 data.measures(i,:,event+2)=measures;
                 data.ratemap{i,event+2}=ratemap;
                 data.thetaautocorr{i,event+2}=cor;
                 data.ThPrecess{i,event+2}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event+2}=hdTuning;
+                data.hdTuning_corrected{i,event+2}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'Cylinder','IgnoreCase',true) && ~contains(data.session_path,'PAE')
                 data.measures(i,:,event)=measures;
                 data.ratemap{i,event}=ratemap;
                 data.thetaautocorr{i,event}=cor;
                 data.ThPrecess{i,event}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event}=hdTuning;
+                data.hdTuning_corrected{i,event}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'Cylinder','IgnoreCase',true) && contains(data.session_path,'PAE')
                 data.measures(i,:,event+1)=measures;
                 data.ratemap{i,event+1}=ratemap;
                 data.thetaautocorr{i,event+1}=cor;
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event+1}=hdTuning;
+                data.hdTuning_corrected{i,event+1}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'Box','IgnoreCase',true) && ~contains(data.mazetypes{event-1},'track','IgnoreCase',true) 
                 data.measures(i,:,event)=measures;
                 data.ratemap{i,event}=ratemap;
                 data.thetaautocorr{i,event}=cor;
                 data.ThPrecess{i,event}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event}=hdTuning;
+                data.hdTuning_corrected{i,event}=corrected_d;
             elseif event>1 && contains(data.mazetypes{event},'Box','IgnoreCase',true)
                 data.measures(i,:,event+1)=measures;
                 data.ratemap{i,event+1}=ratemap;
                 data.thetaautocorr{i,event+1}=cor;
                 data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
+                data.hdTuning{i,event+1}=hdTuning;
+                data.hdTuning_corrected{i,event+1}=corrected_d;
             end
         end
         clearvars -except track figures i event data clusterquality prop pixelDist path
