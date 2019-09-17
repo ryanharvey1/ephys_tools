@@ -9,6 +9,14 @@ metadata_file=fullfile(strjoin(path_parts,filesep),'AnimalMetadata',[data.rat,'_
 if exist(metadata_file,'file')
     load(metadata_file,'AnimalMetadata');
     sessions=fieldnames(AnimalMetadata.RecordingLogs);
+    
+    % if metadata is not updated, command window gui will start
+    if ~isfield(AnimalMetadata.RecordingLogs,(sessions{ismember(sessions,data.sessionID)}))
+        handleAnimalMetaData(fullfile(strjoin(path_parts,filesep),'AnimalMetadata'),data.rat);
+        load(metadata_file,'AnimalMetadata');
+        sessions=fieldnames(AnimalMetadata.RecordingLogs);
+    end
+    
     mtypes=strsplit(AnimalMetadata.RecordingLogs.(sessions{ismember(sessions,data.sessionID)}).MazeTypes,',');
     
     if isempty(mtypes{1})
