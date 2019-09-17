@@ -477,22 +477,15 @@ for event=1:size(data.events,2)
             if track==0
                 [corrected_p,corrected_d,correction_fit]=FMLM_wrapper(data,i,event);
                 
-                if isnan(correction_fit)
-                    corrected_r=NaN;
-                    corrected_dic=NaN;
-                    corrected_info_content=NaN;
-                    corrected_sparsity=NaN;
-                else
-                    % corrected direction metrics
-                    corrected_r=circ_r(deg2rad(3:6:357)',corrected_d,deg2rad(6));
-                    corrected_dic=HD_cell_analysis.computeDIC(histcounts(data_video_spk(data_video_spk(:,6)==0,4),0:6:360),...
-                        corrected_d',sum(data_video_spk(:,6))/sum(data_video_spk(:,6)==0)*data.samplerate);
-                    
-                    % corrected position metrics
-                    corrected_info_content=place_cell_analysis.SpatialInformation('ratemap',...
-                        corrected_p,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)));
-                    corrected_sparsity=place_cell_analysis.Sparsity('ratemap',corrected_p,'occupancy',occ);
-                end
+                % corrected direction metrics
+                corrected_r=circ_r(deg2rad(3:6:357)',corrected_d,deg2rad(6));
+                corrected_dic=HD_cell_analysis.computeDIC(histcounts(data_video_spk(data_video_spk(:,6)==0,4),0:6:360),...
+                    corrected_d',sum(data_video_spk(:,6))/sum(data_video_spk(:,6)==0)*data.samplerate);
+                
+                % corrected position metrics
+                corrected_info_content=place_cell_analysis.SpatialInformation('ratemap',...
+                    corrected_p,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)));
+                corrected_sparsity=place_cell_analysis.Sparsity('ratemap',corrected_p,'occupancy',occ);
             end
             
             % pack results for NaN measures given maze type
