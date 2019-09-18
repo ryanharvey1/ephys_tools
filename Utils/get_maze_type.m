@@ -11,7 +11,7 @@ if exist(metadata_file,'file')
     sessions=fieldnames(AnimalMetadata.RecordingLogs);
     
     % if metadata is not updated, command window gui will start
-    if ~isfield(AnimalMetadata.RecordingLogs,(sessions{ismember(sessions,data.sessionID)}))
+    if ~isfield(AnimalMetadata.RecordingLogs,data.sessionID)
         handleAnimalMetaData(fullfile(strjoin(path_parts,filesep),'AnimalMetadata'),data.rat);
         load(metadata_file,'AnimalMetadata');
         sessions=fieldnames(AnimalMetadata.RecordingLogs);
