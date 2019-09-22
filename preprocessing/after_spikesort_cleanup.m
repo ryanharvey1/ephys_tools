@@ -312,7 +312,7 @@ classdef after_spikesort_cleanup
                 gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
                 gwfparams.spikeClusters = clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))));
                 
-                wf = getWaveForms_filtered(gwfparams);
+                wf = getWaveForms(gwfparams);
                 
                 for u=1:size(wf.waveFormsMean,1)
                     ch_num=1;
