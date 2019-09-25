@@ -174,10 +174,10 @@ for j=1:size(param_idx,1)
         params.hbXYidx{j}{1,f}=tempIn;
         params.HBBound{j}{1,f}=[x_temp(1:end-2)',y_temp(1:end-2)'];
         params.HBcoords{j}{1,f}=[params.backCM{j,1}(tempIn,1),params.backCM{j,1}(tempIn,2)];
-        params.slowInHB{j}{1,f}=nansum(tempIn(1:end-1)& params.stopIdx{j})/fr; %time being slow in homebase
-        params.HBclass{j}{1,f}=params.slowInHB{j}{1,f}/params.hbOcc{j}(1,f); %proportion of time being slow in hb
+        params.slowInHB{j}{1,f}=nansum(tempIn(1:end-1)& params.stopIdx{j})/fr; % time being slow in homebase
+        params.HBclass{j}{1,f}=params.slowInHB{j}{1,f}/params.hbOcc{j}(1,f); % proportion of time being slow in hb
         params.HBstops{j}{1,f}=nansum(inpolygon(params.backCM{j,1}(startStop,1),...
-        params.backCM{j,1}(startStop,2),x_temp(1:end-2)',y_temp(1:end-2)')); %Find number of times animals initiated a start in the home base
+        params.backCM{j,1}(startStop,2),x_temp(1:end-2)',y_temp(1:end-2)')); % Find number of times animals initiated a start in the home base
         time2HB_idx=inpolygon(params.backCM{j,1}(startStop,1),...
         params.backCM{j,1}(startStop,2),x_temp(1:end-2)',y_temp(1:end-2)');
         firstIdx=find(time2HB_idx);
