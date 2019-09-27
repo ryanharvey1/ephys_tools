@@ -77,7 +77,7 @@ title('Data plotted as a function of the von Mises PDF')
 % export_fig(['D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\UNM PhD\Presentations\TalkFigs\',num2str(cells),'_vMPdf.png'],'-m4') 
 
 % Fit new model on data samples assuming n mixture components.
-for i=1:8
+for i=1:4
 fittedVmm = fitmvmdist(samples, i, ...
   'MaxIter', 250,'Replicates',5); % Set maximum number of EM iterations to 250 and number of parameter fitting replications to 5
 fit_measures(i)=fittedVmm.logLikelihood;

@@ -2,17 +2,16 @@
 %%
 %%%%%%%%%%% Plot Paths with home base outline and cue location
 % load('params_V8');
-load('params_V17');
+load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V17');
 param_idx=params.subID;
 
 vars=fieldnames(params);
 
-%% Results Fig. 1 (Path Length, Search Area, Time in outer wall, running speed)
-[row,~]=find(ismember(vars,{'pathL','searchArea','runSpeed','avgHBdist','meanCirc'}));
-
+%%  Results Fig. 1 (Path Length, Search Area, Time in outer wall, running speed)
+[row,~]=find(ismember(vars,{'pathL','searchArea','runSpeed','NumStops'}));
+varlabel={'Path Length (cm)','Running Speed (cm/s)','Number of Stops','Search Area'};
 idx=1;
 fig=figure; fig.Color=[1 1 1];
-
 for i=1:size(row,1)
 tg1=vertcat(params.(vars{row(i)}){contains(param_idx,'Tg') & contains(param_idx,'D1')});
 wt1=vertcat(params.(vars{row(i)}){contains(param_idx,'WT') & contains(param_idx,'D1')});
@@ -20,18 +19,19 @@ tg2=vertcat(params.(vars{row(i)}){contains(param_idx,'Tg') & contains(param_idx,
 wt2=vertcat(params.(vars{row(i)}){contains(param_idx,'WT') & contains(param_idx,'D2')});
 
 subplot(size(row,1),2,idx)
-plotspread_wrapper(wt1,tg1,{'WT','Tg'})
+plotspread_wrapper(wt1,tg1,{'WT','TgF344-AD'})
 ylim([0 max([wt2;tg2;wt1;tg1])])
-ylabel(vars{row(i)})
-title('Proximal Cue Present')
-stat_plot(tg1,wt1,{'Tg','WT'},vars{row(i)})
+ylabel(varlabel{i})
+title('Day 1')
 idx=idx+1;
 subplot(size(row,1),2,idx)
-plotspread_wrapper(wt2,tg2,{'WT','Tg'})
+plotspread_wrapper(wt2,tg2,{'WT','TgF344-AD'})
 ylim([0 max([wt2;tg2;wt1;tg1])])
-title('Proximal Cue Absent')
+title('Day 2')
 idx=idx+1;
 end
+
+export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\whole_trial_meas.png','-m4') 
 
 %%
 for i=1:size(row,1)
@@ -384,7 +384,7 @@ axis image
 axis off
 colorbar
 colormap(viridis(255))
-
+export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\stops_duration_acrossTrial.png','-m4') 
 
 %% Time spent moving for Movement segments 
 
