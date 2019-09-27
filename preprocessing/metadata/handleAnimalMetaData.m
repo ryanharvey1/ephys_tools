@@ -35,11 +35,6 @@ function handleAnimalMetaData(basepath,rat)
 %
 % Ryan E Harvey
 
-com=which('handleAnimalMetaData');
-com=strsplit(com,filesep);
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'GoogleDrive',filesep,'MatlabDir'];
-addpath([basedir,filesep,'BClarkToolbox',filesep,'Analysis',filesep,'Visualize'])
-
 if ~exist('basepath','var')
     basepath=uigetdir(cd,'Locate Metadata folder');
     rat=input('Animal ID  ','s');
@@ -98,23 +93,32 @@ end
 disp(['Loading Metadata file for ',rat])
 load([basepath,filesep,rat,'_metadata.mat'],'AnimalMetadata')
 moresessions='y';
+load('mazesize.mat','mazesize')
 while contains(moresessions,'y')
     if isfield(AnimalMetadata,'RecordingLogs')==0
         sessiondate=input('Path to Session ','s');
         ratID=strsplit(sessiondate,filesep);
         sessiondate=['S',strjoin(regexp(ratID{end},'\d*','Match'),'')];
-        AnimalMetadata.RecordingLogs.(sessiondate).MazeTypes=input('MazeTypes  ','s');
+        
+        AnimalMetadata.RecordingLogs.(sessiondate).MazeTypes=...
+            input(strcat('MazeTypes  (',strjoin([mazesize{:,1}],','),')>> '),'s');
+        
+        AnimalMetadata.RecordingLogs.(sessiondate).ConditionTypes=input('Conditions  ','s');
+
         for i=1:length(AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Anteroposterior)
             AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral=input('Number of Turns  ')...
                 *AnimalMetadata.ExtracellEphys.Probes.mmPerScrewTurn+...
                 AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.DorsalVentral;
         end
+        
         if contains(input('View current coordinates over brain atlas? (''y'',''n'') ','s'),'y')
             brainAtlas([AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Mediolateral,...
                 AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Anteroposterior,...
                 AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral])
         end
+        
         AnimalMetadata.RecordingLogs.(sessiondate).RecordingArea=input('RecordingArea  ','s');
+        
         AnimalMetadata.RecordingLogs.(sessiondate).Notes=input('Notes  ','s');
     else
         disp('Sessions')
@@ -125,7 +129,12 @@ while contains(moresessions,'y')
         sessiondate=input('Path to Session ','s');
         ratID=strsplit(sessiondate,filesep);
         sessiondate=['S',strjoin(regexp(ratID{end},'\d*','Match'),'')];
-        AnimalMetadata.RecordingLogs.(sessiondate).MazeTypes=input('MazeTypes  ','s');
+        
+        AnimalMetadata.RecordingLogs.(sessiondate).MazeTypes=...
+            input(strcat('MazeTypes  (',strjoin([mazesize{:,1}],','),')>> '),'s');
+        
+        AnimalMetadata.RecordingLogs.(sessiondate).ConditionTypes=input('Conditions  ','s');
+        
         sessions=fieldnames(AnimalMetadata.RecordingLogs);
         for i=1:length(AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Anteroposterior)
            try
@@ -136,12 +145,15 @@ while contains(moresessions,'y')
                AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral(i,1)=0;
            end
         end
+        
         if contains(input('View current coordinates over brain atlas? (''y'',''n'') ','s'),'y')
             brainAtlas([AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Mediolateral,...
                 AnimalMetadata.ExtracellEphys.Probes.ImplantCoordinates.Anteroposterior,...
                 AnimalMetadata.RecordingLogs.(sessiondate).DorsalVentral])
         end
+        
         AnimalMetadata.RecordingLogs.(sessiondate).RecordingArea=input('RecordingArea  ','s');
+        
         AnimalMetadata.RecordingLogs.(sessiondate).Notes=input('Notes  ','s');
     end
     disp('---------------------------------------------------------')
