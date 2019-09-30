@@ -147,10 +147,10 @@ end
 function IC=ic(tempframes,data,session)
 if isfield(data,'linear_track')
     [ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
-        data.samplerate,tempframes(tempframes(:,6)==1,:),'yes',data.maze_size_cm(session));
+        data.samplerate,tempframes(tempframes(:,6)==1,:),1,data.maze_size_cm(session));
 else
     [ratemap,~,~,occ,~]=bindata(tempframes(tempframes(:,6)==0,:),...
-        data.samplerate,tempframes(tempframes(:,6)==1,:),'no',data.maze_size_cm(session));
+        data.samplerate,tempframes(tempframes(:,6)==1,:),0,data.maze_size_cm(session));
 end
 IC=place_cell_analysis.SpatialInformation('ratemap',...
     ratemap,'occupancy',occ,'n_spikes',sum(tempframes(:,6)));
