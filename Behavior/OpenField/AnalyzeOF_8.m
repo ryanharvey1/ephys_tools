@@ -3,8 +3,7 @@
 %  Most data are exported as csv files for further analysis in Python.
 %  However, some measures are directly analyzed below. 
 
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V17');
-A = table2array(params);
+load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V18');
 param_idx=params.subID;
 
 %% Compile single numeric Measures for whole trial analysis (#1)
@@ -15,20 +14,22 @@ param_idx=params.subID;
 % runSpeed: average linear running speed. 
 % numStops: number of instances when the animal decreased their speed to
 %           <3cm/s for at least 1 second. 
-% time_in_zone: total time spent in the cue area. 
+% CueEntries: number of entries in cue zone during probe
+% CueStops: number of stops in cue zone during probe
 %
 % Measures are compiled to a table and exported as csv for analysis in
 % Python. 
 
 %Here we'll define the variable names. 
-vars={'Subject','day','group','pathL','searchArea','runSpeed','numStops','time_in_zone'};
+vars={'Subject','day','group','pathL','searchArea','runSpeed','numStops','CueEntries','CueStops'};
 
 %Lets pull the variables from the table. 
 pathL=cell2mat(params.pathL); 
 searchArea=cell2mat(params.searchArea);
 runSpeed=cell2mat(params.runSpeed);
 numStops=cell2mat(params.NumStops); 
-time_in_zone=cell2mat(params.time_in_zone);
+CueEntries=params.CueEntries;
+CueStops=params.CueStops;
 
 %Now we'll create variables for levels of independent variables as well as
 %make the unique subject id. 
@@ -39,32 +40,34 @@ id=split(params.subID,'_'); %create subID as a within-subjects factor
 [~,~,subject]=unique(id(:,1)); %create subID as a within-subjects factor 
 
 %We can now create a table with only our new vars 
-wholeTrial2Python=table(subject,day,group,pathL,searchArea,runSpeed,numStops,time_in_zone,'VariableNames',vars); %make table
+wholeTrial2Python=table(subject,day,group,pathL,searchArea,runSpeed,numStops,CueEntries,CueStops,'VariableNames',vars); %make table
 
 writetable(wholeTrial2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\wholeTrial_measures.csv'); %save data
 
 %% Get Binned Stop time duration (#2)
-
-timeStopped_tg1=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D1')});
-timeStopped_wt1=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D1')});
-timeStopped_tg2=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D2')});
-timeStopped_wt2=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D2')});
-
-%create bins 0-2, 2-10, 10-60, >60s
 edges = [0 2 10 60 1800];
 
-tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
-norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
+for i=1:length(param_idx)
+   bin_dur_mat(i,:)=histcounts(cell2mat(params.timeStopped{i})',edges); 
+    
+end
 
-wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
-norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
+% save vars as table 
 
-tg2_bin = histcounts(cell2mat(timeStopped_tg2)',edges);
-norm_tg2_bin = tg2_bin/size(cell2mat(timeStopped_tg2)',1);
+vars_continuous = {'Subject','day','group','dur_bin','stop_duration'};
 
-wt2_bin = histcounts(cell2mat(timeStopped_wt2)',edges);
-norm_wt2_bin = wt2_bin/size(cell2mat(timeStopped_wt2)',1);
+dur_bin=[zeros(48,1)+1; zeros(48,1)+2; zeros(48,1)+3; zeros(48,1)+4];
+
+continuous_bin_dur = table([subject;subject;subject;subject], [day;day;day;day],...
+    [group;group;group;group], dur_bin, ...
+    [bin_dur_mat(:,1); bin_dur_mat(:,2); bin_dur_mat(:,3); bin_dur_mat(:,4)]...
+    ,'VariableNames',vars_continuous);
+
+writetable(continuous_bin_dur,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\continuous_bin_dur.csv'); %save data
+
+varargout=shadedErrorBar(x,y,errBar,lineProps,transparent)
 
 fig = figure; 
 fig.Color = [1 1 1];
@@ -93,6 +96,36 @@ legend({'WT','TgF344-AD'});legend('boxoff')
 set(gca,'FontSize',14,'FontName','Helvetica','FontWeight','bold','LineWidth',2)
 
  export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\Binned_Stops.png','-m4') 
+ 
+% timeStopped_tg1=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D1')});
+% timeStopped_wt1=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D1')});
+% timeStopped_tg2=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D2')});
+% timeStopped_wt2=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D2')});
+% 
+% tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
+% norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
+% 
+% wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
+% norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
+% 
+% tg2_bin = histcounts(cell2mat(timeStopped_tg2)',edges);
+% norm_tg2_bin = tg2_bin/size(cell2mat(timeStopped_tg2)',1);
+% 
+% wt2_bin = histcounts(cell2mat(timeStopped_wt2)',edges);
+% norm_wt2_bin = wt2_bin/size(cell2mat(timeStopped_wt2)',1);
+%  data_cue = [tg1_bin; wt1_bin];
+% 
+% contingency_cue = table(subject, day, group, data_cue(:,1),data_cue(:,2),data_cue(:,3),data_cue(:,4)...
+%     ,'VariableNames',vars,'RowNames',{'TgF344-AD','F344'});
+% 
+% data_probe = [tg2_bin; wt2_bin];
+% 
+% contingency_probe = table(subject, day, group,  data_probe(:,1),data_probe(:,2),data_probe(:,3),data_probe(:,4)...
+%     ,'VariableNames',vars,'RowNames',{'TgF344-AD','F344'});
+% writetable(contingency_cue,...
+%     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\binned_duration_cue.csv'); %save data
+% writetable(contingency_probe,...
+%     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\binned_duration_probe.csv'); %save data
 
 
 %% Get Primary home base measures lb 9/18/19 Add mean stop duration in home base (#3) 
@@ -148,6 +181,175 @@ hbMeas2Python=table(subject,day,group,numHb,primary_hbOcc,...
 
 writetable(hbMeas2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\hbData.csv'); %save data
+
+%% get velocity measures during stopping (item 5)
+
+
+%standard error of linear and angular velocity
+param_idx=params.subID;
+ang_vel_Tg=[];
+ang_vel_WT=[];
+for i=1:length(param_idx)
+    runIdx=params.runIdx{i};
+    temp_angVel=params.angVel{i};
+    temp_linVel=params.pathIV{i};
+    
+    if contains(param_idx(i),'Tg')
+        motion(i,1)=1;
+        ang_vel_Tg=[ang_vel_Tg; temp_angVel];
+    else
+        motion(i,1)=0;
+        ang_vel_WT=[ang_vel_WT; temp_angVel];
+    end
+    
+    if mod(i,2)==0
+        motion(i,2)=2;
+    else
+        motion(i,2)=1;
+    end
+    
+    motion(i,3)=nanstd(abs(temp_angVel));
+    motion(i,4)=nanstd(abs(temp_linVel));
+    motion(i,5)=nanstd(abs(temp_angVel(runIdx)));
+    motion(i,6)=nanstd(abs(temp_linVel(runIdx)));
+    motion(i,7)=nanmean(abs(temp_angVel(~runIdx)));
+    motion(i,8)=nanstd(abs(temp_angVel(~runIdx)));
+    
+end
+
+vars={'group','day','mean_abs_vel','std_abs_vel'};
+
+velocity_data = table(motion(:,1),motion(:,2),...
+    motion(:,7),motion(:,8),'VariableNames',vars);
+
+writetable(velocity_data,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\velocity_data.csv'); %save data
+
+
+%% Number of Rats with x num of home bases 
+
+% Get home bases that are minimum 5 min in duration 
+
+for i = 1 : length (params.hbOcc)
+
+    numHB(i,1)= sum(params.hbOcc{i} > 300);
+    
+end
+
+day_idx = zeros(48,1);
+day_idx([2:2:48]',1)=1; 
+group_idx = [ones(24,1) ;zeros(24,1)];
+
+vars = {'group','day','number_of_homebase'};
+num_hb = table(group_idx, day_idx, numHB,'VariableNames',vars);
+
+writetable(num_hb,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\num_hb.csv'); %save data
+
+
+edges = [1 2 3 4];
+tg_binned_1 = histcounts(numHB(group_idx == 1 & day_idx == 0,1),edges);
+wt_binned_1 = histcounts(numHB(group_idx == 0 & day_idx == 0,1),edges);
+tg_binned_2 = histcounts(numHB(group_idx == 1 & day_idx == 1,1),edges);
+wt_binned_2 = histcounts(numHB(group_idx == 0 & day_idx == 1,1),edges);
+
+
+
+
+fig = figure; 
+fig.Color = [1 1 1];
+
+labels = {'One','Two','Three'};
+subplot(2,2,1)
+tg_d1 = numHB(day_idx == 0 & group_idx ==1,1);
+pie(histcounts(tg_d1,[1 2 3 4]))
+legend(labels,'Orientation','horizontal','Location','southoutside')
+legend('boxoff')
+title('Tg-F344-AD Day 1')
+set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
+subplot(2,2,2)
+wt_d1 = numHB(day_idx == 0 & group_idx ==0,1);
+pie(histcounts(wt_d1,[1 2 3 4]))
+legend(labels,'Orientation','horizontal','Location','southoutside')
+legend('boxoff')
+title('F344 Day 1')
+set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
+subplot(2,2,3)
+tg_d2 = numHB(day_idx == 1 & group_idx ==1,1);
+pie(histcounts(tg_d2,[1 2 3 4]))
+legend(labels,'Orientation','horizontal','Location','southoutside')
+legend('boxoff')
+title('Tg-F344-AD Day 2')
+set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
+subplot(2,2,4)
+wt_d2 = numHB(day_idx == 1 & group_idx ==0,1);
+pie(histcounts(wt_d2,[1 2 3 4]))
+legend(labels,'Orientation','horizontal','Location','southoutside')
+legend('boxoff')
+title('F344 Day 2')
+set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
+
+export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\Home_base_pie.png','-m4') 
+
+%% Probe Trial analysis 
+CueEntries_tg = vertcat(params.CueEntries(contains(param_idx,'Tg') & contains(param_idx,'D2')));
+CueEntries_wt = vertcat(params.CueEntries(contains(param_idx,'WT') & contains(param_idx,'D2')));
+
+CueStops_tg = vertcat(params.CueStops(contains(param_idx,'Tg') & contains(param_idx,'D2')));
+CueStops_wt = vertcat(params.CueStops(contains(param_idx,'WT') & contains(param_idx,'D2')));
+
+BinStops = vertcat(params.bin_stops{contains(param_idx,'D2')});
+
+BinEntries = vertcat(params.bin_entries{contains(param_idx,'D2')});
+
+vars={'Subject','group','stops'};
+
+subject=[1:24]';
+group = [ones(12,1);zeros(12,1)];
+
+bin_stop=table(subject,group,BinStops,'VariableNames',vars);
+
+vars={'Subject','group','entries'};
+
+bin_entries=table(subject,group,BinEntries(:,1),'VariableNames',vars);
+
+writetable(bin_stop,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\bin_stop.csv'); %save data
+
+writetable(bin_entries,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\bin_entry.csv'); %save data
+
+
+
+fig = figure; 
+fig.Color=[1 1 1];
+
+subplot(2,2,1)
+plotspread_wrapper(CueEntries_wt,CueEntries_tg,{'F344','TgF344-AD'})
+set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
+ylim([0 max([CueEntries_wt;CueEntries_tg;CueStops_wt;CueStops_tg])])
+title('Entries')
+
+subplot(2,2,2)
+plotspread_wrapper(CueStops_wt,CueStops_tg,{'F344','TgF344-AD'})
+set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
+ylim([0 max([CueEntries_wt;CueEntries_tg;CueStops_wt;CueStops_tg])])
+title('Stops')
+
+subplot(2,2,3)
+plotspread_wrapper(BinEntries(12:end,:),BinEntries(1:12,:),{'F344','TgF344-AD'})
+set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
+ylim([0 max([BinEntries;BinStops])])
+title('Entries first 2 minutes')
+
+subplot(2,2,4)
+plotspread_wrapper(BinStops(12:end,:),BinStops(1:12,:),{'F344','TgF344-AD'})
+set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
+ylim([0 max([BinEntries;BinStops])])
+title('Stops first 2 minutes')
+
+export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\entries_stops.png','-m4') 
+
 
 %% Proximity of primary hb day 1 versus primary hb day 2
 row=1;
