@@ -1,6 +1,6 @@
 % time_near_cue
 % Ryan Harvey 2019; updated by LB 2019 to included entries/stop measures
-load('d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V17.mat')
+load('d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V18.mat')
 tic
 for i=1:size(params.subID)
     
@@ -26,7 +26,18 @@ for i=1:size(params.subID)
         params.CueEntries(i)=0;
     else
         tempOut=contiguousframes(tempIn,60); %has to be inside of cue for at least 2 sec to count as entry
-        [~,~,params.CueEntries(i)]=findgroups(tempOut);
+        [start_CueEntries,~,params.CueEntries(i)]=findgroups(tempOut);
+    end
+    
+    
+    
+    if exist('start_CueEntries','var')
+        edges = [0 2];
+        edges = edges*60; % convert edges into seconds
+        
+        params.bin_entries{i} = histcounts(params.ts{i}(start_CueEntries,1),edges);
+    else
+        params.bin_entries{i} = zeros(1,15);
     end
     
     % Retrieve Stops in Cue Zone
@@ -62,7 +73,7 @@ for i=1:size(params.subID)
     % Bin stops that occur in cue zone over time
     
     if exist('tsStops','var')
-        edges = [0 2 4 6 8 10 12 14 16 18 20 22 24 26 28 30];
+        edges = [0 2];
         edges = edges*60; % convert edges into seconds
         
         params.bin_stops{i} = histcounts(tsStops,edges);
