@@ -8,7 +8,7 @@ function anglevel=insta_angvel(theta,samplerate)
 % Output:
 %           anglevel: angular velocity in angles/sec
 %
-% Ryan H, Laura, B
+% Ryan H, Laura B; updated 10/1/2019 
 %
 normDeg=mod(diff(theta),360);
 DiffDeg=[360-normDeg,normDeg];
@@ -20,9 +20,8 @@ DiffDeg(:,1)=-DiffDeg(:,1);
 angvel(I==2,1)=DiffDeg(I==2,2);
 angvel(I==1,1)=DiffDeg(I==1,1);
 
-angvel=angvel*samplerate;
+anglevel=angvel*samplerate;
 
-anglevel=movmedian(angvel,round(samplerate*0.1667)) ;
 end
 
 
