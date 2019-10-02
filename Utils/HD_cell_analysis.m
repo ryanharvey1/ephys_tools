@@ -184,19 +184,57 @@ classdef HD_cell_analysis
         
         function anticipatory_time_interval=computeATI(data,session,cell)
             
-            %Get frames 
-            event = data.events(session);
-            frames = data.frames; 
             
+            [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
             %Compute angular head velocity
+            anglevel=insta_angvel(data_video_nospk(:,4),30);
             
             %Interpolate head direction to insure HD is in phase with
+            %velocity
+            new_time = data_video_nospk(:,1) + ((1/data.samplerate)/2); %set time inbetween data points
+            new_time(new_time>max(data_video_nospk(:,1)))=[];
             
-            %Identify clockwise (v > 90deg/s), counterclockwise(v > -90deg/s), and still frames |v| < 30deg/s.  
+            in_phase_hd = interp1(data_video_nospk(:,1),data_video_nospk(:,4),new_time,'linear');
+            in_phase_ang_vel = interp1(new_time,anglevel,new_time,'linear');
+
             
-            %compute mean direction for each group 
+            spk_ts = data_video_spk(data_video_spk(:,6)==1,1);
             
+            in_phase_vel_spk = interp1(new_time,anglevel,...
+                spk_ts,'linear');
+            in_phase_hd_spk = interp1(new_time,in_phase_hd,...
+                spk_ts,'linear');
+            
+            % Identify clockwise (v > 90deg/s), counterclockwise(v > -90deg/s), and still frames |v| < 30deg/s and 
+            % make tuning curves.
+            
+            [~,~,~,~,prefdirec,hdTuning_c]=...
+                tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk > 90),30)
+
+            [~,~,~,~,prefdirec,hdTuning_cc]=...
+                tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk < -90),30)
+            
+            [~,~,~,~,prefdirec,hdTuning_s]=...
+                tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(abs(in_phase_vel_spk) < 30),30)
+            
+            [~,~,~,~,prefdirec,hdTuning]=...
+                tuningcurve(data_video_nospk(:,4),data_video_spk(data_video_spk(:,6)==1,4),30)
+            
+            % ADD CROSS_VALIDATION FOR ABOVE TO VERIFY MEAN DIRECTION IS
+            % NOT OBTAINED BY CHANCE 
+            
+            figure;
+            
+            plot(hdTuning_s,'Color',[.7 .7 .7],'LineWidth',2)
+            hold on;
+            plot(hdTuning_c,'b','LineWidth',2)
+            plot(hdTuning_cc,'r','LineWidth',2)
+            plot(hdTuning,'k','lineWidth',3)
+            legend({'Still','clockwise','counter clockwise','Overall'})
+            ylabel('Firing Rate')
+            xlabel('Binned Direction')
+
             %Identify subcategories of fast and slow
                 %Clkfast (v >= 270 deg/s)
                 %Clkslow (30 deg/s <= v < 270 deg/s)
@@ -208,7 +246,7 @@ classdef HD_cell_analysis
             %category 
             
             %time-shift analysis for future (add 1/samplerate to ts) and past
-            %(subtract 1/samplerate to ts) and current (
+            %(subtract 1/samplerate to ts) and current 
             
             
         end
