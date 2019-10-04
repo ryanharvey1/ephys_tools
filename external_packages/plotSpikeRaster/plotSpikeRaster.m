@@ -160,8 +160,8 @@ elseif ~isnan(rasterWindowOffset) && relSpikeStartTime~=0
 end
 
 %% Initialize figure and begin plotting logic
-figure(figH);
-hold on;
+% figure(figH);
+% hold on;
 
 if islogical(spikes)
     %% Binary spike train matrix case. Initialize variables and set axes.
