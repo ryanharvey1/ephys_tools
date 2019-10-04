@@ -271,7 +271,15 @@ classdef postprocessFigures
             X = cellfun(@transpose,data.Spikes,'un',0);
             [~,I] = sort(cellfun(@length,X));
             X = X(I);
-            plotSpikeRaster(X,'PlotType','vertline');hold on
+            clear x y
+            for i=1:length(X)
+                [x{i},y{i}]=plotSpikeRaster(X(i),'PlotType','vertline');
+            end
+            for i=1:length(x)
+                plot(x{i},y{i}+i,'Color',[rand(1),rand(1),rand(1)]);hold on
+            end
+            axis tight
+            grid on
             xlabel('Time(sec)')
             ylabel('Cells')
             title('Raster')
@@ -284,7 +292,9 @@ classdef postprocessFigures
             spiketimes=vertcat(data.Spikes{:});
             % BIN SPIKE TIMES FROM ALL CELLS OVER 500MS
             edges=linspace(min(spiketimes),max(spiketimes),round(data.frames(end,1)/3));
-            histogram(spiketimes,edges)
+            h=histogram(spiketimes,edges);
+            h.FaceColor = [.7 .7 .7];
+            h.EdgeColor = [.7 .7 .7];
             box off;axis tight
             xlabel('Time(sec)')
             ylabel('Count')
@@ -302,6 +312,7 @@ classdef postprocessFigures
             pspectrum((data.lfp.signal(idx,:)),1000,'power','FrequencyLimits',[0, 100]);
             
             colormap(viridis(255))
+            darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
         end
         
         function plot_corr_line(x,maxx,data)
