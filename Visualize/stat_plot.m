@@ -49,11 +49,17 @@ if ischar(VarNames)
     VarNames={VarNames};
 end
 
+AllStats = {};
+hypothesis1 = zeros(1,size(VarNames,2));
+
 % Stats Decision Tree * WORKING *
 for vars=1:size(VarNames,2)
     % Kolmogorov-Smirnov test to test if the sample was derived from a standard normal distribution
-    Kolmogorov=sum([kstest(Group1(:,vars)),kstest(Group2(:,vars))]);
-    
+    try
+        Kolmogorov=sum([kstest(Group1(:,vars)),kstest(Group2(:,vars))]);
+    catch
+        continue
+    end
     if Kolmogorov>=1
         % Wilcoxon rank sum test
         [p,hypothesis1(vars),statz] = ranksum(Group1(:,vars),Group2(:,vars));
