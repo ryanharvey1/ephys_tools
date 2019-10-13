@@ -366,6 +366,9 @@ classdef postprocessFigures
         end
         
         function unlinearpath(ax,unlinear,laps,spkframes,mazetypes,lfp_ts,theta_phase,colorcode)
+            if ~iscell(laps)
+                return
+            end
             % set up colormap
             theta=0:.01:2*pi;
             color=hsv(length(theta));
@@ -452,6 +455,9 @@ classdef postprocessFigures
         function ratemaps(ax,lapmaps,ratemap,measures,varnames)
             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
             % SUPERIMPOSED
+            if ~iscell(lapmaps)
+                return
+            end
             laps=reshape([lapmaps{:}],[],length(lapmaps));
             imagesc(flipud(imrotate(laps,90)));hold on;set(gca,'Ydir','Normal')
             plot(rescale(ratemap,1,size(laps,2)),'LineWidth',2, 'color','w');
@@ -475,6 +481,10 @@ classdef postprocessFigures
         end
         
         function phase_by_pos(ax,dataspks,lfp_ts,theta_phase,ratemap,trackinfo)
+            if isempty(dataspks)
+                return
+            end
+               
             % PHASE BY POSITION
             x=rescale(dataspks(:,2),0,1);
             
@@ -513,6 +523,9 @@ classdef postprocessFigures
         end
         
         function phase_map(ax,ts,x,spkts,lfp,ratemap,trodeID,samplerate)
+            if isempty(x)
+                return
+            end
             % PHASE MAP
             [~,I]=unique(ts);
             ts=ts(I);
