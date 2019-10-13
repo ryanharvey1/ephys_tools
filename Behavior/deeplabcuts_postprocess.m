@@ -3,7 +3,7 @@
 figs=0;
 
 %Initialize path to DLC output
-path_to_files='d:\Users\BClarkLab\Desktop\Videos\lgOF_dlc';
+path_to_files='d:\Users\BClarkLab\Desktop\Videos\Monica_dlc';
 files = dir([path_to_files,'\**\*.csv']);
 
 %Initialize data table and variables
@@ -16,12 +16,12 @@ params.butt{1}=[];
 %Get SubID from subdirectory names
 vidfile=dir(path_to_files);
 vidfile(1:2,:)=[]; %get rid of . & .. entries
-dia=202; %diameter of maze in cm
+dia=152.4 ; %diameter of maze in cm
 
 %% Compile environment Max/Min for transformation into cm and cue Coords for
 %computing cue related measures in OF_postprocess
 
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\maxmin.mat');
+load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\PAE_OF\Data\maxmin.mat');
 
 for i=1:length(files)
     params.subID{i}=vidfile(i).name;
@@ -61,21 +61,21 @@ for i=1:length(files)
     idx=tsxy(:,contains(header(2,:),'likelihood'))<.95;
     xloc=find(contains(header(2,:),'x'));
     yloc=find(contains(header(2,:),'y'));
-    tstart=behav.Trial_start(1,1);
-    tend=tstart+(30*60); %30=30min trial duration, 60=seconds/min, 
-    for l=1:size(idx,2)
-        tsxy(idx(:,l),xloc(l):yloc(l))=NaN;
-        
-        tsxy(~inpolygon(tsxy(:,xloc(l)),tsxy(:,yloc(l)),xunit,yunit),xloc(l):yloc(l))=NaN;
-        
-        [tsxy(:,xloc(l)),tsxy(:,yloc(l))]=FixPos(tsxy(:,xloc(l)),tsxy(:,yloc(l)),tsxy(:,1));
-    end
-    
-    %Keep only points that are within the trial start time plus 30min
-    tsxy=tsxy(tsxy(:,1)>=tstart & tsxy(:,1)<=tend,:);
-    
-    %Reset timestamps to zero 
-    tsxy(:,1)=(tsxy(:,1)-tsxy(1,1));
+%     tstart=behav.Trial_start(1,1);
+%     tend=tstart+(30*60); %30=30min trial duration, 60=seconds/min, 
+%     for l=1:size(idx,2)
+%         tsxy(idx(:,l),xloc(l):yloc(l))=NaN;
+%         
+%         tsxy(~inpolygon(tsxy(:,xloc(l)),tsxy(:,yloc(l)),xunit,yunit),xloc(l):yloc(l))=NaN;
+%         
+%         [tsxy(:,xloc(l)),tsxy(:,yloc(l))]=FixPos(tsxy(:,xloc(l)),tsxy(:,yloc(l)),tsxy(:,1));
+%     end
+%     
+%     %Keep only points that are within the trial start time plus 30min
+%     tsxy=tsxy(tsxy(:,1)>=tstart & tsxy(:,1)<=tend,:);
+%     
+%     %Reset timestamps to zero 
+%     tsxy(:,1)=(tsxy(:,1)-tsxy(1,1));
     
     % Save data
     params.ts{i}=tsxy(:,1);
@@ -113,12 +113,12 @@ for i=1:length(files)
     end
 end
 
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\cueCoords.mat');
-
-params.Xmax=maxmin.xmax;
-params.Xmin=maxmin.xmin;
-params.Ymax=maxmin.ymax;
-params.Ymin=maxmin.ymin;
-params.cueCoords=cueCoords.coords;
+% load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\PAE_OF\Data\cueCoords.mat');
+% 
+% params.Xmax=maxmin.xmax;
+% params.Xmin=maxmin.xmin;
+% params.Ymax=maxmin.ymax;
+% params.Ymin=maxmin.ymin;
+% params.cueCoords=cueCoords.coords;
 
 

@@ -154,7 +154,7 @@ behavior5 = uicontrol('Parent', F, ...
 
     function playfast
         if playfastButton.Value==1
-            data.playbackspeed=9; %was 5, changed by LB 09/june/2019. 9 is max without causing delay. 
+            data.playbackspeed=5; %was 5, changed by LB 09/june/2019. 5 is max without causing delay. 
             playfastButton.BackgroundColor='r';
         else
             data.playbackspeed=3; %was 1, changed by LB 09/june/2019
