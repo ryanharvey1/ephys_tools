@@ -99,6 +99,9 @@ classdef postprocessFigures
                     if contains(data.mazetypes{round(ns/2)},'track','IgnoreCase',true)
                         
                         if ns==1 || ns==3% FOR LEFT RUNNING DIRECTION
+                            if ~isfield(data.linear_track{round(ns/2)},'right')
+                                continue
+                            end
                             postprocessFigures.unlinearpath(ax,data.linear_track{round(ns/2)}.nonlinearFrames,data.linear_track{round(ns/2)}.right{1,i}.laps,...
                                 data.linear_track{round(ns/2)}.right{1,i}.dataspks,data.mazetypes,...
                                 data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
@@ -141,7 +144,9 @@ classdef postprocessFigures
                             postprocessFigures.avg_waveforms(data.avgwave{i},data.measures(i,:,ns),data.varnames)
                             
                         elseif ns==2 || ns==4% FOR RIGHT RUNNING DIRECTION
-                            
+                            if ~isfield(data.linear_track{round(ns/2)},'left')
+                                continue
+                            end
                             postprocessFigures.unlinearpath(ax,data.linear_track{round(ns/2)}.nonlinearFrames,data.linear_track{round(ns/2)}.left{1,i}.laps,...
                                 data.linear_track{round(ns/2)}.left{1,i}.dataspks,data.mazetypes,...
                                 data.lfp.ts,data.lfp.theta_phase(trodeID,:),colorcode)
@@ -366,7 +371,7 @@ classdef postprocessFigures
         end
         
         function unlinearpath(ax,unlinear,laps,spkframes,mazetypes,lfp_ts,theta_phase,colorcode)
-            if ~iscell(laps)
+            if ~iscell(laps) || isempty(laps)
                 return
             end
             % set up colormap
@@ -455,7 +460,7 @@ classdef postprocessFigures
         function ratemaps(ax,lapmaps,ratemap,measures,varnames)
             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
             % SUPERIMPOSED
-            if ~iscell(lapmaps)
+            if ~iscell(lapmaps) || isempty(lapmaps)
                 return
             end
             laps=reshape([lapmaps{:}],[],length(lapmaps));
