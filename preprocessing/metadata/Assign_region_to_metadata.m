@@ -1,13 +1,15 @@
 %% Assign_region_to_metadata
+
 % clear
 % load metadata of choice
 % load('D:\Projects\PAE_PlaceCell\AnimalMetadata\LEM3120_metadata.mat')
 
 %% First, fill in recording logs based on processed data files
+% cd to your processed data folder
 
-dataset='F:\ClarkP30_Recordings\ProcessedData';
-
-cd(dataset)
+if contains(pwd,'ProcessedData')~=1
+    error('cd to ProcessedData')
+end
 
 files=dir;
 
@@ -78,8 +80,10 @@ for i=1:length(sessions)
 end
 
 %% Fourth, save the updated metadata file 
-metapath=strsplit(dataset,filesep);
-metapath=fullfile(metapath{1:end-1},'AnimalMetadata',[AnimalMetadata.AnimalName,'_metadata']);
+cd ..
+% metapath=strsplit(dataset,filesep);
+metapath = pwd;
+metapath=fullfile(metapath,'AnimalMetadata',[AnimalMetadata.AnimalName,'_metadata']);
 save(metapath,'AnimalMetadata')
 
 
