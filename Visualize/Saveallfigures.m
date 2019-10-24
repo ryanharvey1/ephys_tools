@@ -12,8 +12,10 @@ sessions={sessions.name};
 
 for i=1:length(sessions)
     sess_id = extractBetween(sessions{i},'_','.mat');
-
-    if exist(fullfile(processedpath,'Figures',extractBefore(sessions{i},'_'),sess_id{:}),'dir')
+    load(sessions{i},'spikesID');
+    
+    if exist(fullfile(processedpath,'Figures',extractBefore(sessions{i},'_'),sess_id{:}),'dir')==7 &&...
+            length(dir(fullfile(processedpath,'Figures',extractBefore(sessions{i},'_'),sess_id{:},'\*.png'))) == length(spikesID.CellNum)+1
         continue
     end
     
