@@ -29,7 +29,7 @@
 % the Free Software Foundation; either version 2 of the License, or
 % (at your option) any later version.
 
-function [ripples,sd] = FindRipples(samples,varargin)
+function [ripples,sd] = findRipples(samples,varargin)
 
 % Default values
 frequency = 1250;
@@ -195,7 +195,7 @@ for i=1:size(thirdPass,1),
         fqcy(i) = frequency/median(diff(peakIx));
     else
         warning('Weird...')
-        keyboard
+%         keyboard
     end
 end
 
