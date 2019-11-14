@@ -1,9 +1,9 @@
 % AnalyzeResults_PAE_Cylinder
 clear
-data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
+data=compileResults('F:\Projects\PAE_PlaceCell\ProcessedData');
 
-control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
-pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
+control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120','LEM3216'};
+pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124','LEM3206','LEM3246'};
 
 %% COMPILE GROUPS
 data.control.measures=[];
@@ -39,32 +39,32 @@ group2id(to_delete,:)=[];
 %% DELETE MEASURES FOR OPEN ARENA
 varnames=data.varnames;
 % colstodelete=size(group1,1)==sum(isnan(group1));
-if session==3
-    colstodelete=contains(varnames,["DirectionalityIndex","Displacement","Cluster Grade",...
-        "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
-        "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
-        "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
-        "meanstability","spatialcorrelation"]);
-    varnames(colstodelete)=[];
-    group1(:,colstodelete)=[];
-    group2(:,colstodelete)=[];
-elseif session==4
-    colstodelete=contains(varnames,["DirectionalityIndex","Cluster Grade",...
-        "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
-        "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
-        "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
-        "meanstability","spatialcorrelation"]);
-    varnames(colstodelete)=[];
-    group1(:,colstodelete)=[];
-    group2(:,colstodelete)=[];
-end
+% if session==3
+%     colstodelete=contains(varnames,["DirectionalityIndex","Displacement","Cluster Grade",...
+%         "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
+%         "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
+%         "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
+%         "meanstability","spatialcorrelation"]);
+%     varnames(colstodelete)=[];
+%     group1(:,colstodelete)=[];
+%     group2(:,colstodelete)=[];
+% elseif session==4
+%     colstodelete=contains(varnames,["DirectionalityIndex","Cluster Grade",...
+%         "DisplacementCorr","Tightness","Incompleteness","StationInTime",...
+%         "TempMatch","BDistanceClust","BDistanceSpike","nlaps",...
+%         "rateoverlap","fieldoverlap","lap_perm_stability","stabilityoverlaps",...
+%         "meanstability","spatialcorrelation"]);
+%     varnames(colstodelete)=[];
+%     group1(:,colstodelete)=[];
+%     group2(:,colstodelete)=[];
+% end
 
 
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-group1id=get_region_id(group1id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
-group2id=get_region_id(group2id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
+group1id=get_region_id(group1id,'F:\Projects\PAE_PlaceCell\AnimalMetadata');
+group2id=get_region_id(group2id,'F:\Projects\PAE_PlaceCell\AnimalMetadata');
 
 group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
 group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
@@ -159,11 +159,11 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 % end
 
 %%
-figure;
-allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
-scatter3(allgroups(:,contains(varnames,'PeakRate')),...
-    allgroups(:,contains(varnames,'FieldWidth')),...
-    allgroups(:,contains(varnames,'InformationContent')),10,'k','Filled')
+% figure;
+% allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
+% scatter3(allgroups(:,contains(varnames,'PeakRate')),...
+%     allgroups(:,contains(varnames,'FieldWidth')),...
+%     allgroups(:,contains(varnames,'InformationContent')),10,'k','Filled')
 
 % place cell filter
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
@@ -173,13 +173,13 @@ scatter3(allgroups(:,contains(varnames,'PeakRate')),...
 [group1dg,group1dgid]=placefieldfilter(group1dg,group1dgid,varnames);
 [group2dg,group2dgid]=placefieldfilter(group2dg,group2dgid,varnames);
 
-allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
-scatter3(allgroups(:,contains(varnames,'PeakRate')),...
-    allgroups(:,contains(varnames,'FieldWidth')),...
-    allgroups(:,contains(varnames,'InformationContent')),10,'r','Filled')
-xlabel('PeakRate')
-ylabel('FieldWidth')
-zlabel('InformationContent')
+% allgroups=[group1ca1;group2ca1;group1ca3;group2ca3;group1dg;group2dg];
+% scatter3(allgroups(:,contains(varnames,'PeakRate')),...
+%     allgroups(:,contains(varnames,'FieldWidth')),...
+%     allgroups(:,contains(varnames,'InformationContent')),10,'r','Filled')
+% xlabel('PeakRate')
+% ylabel('FieldWidth')
+% zlabel('InformationContent')
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
 disp([num2str(size(uCA,1)),' control ca1 place cells'])
@@ -244,25 +244,47 @@ for i=1:length(C)
     disp([C{i},' ',num2str(sum(contains(temp(:,1),C{i})))])
 end
 
-for i=1:length(varnames)
-    fig=figure;fig.Color=[1 1 1];
-    plot(sort(group1ca1(:,i)),linspace(0,1,length(group1ca1(:,i))),'LineWidth',2);hold on
-    plot(sort(group1ca3(:,i)),linspace(0,1,length(group1ca3(:,i))),'LineWidth',2)
-    plot(sort(group1dg(:,i)),linspace(0,1,length(group1dg(:,i))),'LineWidth',2)
-    
-    plot(sort(group2ca1(:,i)),linspace(0,1,length(group2ca1(:,i))),'LineWidth',2)
-    plot(sort(group2ca3(:,i)),linspace(0,1,length(group2ca3(:,i))),'LineWidth',2)
-    plot(sort(group2dg(:,i)),linspace(0,1,length(group2dg(:,i))),'LineWidth',2)
-    
-    xlabel(varnames{i})
-    legend('control ca1','control ca3','control dg','pae ca1','pae ca3','pae dg','Location','best')
-    grid on
-    pause(.000001)
-    export_fig(fullfile('D:\Projects\PAE_PlaceCell\Figures\region_comparison\cylinder',[varnames{i},'.png']))
+% for i=1:length(varnames)
+%     fig=figure;fig.Color=[1 1 1];
+%     plot(sort(group1ca1(:,i)),linspace(0,1,length(group1ca1(:,i))),'LineWidth',2);hold on
+%     plot(sort(group1ca3(:,i)),linspace(0,1,length(group1ca3(:,i))),'LineWidth',2)
+%     plot(sort(group1dg(:,i)),linspace(0,1,length(group1dg(:,i))),'LineWidth',2)
+%     
+%     plot(sort(group2ca1(:,i)),linspace(0,1,length(group2ca1(:,i))),'LineWidth',2)
+%     plot(sort(group2ca3(:,i)),linspace(0,1,length(group2ca3(:,i))),'LineWidth',2)
+%     plot(sort(group2dg(:,i)),linspace(0,1,length(group2dg(:,i))),'LineWidth',2)
+%     
+%     xlabel(varnames{i})
+%     legend('control ca1','control ca3','control dg','pae ca1','pae ca3','pae dg','Location','best')
+%     grid on
+%     pause(.000001)
+%     export_fig(fullfile('D:\Projects\PAE_PlaceCell\Figures\region_comparison\cylinder',[varnames{i},'.png']))
+% 
+%     close(fig)
+% end
+%% compile and save as csv
+id=[group1ca1id;group1ca3id;group1dgid;group1cortexid;group2ca1id;group2ca3id;group2dgid;group2cortexid];
 
-    close(fig)
-end
 
+id = [id,[cellstr(repmat('control',size([group1ca1id;group1ca3id;group1dgid;group1cortexid],1),1));...
+    cellstr(repmat('pae',size([group2ca1id;group2ca3id;group2dgid;group2cortexid],1),1))]];
+
+Rdata = [group1ca1;group1ca3;group1dg;group1cortex;group2ca1;group2ca3;group2dg;group2cortex];
+
+% add runningdir for compatitablity with linear track data
+Rdata = [Rdata,ones(length(Rdata),1)];
+varnames=[varnames,'runningdir'];
+
+Rdata = [num2cell(Rdata),id];
+
+varnames = [varnames,{'session','tt','cell','area','group'}];
+varnames = regexprep(varnames, '\W', '');
+Rdata = cell2table(Rdata,'VariableNames',varnames);
+
+
+writetable(Rdata,'F:\Projects\PAE_PlaceCell\Rdata_pae_sfn2019_cylinder.csv')
+
+%%
 figure
 AllStatsca1=stat_plot(group1ca1,group2ca1,{'Sacc','PAE'},varnames)
 
@@ -348,13 +370,13 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=9 &...
     group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.25 &...
+    group(:,contains(varnames,'InformationContent'))>=.15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 
 group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=9 &...
     group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.25 &...
+    group(:,contains(varnames,'InformationContent'))>=.15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 end
 

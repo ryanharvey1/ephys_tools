@@ -1,45 +1,45 @@
-% AnalyzeResults_HPCatn
+% AnalyzeResults_HPCatn_lesion
 data=compileResults('F:\Projects\HPCatn\ProcessedData');
 
 control={'HPCatn02','HPCatn05'};
 lesion={'HPCatn03','HPCatn04'};
 
-% load inactivation data (HPCatn06 / HPCatn07)
-load('F:\Projects\HPCatn\AnimalMetadata\HPCatn06_metadata.mat')
-clear mazes
-sessions=fieldnames(AnimalMetadata.RecordingLogs);
-for i=1:length(sessions)
-    mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
-end
-idx=contains(data.HPCatn06.id(:,1),sessions(contains(mazes,'track')));
-
-% baseline & 6 hour recovery
-HPCatn06_baseline=[data.HPCatn06.measures(idx,:,1);data.HPCatn06.measures(idx,:,2)];
-HPCatn06_baseline=[HPCatn06_baseline,[ones(size(data.HPCatn06.measures(idx,:,1),1),1);ones(size(data.HPCatn06.measures(idx,:,1),1),1)+1]];
-HPCatn06_baseline_id=[data.HPCatn06.id(idx,:);data.HPCatn06.id(idx,:)];
-
-% inactivation
-HPCatn06_inactivation=[data.HPCatn06.measures(idx,:,3);data.HPCatn06.measures(idx,:,4)];
-HPCatn06_inactivation=[HPCatn06_inactivation,[ones(size(data.HPCatn06.measures(idx,:,1),1),1);ones(size(data.HPCatn06.measures(idx,:,1),1),1)+1]];
-HPCatn06_inactivation_id=[data.HPCatn06.id(idx,:);data.HPCatn06.id(idx,:)];
-
-load('F:\Projects\HPCatn\AnimalMetadata\HPCatn07_metadata.mat')
-clear mazes
-sessions=fieldnames(AnimalMetadata.RecordingLogs);
-for i=1:length(sessions)
-    mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
-end
-idx=contains(data.HPCatn07.id(:,1),sessions(contains(mazes,'track')));
-
-% baseline & 6 hour recovery
-HPCatn07_baseline=[data.HPCatn07.measures(idx,:,1);data.HPCatn07.measures(idx,:,2)];
-HPCatn07_baseline=[HPCatn07_baseline,[ones(size(data.HPCatn07.measures(idx,:,1),1),1);ones(size(data.HPCatn07.measures(idx,:,1),1),1)+1]];
-HPCatn07_baseline_id=[data.HPCatn07.id(idx,:);data.HPCatn07.id(idx,:)];
-
-% inactivation
-HPCatn07_inactivation=[data.HPCatn07.measures(idx,:,3);data.HPCatn07.measures(idx,:,4)];
-HPCatn07_inactivation=[HPCatn07_inactivation,[ones(size(data.HPCatn07.measures(idx,:,1),1),1);ones(size(data.HPCatn07.measures(idx,:,1),1),1)+1]];
-HPCatn07_inactivation_id=[data.HPCatn07.id(idx,:);data.HPCatn07.id(idx,:)];
+% % load inactivation data (HPCatn06 / HPCatn07)
+% load('F:\Projects\HPCatn\AnimalMetadata\HPCatn06_metadata.mat')
+% clear mazes
+% sessions=fieldnames(AnimalMetadata.RecordingLogs);
+% for i=1:length(sessions)
+%     mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
+% end
+% idx=contains(data.HPCatn06.id(:,1),sessions(contains(mazes,'track')));
+% 
+% % baseline & 6 hour recovery
+% HPCatn06_baseline=[data.HPCatn06.measures(idx,:,1);data.HPCatn06.measures(idx,:,2)];
+% HPCatn06_baseline=[HPCatn06_baseline,[ones(size(data.HPCatn06.measures(idx,:,1),1),1);ones(size(data.HPCatn06.measures(idx,:,1),1),1)+1]];
+% HPCatn06_baseline_id=[data.HPCatn06.id(idx,:);data.HPCatn06.id(idx,:)];
+% 
+% % inactivation
+% HPCatn06_inactivation=[data.HPCatn06.measures(idx,:,3);data.HPCatn06.measures(idx,:,4)];
+% HPCatn06_inactivation=[HPCatn06_inactivation,[ones(size(data.HPCatn06.measures(idx,:,1),1),1);ones(size(data.HPCatn06.measures(idx,:,1),1),1)+1]];
+% HPCatn06_inactivation_id=[data.HPCatn06.id(idx,:);data.HPCatn06.id(idx,:)];
+% 
+% load('F:\Projects\HPCatn\AnimalMetadata\HPCatn07_metadata.mat')
+% clear mazes
+% sessions=fieldnames(AnimalMetadata.RecordingLogs);
+% for i=1:length(sessions)
+%     mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
+% end
+% idx=contains(data.HPCatn07.id(:,1),sessions(contains(mazes,'track')));
+% 
+% % baseline & 6 hour recovery
+% HPCatn07_baseline=[data.HPCatn07.measures(idx,:,1);data.HPCatn07.measures(idx,:,2)];
+% HPCatn07_baseline=[HPCatn07_baseline,[ones(size(data.HPCatn07.measures(idx,:,1),1),1);ones(size(data.HPCatn07.measures(idx,:,1),1),1)+1]];
+% HPCatn07_baseline_id=[data.HPCatn07.id(idx,:);data.HPCatn07.id(idx,:)];
+% 
+% % inactivation
+% HPCatn07_inactivation=[data.HPCatn07.measures(idx,:,3);data.HPCatn07.measures(idx,:,4)];
+% HPCatn07_inactivation=[HPCatn07_inactivation,[ones(size(data.HPCatn07.measures(idx,:,1),1),1);ones(size(data.HPCatn07.measures(idx,:,1),1),1)+1]];
+% HPCatn07_inactivation_id=[data.HPCatn07.id(idx,:);data.HPCatn07.id(idx,:)];
 
 %% COMPILE GROUPS
 data.control.measures=[];
@@ -66,17 +66,17 @@ group2=[[data.lesion.measures(:,:,1),ones(size(data.lesion.measures(:,:,1),1),1)
 group1id=[data.control.id;data.control.id];
 group2id=[data.lesion.id;data.lesion.id];
 
-%% add baseline control data
-group1=[group1;HPCatn06_baseline;HPCatn07_baseline];
-group1id=[group1id;HPCatn06_baseline_id;HPCatn07_baseline_id];
-control{3}='HPCatn06';
-control{4}='HPCatn07';
-
-%% add inactivation data to lesion group
-group2=[group2;HPCatn06_inactivation;HPCatn07_inactivation];
-group2id=[group2id;HPCatn06_inactivation_id;HPCatn07_inactivation_id];
-lesion{3}='HPCatn06';
-lesion{4}='HPCatn07';
+% %% add baseline control data
+% group1=[group1;HPCatn06_baseline;HPCatn07_baseline];
+% group1id=[group1id;HPCatn06_baseline_id;HPCatn07_baseline_id];
+% control{3}='HPCatn06';
+% control{4}='HPCatn07';
+% 
+% %% add inactivation data to lesion group
+% group2=[group2;HPCatn06_inactivation;HPCatn07_inactivation];
+% group2id=[group2id;HPCatn06_inactivation_id;HPCatn07_inactivation_id];
+% lesion{3}='HPCatn06';
+% lesion{4}='HPCatn07';
 
 %% DELETE MEASURES FOR OPEN ARENA
 varnames=data.varnames;
@@ -92,66 +92,25 @@ group2(:,colstodelete,:)=[];
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-cd F:\Projects\HPCatn\AnimalMetadata
+group1id=get_region_id(group1id,'F:\Projects\HPCatn\AnimalMetadata');
+group1id(contains(group1id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(group1id(:,end),'dg')),1));
 
-rats=dir('*.mat');
-rats={rats.name};
-sess_region=[];
-sessionid=[];
-% mainpath='D:\Projects\PAE_PlaceCell\ProcessedData\';
-mainpath=[];
+group2id=get_region_id(group2id,'F:\Projects\HPCatn\AnimalMetadata');
+group2id(contains(group2id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(group2id(:,end),'dg')),1));
 
-for i=1:length(rats)
-  load(rats{i})
-  sess=fieldnames(AnimalMetadata.RecordingLogs);
-  for s=1:length(sess)
-      sess_region=[sess_region;{AnimalMetadata.AnimalName,sess{s},AnimalMetadata.RecordingLogs.(sess{s}).RecordingArea}];
-      sessionid=[sessionid;{[mainpath,AnimalMetadata.AnimalName,'_',sess{s}]}];
-  end
-end
 
-% create idx
-ca1idx=strcmp(sess_region(:,3), 'ca1');
-ca3idx=contains(sess_region(:,3), ["ca3","dg"]);
-cortexidx=strcmp(sess_region(:,3), 'cortex');
 
-ca1=sessionid(ca1idx);
-ca3=sessionid(ca3idx);
-cortex=sessionid(cortexidx); 
+group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
+group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
+group1ca3 = group1(strcmp(group1id(:,4),'ca3'),:);
+group1ca3id = group1id(strcmp(group1id(:,4),'ca3'),:);
 
-% split groups between regions
-% ca1
-group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
-group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
-group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
-group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
 
-[uCA,~,~] = uniqueRowsCA(group1ca1id);
-disp([num2str(size(uCA,1)),' control ca1 cells'])
-[uCA,~,~] = uniqueRowsCA(group2ca1id);
-disp([num2str(size(uCA,1)),' pae ca1 cells'])
+group2ca1 = group2(strcmp(group2id(:,4),'ca1'),:);
+group2ca1id = group2id(strcmp(group2id(:,4),'ca1'),:);
+group2ca3 = group2(strcmp(group2id(:,4),'ca3'),:);
+group2ca3id = group2id(strcmp(group2id(:,4),'ca3'),:);
 
-% ca3/dg
-group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
-group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
-group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
-group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
-
-[uCA,~,~] = uniqueRowsCA(group1ca3id);
-disp([num2str(size(uCA,1)),' control ca3 cells'])
-[uCA,~,~] = uniqueRowsCA(group2ca3id);
-disp([num2str(size(uCA,1)),' pae ca3 cells'])
-
-% cortex
-group1cortex = group1(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
-group2cortex = group2(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
-group1cortexid = group1id(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
-group2cortexid = group2id(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
-
-[uCA,~,~] = uniqueRowsCA(group1cortexid);
-disp([num2str(size(uCA,1)),' control cortex cells'])
-[uCA,~,~] = uniqueRowsCA(group2cortexid);
-disp([num2str(size(uCA,1)),' pae cortex cells'])
 
 
 %% PLACE CELL FILTER
@@ -159,8 +118,7 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
 [group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
 [group2ca3,group2ca3id]=placefieldfilter(group2ca3,group2ca3id,varnames);
-[group1cortex,group1cortexid]=placefieldfilter(group1cortex,group1cortexid,varnames);
-[group2cortex,group2cortexid]=placefieldfilter(group2cortex,group2cortexid,varnames);
+
 
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
@@ -173,10 +131,6 @@ disp([num2str(size(uCA,1)),' control ca3 place cells'])
 [uCA,~,~] = uniqueRowsCA(group2ca3id);
 disp([num2str(size(uCA,1)),' pae ca3 place cells'])
 
-[uCA,~,~] = uniqueRowsCA(group1cortexid);
-disp([num2str(size(uCA,1)),' control cortex place cells'])
-[uCA,~,~] = uniqueRowsCA(group2cortexid);
-disp([num2str(size(uCA,1)),' pae cortex place cells'])
 
 disp('...')
 disp('control rats with ca1')
@@ -213,29 +167,70 @@ end
 
 
 %% pop vec
-popvector(group1id,group1(:,end),'control');
-popvector(group2id,group2(:,end),'lesion');
+% popvector(group1id,group1(:,end),'control');
+% popvector(group2id,group2(:,end),'lesion');
 
 
 
-% visualizecells(uniqueRowsCA(group1id),'control')
-% visualizecells(uniqueRowsCA(group2id),'lesion')
 
-% visualizecells(uniqueRowsCA(group1cortexid),'control_cortex')
-% visualizecells(uniqueRowsCA(group2cortexid),'lesion_cortex')
+% 
+% visualize_cells(group1ca1id,'D:\Projects\HPCatn\figures\13_10_2019\controlca1')
+% visualize_cells(group2ca1id,'D:\Projects\HPCatn\figures\13_10_2019\lesionca1')
+% 
+% visualize_cells(group1ca3id,'D:\Projects\HPCatn\figures\13_10_2019\controlca3')
+% visualize_cells(group2ca3id,'D:\Projects\HPCatn\figures\13_10_2019\lesionca3')
 
-visualizecells(uniqueRowsCA(group1ca1id),'Control')
-visualizecells(uniqueRowsCA(group2ca1id),'Lesion')
+
+group1ca1_trial_deviation = compute_trial_deviation(group1ca1id,group1ca1(:,contains(varnames,'runningdir')));
+
+group2ca1_trial_deviation = compute_trial_deviation(group2ca1id,group1ca1(:,contains(varnames,'runningdir')));
+
+group1ca3_trial_deviation = compute_trial_deviation(group1ca3id,group1ca3(:,contains(varnames,'runningdir')));
+
+group2ca3_trial_deviation = compute_trial_deviation(group2ca3id,group2ca3(:,contains(varnames,'runningdir')));
+
+group1ca1=[group1ca1,group1ca1_trial_deviation];
+group2ca1=[group2ca1,group2ca1_trial_deviation];
+group1ca3=[group1ca3,group1ca3_trial_deviation];
+group2ca3=[group2ca3,group2ca3_trial_deviation];
+% 
+% varnames = [varnames,'trialdeviation'];
 
 
-visualize_cells(group1ca3id,'D:\Projects\HPCatn\figures\13_05_2019\control')
-visualize_cells(group2ca3id,'D:\Projects\HPCatn\figures\13_05_2019\lesion')
+
+fig = figure;fig.Color = [1 1 1];
+AllStats=stat_plot(group1ca3_trial_deviation,group2ca3_trial_deviation,{'Control','ATN Lesion'},{'Trial Deviation'},'plots',2)
+
+fig = figure;fig.Color = [1 1 1];
+
+AllStats=stat_plot(group1ca3(:,contains(varnames,'lap_perm_stability')),...
+    group2ca3(:,contains(varnames,'lap_perm_stability')),{'Control','ATN Lesion'},{'Trial Stability'},'plots',2)
 
 
 
 figure
-AllStats=CDFplots(group1ca1(:,:,1),group2ca1(:,:,1),{'Control','ATN Lesion'},varnames,1)
-AllStats=CDFplots(group1ca3(:,:,1),group2ca3(:,:,1),{'Control','ATN Lesion'},varnames,1)
+AllStats=stat_plot(group1ca1(:,:,1),group2ca1(:,:,1),{'Control','ATN Lesion'},varnames)
+figure
+AllStats=stat_plot(group1ca3(:,:,1),group2ca3(:,:,1),{'Control','ATN Lesion'},varnames)
+
+%% compile and save as csv
+id=get_region_id([group1ca1id;group1ca3id;group2ca1id;group2ca3id],'F:\Projects\HPCatn\AnimalMetadata');
+
+id(contains(id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(id(:,end),'dg')),1));
+
+id = [id,[cellstr(repmat('control',size([group1ca1id;group1ca3id],1),1));...
+    cellstr(repmat('lesion',size([group2ca1id;group2ca3id],1),1))]]
+
+Rdata = [group1ca1;group1ca3;group2ca1;group2ca3];
+
+Rdata = [num2cell(Rdata),id];
+
+varnames = [varnames,{'session','tt','cell','area','group'}];
+varnames = regexprep(varnames, '\W', '');
+Rdata = cell2table(Rdata,'VariableNames',varnames);
+
+
+writetable(Rdata,'F:\Projects\HPCatn\Rdata_hpcatn_sfn2019_control_lesion.csv')
 
 
 
@@ -315,6 +310,24 @@ legend(control{1},control{2},control{3},lesion{1},lesion{2})
 
 
 %%
+
+function d = compute_trial_deviation(id,runningdir)
+direction = {'left','right'};
+
+parfor i=1:length(id)
+    
+    data=load(id{i,1},'linear_track','spikesID');
+    
+    idx = find_cells(data,str2double((extractBetween(id{i,2},'TT','.mat'))),str2double(id{i,3}));
+    
+    trials = vertcat(data.linear_track{1, 1}.(direction{runningdir(i)}){idx}.maps{:});
+    
+    d(i,1) = trial_deviation(trials);
+
+end
+
+end
+
 function [group,groupid]=placefieldfilter(group,groupid,varnames)
 % 1) Minimum peak firing rate of 2 Hz, 
 % 2) Minimum field width of 8 cm, 
@@ -325,13 +338,13 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=180 &...
-    group(:,contains(varnames,'nlaps'))>=10 &...
+    group(:,contains(varnames,'nlaps'))>=15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 
 group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=180 &...
-    group(:,contains(varnames,'nlaps'))>=10 &...
+    group(:,contains(varnames,'nlaps'))>=15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:,:);
 end
 
@@ -363,6 +376,8 @@ for i=1:length(groupid)
 % print('-dmeta',['D:\Projects\PAE_PlaceCell',filesep,'test.emf'])
 end
 end
+
+
 
 function popvector(groupid,runningdir,group)
 for i=1:length(groupid)

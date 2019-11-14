@@ -1,18 +1,18 @@
 % AnalyzeResults_HPCatn_box
-data=compileResults('D:\Projects\HPCatn\ProcessedData');
+data=compileResults('F:\Projects\HPCatn\ProcessedData');
 
 control={'HPCatn02','HPCatn05'};
 lesion={'HPCatn03','HPCatn04'};
 
 % load inactivation data
-load('D:\Projects\HPCatn\AnimalMetadata\HPCatn06_metadata.mat')
-sessions=fieldnames(AnimalMetadata.RecordingLogs);
-for i=1:length(sessions)
-    mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
-end
-idx=contains(data.HPCatn06.id(:,1),sessions(contains(mazes,'box')));
-tempdata=data.HPCatn06.measures(idx,:,:);
-tempid=data.HPCatn06.id(idx,:);
+% load('D:\Projects\HPCatn\AnimalMetadata\HPCatn06_metadata.mat')
+% sessions=fieldnames(AnimalMetadata.RecordingLogs);
+% for i=1:length(sessions)
+%     mazes{i}=AnimalMetadata.RecordingLogs.(sessions{i}).MazeTypes;
+% end
+% idx=contains(data.HPCatn06.id(:,1),sessions(contains(mazes,'box')));
+% tempdata=data.HPCatn06.measures(idx,:,:);
+% tempid=data.HPCatn06.id(idx,:);
 
 
 %% COMPILE GROUPS
@@ -37,15 +37,15 @@ group2=data.lesion.measures(:,:,3);
 group1id=data.control.id;
 group2id=data.lesion.id;
 
-%% add inactivation rat control data
-group1=[group1;tempdata(:,:,1)];
-group1id=[group1id;tempid];
-control{3}='HPCatn06';
-
-% add inactivation data
-group2=[group2;tempdata(:,:,2)];
-group2id=[group2id;tempid];
-lesion{3}='HPCatn06';
+% %% add inactivation rat control data
+% group1=[group1;tempdata(:,:,1)];
+% group1id=[group1id;tempid];
+% control{3}='HPCatn06';
+% 
+% % add inactivation data
+% group2=[group2;tempdata(:,:,2)];
+% group2id=[group2id;tempid];
+% lesion{3}='HPCatn06';
 %% DELETE MEASURES FOR OPEN ARENA
 varnames=data.varnames;
 
@@ -60,84 +60,52 @@ group2(:,colstodelete)=[];
 
 %% SPLIT BY REGION
 % load metadata files and extract region info
-cd D:\Projects\HPCatn\AnimalMetadata
 
-rats=dir('*.mat');
-rats={rats.name};
-sess_region=[];
-sessionid=[];
-% mainpath='D:\Projects\PAE_PlaceCell\ProcessedData\';
-mainpath=[];
+group1id=get_region_id(group1id,'F:\Projects\HPCatn\AnimalMetadata');
+group1id(contains(group1id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(group1id(:,end),'dg')),1));
 
-for i=1:length(rats)
-  load(rats{i})
-  sess=fieldnames(AnimalMetadata.RecordingLogs);
-  for s=1:length(sess)
-      sess_region=[sess_region;{AnimalMetadata.AnimalName,sess{s},AnimalMetadata.RecordingLogs.(sess{s}).RecordingArea}];
-      sessionid=[sessionid;{[mainpath,AnimalMetadata.AnimalName,'_',sess{s}]}];
-  end
-end
+group2id=get_region_id(group2id,'F:\Projects\HPCatn\AnimalMetadata');
+group2id(contains(group2id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(group2id(:,end),'dg')),1));
 
-% create idx
-ca1idx=strcmp(sess_region(:,3), 'ca1');
-ca3idx=contains(sess_region(:,3), ["ca3","dg"]);
-cortexidx=strcmp(sess_region(:,3), 'cortex');
 
-ca1=sessionid(ca1idx);
-ca3=sessionid(ca3idx);
-cortex=sessionid(cortexidx);
 
-% split groups between regions
-% ca1
-group1ca1 = group1(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
-group2ca1 = group2(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
-group1ca1id = group1id(ismember(erase(group1id(:,1),'.mat'), ca1),:,:);
-group2ca1id = group2id(ismember(erase(group2id(:,1),'.mat'), ca1),:,:);
+group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
+group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
 
-[uCA,~,~] = uniqueRowsCA(group1ca1id);
-disp([num2str(size(uCA,1)),' control ca1 cells'])
-[uCA,~,~] = uniqueRowsCA(group2ca1id);
-disp([num2str(size(uCA,1)),' lesion ca1 cells'])
+group1ca3 = group1(strcmp(group1id(:,4),'ca3'),:);
+group1ca3id = group1id(strcmp(group1id(:,4),'ca3'),:);
 
-% ca3/dg
-group1ca3 = group1(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
-group2ca3 = group2(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
-group1ca3id = group1id(ismember(erase(group1id(:,1),'.mat'), ca3),:,:);
-group2ca3id = group2id(ismember(erase(group2id(:,1),'.mat'), ca3),:,:);
+group1cortex = group1(strcmp(group1id(:,4),'cortex'),:);
+group1cortexid = group1id(strcmp(group1id(:,4),'cortex'),:);
 
-[uCA,~,~] = uniqueRowsCA(group1ca3id);
-disp([num2str(size(uCA,1)),' control ca3 cells'])
-[uCA,~,~] = uniqueRowsCA(group2ca3id);
-disp([num2str(size(uCA,1)),' lesion ca3 cells'])
 
-% cortex
-group1cortex = group1(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
-group2cortex = group2(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
-group1cortexid = group1id(ismember(erase(group1id(:,1),'.mat'), cortex),:,:);
-group2cortexid = group2id(ismember(erase(group2id(:,1),'.mat'), cortex),:,:);
 
-[uCA,~,~] = uniqueRowsCA(group1cortexid);
-disp([num2str(size(uCA,1)),' control cortex cells'])
-[uCA,~,~] = uniqueRowsCA(group2cortexid);
-disp([num2str(size(uCA,1)),' lesion cortex cells'])
+group2ca1 = group2(strcmp(group2id(:,4),'ca1'),:);
+group2ca1id = group2id(strcmp(group2id(:,4),'ca1'),:);
 
-%% HD filter
-[group1ca1,group1ca1id]=HDfilter(group1ca1,group1ca1id,varnames);
-[group2ca1,group2ca1id]=HDfilter(group2ca1,group2ca1id,varnames);
-[group1ca3,group1ca3id]=HDfilter(group1ca3,group1ca3id,varnames);
-[group2ca3,group2ca3id]=HDfilter(group2ca3,group2ca3id,varnames);
-[group1cortex,group1cortexid]=HDfilter(group1cortex,group1cortexid,varnames);
-[group2cortex,group2cortexid]=HDfilter(group2cortex,group2cortexid,varnames);
+group2ca3 = group2(strcmp(group2id(:,4),'ca3'),:);
+group2ca3id = group2id(strcmp(group2id(:,4),'ca3'),:);
 
-visualize_cells(group2cortexid,'D:\Projects\HPCatn\figures\HDcells')
+group2cortex = group1(strcmp(group2id(:,4),'cortex'),:);
+group2cortexid = group1id(strcmp(group2id(:,4),'cortex'),:);
+
+
+% %% HD filter
+% [group1ca1,group1ca1id]=HDfilter(group1ca1,group1ca1id,varnames);
+% [group2ca1,group2ca1id]=HDfilter(group2ca1,group2ca1id,varnames);
+% [group1ca3,group1ca3id]=HDfilter(group1ca3,group1ca3id,varnames);
+% [group2ca3,group2ca3id]=HDfilter(group2ca3,group2ca3id,varnames);
+% [group1cortex,group1cortexid]=HDfilter(group1cortex,group1cortexid,varnames);
+% [group2cortex,group2cortexid]=HDfilter(group2cortex,group2cortexid,varnames);
+% 
+% visualize_cells(group2cortexid,'F:\Projects\HPCatn\figures\HDcells')
 
 %% PLACE CELL FILTER
 [group1ca1,group1ca1id]=placefieldfilter(group1ca1,group1ca1id,varnames);
 [group2ca1,group2ca1id]=placefieldfilter(group2ca1,group2ca1id,varnames);
 [group1ca3,group1ca3id]=placefieldfilter(group1ca3,group1ca3id,varnames);
 [group2ca3,group2ca3id]=placefieldfilter(group2ca3,group2ca3id,varnames);
-[group1cortex,group1cortexid]=placefieldfilter(group1cortex,group1cortexid,varnames);
-[group2cortex,group2cortexid]=placefieldfilter(group2cortex,group2cortexid,varnames);
+
 
 
 [uCA,~,~] = uniqueRowsCA(group1ca1id);
@@ -190,8 +158,12 @@ end
 % visualize_cells(group2ca3id,'D:\Projects\HPCatn\figures\placecellbox_group2_ca3')
 
 
-group2ca1_shuff_pass=shuff(group2ca1id,'feature',{'ic','mvl','dic'},'session',2);
-visualize_cells(group2ca1id(group2ca1_shuff_pass(:,1)==1,:),'D:\Projects\HPCatn\figures\placecellbox_group2_ca1_infoshuffpass')
+% group2ca1_shuff_pass=shuff(group2ca1id,'feature',{'ic','mvl','dic'},'session',2);
+% visualize_cells(group2ca1id(group2ca1_shuff_pass(:,1)==1,:),'D:\Projects\HPCatn\figures\placecellbox_group2_ca1_infoshuffpass')
+
+
+
+
 
 figure
 AllStatsca1=stat_plot(group1ca1,group2ca1,{'control','lesion'},varnames)
@@ -199,6 +171,26 @@ figure
 AllStatsca3=stat_plot(group1ca3,group2ca3,{'control','lesion'},varnames)
 
 
+
+
+%% compile and save as csv
+id=get_region_id([group1ca1id;group1ca3id;group1cortexid;group2ca1id;group2ca3id;group2cortexid],...
+    'F:\Projects\HPCatn\AnimalMetadata');
+
+id(contains(id(:,end),'dg'),end) = cellstr(repmat('ca3',sum(contains(id(:,end),'dg')),1));
+
+id = [id,[cellstr(repmat('control',size([group1ca1id;group1ca3id;group1cortexid],1),1));...
+    cellstr(repmat('lesion',size([group2ca1id;group2ca3id;group2cortexid],1),1))]];
+
+Rdata = [group1ca1;group1ca3;group1cortex;group2ca1;group2ca3;group2cortex];
+
+Rdata = [num2cell(Rdata),id];
+
+varnames = [varnames,{'session','tt','cell','area','group'}];
+varnames = regexprep(varnames, '\W', '');
+Rdata = cell2table(Rdata,'VariableNames',varnames);
+
+writetable(Rdata,'F:\Projects\HPCatn\Rdata_hpcatn_sfn2019_control_lesion_box.csv')
 
 
 %% plot individual rats
@@ -272,14 +264,14 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 
 groupid=groupid(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=9 &...
-    group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.3 &...
+    group(:,contains(varnames,'FieldWidth'))<=50 &...
+    group(:,contains(varnames,'InformationContent'))>=.15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 
 group=group(group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=9 &...
-    group(:,contains(varnames,'FieldWidth'))<=40 &...
-    group(:,contains(varnames,'InformationContent'))>=.3 &...
+    group(:,contains(varnames,'FieldWidth'))<=50 &...
+    group(:,contains(varnames,'InformationContent'))>=.15 &...
     group(:,contains(varnames,'nSpikes'))>=100,:);
 end
 

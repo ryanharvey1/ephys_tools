@@ -1,10 +1,10 @@
 % AnalyzeResults_PAE_LinearTrack
 clear
-data=compileResults('D:\Projects\PAE_PlaceCell\ProcessedData');
-addpath('D:\Projects\PAE_PlaceCell\ProcessedData')
+data=compileResults('F:\Projects\PAE_PlaceCell\ProcessedData');
+addpath('F:\Projects\PAE_PlaceCell\ProcessedData')
 
-control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120'};
-pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124'};
+control={'RH13','RH14','LS21','LS23','LE2821','LE2823','LEM3116','LEM3120','LEM3216'};
+pae={'RH11','RH16','LS17','LS19','LE2813','LEM3124','LEM3206','LEM3246'};
 
 %% COMPILE GROUPS
 data.control.measures=[];
@@ -33,12 +33,12 @@ group2id=[data.pae.id;data.pae.id];
 varnames=data.varnames;
 varnames=[varnames,'runningdir'];
 
-colstodelete=contains(varnames,["Cluster Grade","borderScore","E",...
-    "DisplacementCorr","bordermod","egomod","Tightness","Incompleteness",...
-    "StationInTime","TempMatch","BDistanceClust","BDistanceSpike"]);
-varnames(colstodelete)=[];
-group1(:,colstodelete)=[];
-group2(:,colstodelete)=[];
+% colstodelete=contains(varnames,["Cluster Grade","borderScore","E",...
+%     "DisplacementCorr","bordermod","egomod","Tightness","Incompleteness",...
+%     "StationInTime","TempMatch","BDistanceClust","BDistanceSpike"]);
+% varnames(colstodelete)=[];
+% group1(:,colstodelete)=[];
+% group2(:,colstodelete)=[];
 
 
 %% PLOT ALL XY FOR DEBUGING
@@ -64,8 +64,8 @@ group2(:,colstodelete)=[];
 %% SPLIT BY REGION
 % load metadata files and extract region info
 
-group1id=get_region_id(group1id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
-group2id=get_region_id(group2id,'D:\Projects\PAE_PlaceCell\AnimalMetadata');
+group1id=get_region_id(group1id,'F:\Projects\PAE_PlaceCell\AnimalMetadata');
+group2id=get_region_id(group2id,'F:\Projects\PAE_PlaceCell\AnimalMetadata');
 
 group1ca1 = group1(strcmp(group1id(:,4),'ca1'),:);
 group1ca1id = group1id(strcmp(group1id(:,4),'ca1'),:);
@@ -183,13 +183,13 @@ disp([num2str(size(uCA,1)),' pae cortex cells'])
 
 
 %% sessions for decoding
-decode=[unique(group1ca1id(:,1));...
-unique(group2ca1id(:,1));...
-unique(group1ca3id(:,1));...
-unique(group2ca3id(:,1));...
-unique(group1dgid(:,1));...
-unique(group2dgid(:,1))];
-save('D:\Projects\PAE_PlaceCell\decoding\decode','decode')
+% decode=[unique(group1ca1id(:,1));...
+% unique(group2ca1id(:,1));...
+% unique(group1ca3id(:,1));...
+% unique(group2ca3id(:,1));...
+% unique(group1dgid(:,1));...
+% unique(group2dgid(:,1))];
+% save('D:\Projects\PAE_PlaceCell\decoding\decode','decode')
 
 
 %%
@@ -257,7 +257,24 @@ for i=1:length(C)
 end
 
 
+%% compile and save as csv
+id=[group1ca1id;group1ca3id;group1dgid;group2ca1id;group2ca3id;group2dgid];
 
+
+id = [id,[cellstr(repmat('control',size([group1ca1id;group1ca3id;group1dgid],1),1));...
+    cellstr(repmat('pae',size([group2ca1id;group2ca3id;group2dgid],1),1))]]
+
+Rdata = [group1ca1;group1ca3;group1dg;group2ca1;group2ca3;group2dg];
+
+Rdata = [num2cell(Rdata),id];
+
+varnames = [varnames,{'session','tt','cell','area','group'}];
+varnames = regexprep(varnames, '\W', '');
+Rdata = cell2table(Rdata,'VariableNames',varnames);
+
+
+writetable(Rdata,'F:\Projects\PAE_PlaceCell\Rdata_pae_sfn2019_lineartrack.csv')
+%%
 
 %  [pontential]=COM(group1ca1id)
 % visualizecells(uniqueRowsCA(group1ca1id),'sacca1')
@@ -288,7 +305,7 @@ for i=1:length(varnames)
     legend('control ca1','control ca3','control dg','pae ca1','pae ca3','pae dg','Location','best')
     grid on
     pause(.000001)
-    export_fig(fullfile('D:\Projects\PAE_PlaceCell\Figures\region_comparison',[varnames{i},'.png']))
+    export_fig(fullfile('F:\Projects\PAE_PlaceCell\Figures\region_comparison',[varnames{i},'.png']))
 
     close(fig)
 end
@@ -314,14 +331,18 @@ for i=1:length(varnames)
 end
 
 visualize_cells(uniqueRowsCA(group1ca1id),...
-    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca1');
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca1');
 visualize_cells(uniqueRowsCA(group2ca1id),...
-    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca1');
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca1');
 visualize_cells(uniqueRowsCA(group1ca3id),...
-    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca3');
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_ca3');
 visualize_cells(uniqueRowsCA(group2ca3id),...
-    'D:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca3');
-
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_ca3');
+visualize_cells(uniqueRowsCA(group1dgid),...
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\control_dg');
+visualize_cells(uniqueRowsCA(group2dgid),...
+    'F:\Projects\PAE_PlaceCell\Figures\PlaceCells\pae_dg');
+% 
 % visualizecells(group1ca1id,'control_ca1')
 % visualizecells(group2ca1id,'pae_ca1')
 % visualizecells(group1ca3id,'control_ca3')
@@ -515,8 +536,10 @@ function [group,groupid]=placefieldfilter(group,groupid,varnames)
 idx=group(:,contains(varnames,'PeakRate'))>=1 &...
     group(:,contains(varnames,'FieldWidth'))>=8 &...
     group(:,contains(varnames,'FieldWidth'))<=80 &...
-    group(:,contains(varnames,'nlaps'))>=10 &...
-    group(:,contains(varnames,'nSpikes'))>=100;
+    group(:,contains(varnames,'nlaps'))>=15 &...
+    group(:,contains(varnames,'nSpikes'))>=100 &...
+    group(:,contains(varnames,'InformationContent'))>=.15;
+
 groupid=groupid(idx,:);
 
 group=group(idx,:);
@@ -546,7 +569,7 @@ cd('D:\Projects\PAE_PlaceCell\ProcessedData')
 for i=1:length(groupid)
     data=load(groupid{i,1});
     try
-        postprocessFigures.main(data,{groupid{i,2},str2double(groupid(i,3))});
+        postprocessFigures.main(data,{groupid{i,2},str2double(groupid(i,3))},'colorcode','HD');
         pause(.001)
     catch
     end
@@ -599,8 +622,8 @@ set(gca,'FontSize',12)
 
 set(gcf, 'Position', get(0, 'Screensize'));
 print(gcf,'-dpng', '-r400',...
-    ['D:\Projects\PAE_PlaceCell\Figures\popvectors\',group,filesep,'popvec.png'])
+    ['F:\Projects\PAE_PlaceCell\Figures\popvectors\',group,filesep,'popvec.png'])
 
-savefig(['D:\Projects\PAE_PlaceCell\Figures\popvectors\',group,filesep,'popvec.fig'])
+% savefig(['F:\Projects\PAE_PlaceCell\Figures\popvectors\',group,filesep,'popvec.fig'])
 close all
 end

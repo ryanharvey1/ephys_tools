@@ -174,4 +174,71 @@ writetable(T,...
    'D:\Dropbox\school work\UNM\Classes\Stats_527\HPCatn_data.csv'); %save data
 
 
+%% delete .dat files
+cd F:\ryan_harvey\Projects\PAE_PlaceCell\data
+files=dir('**/*.dat');
+for i=1:size(files,1)
+    disp(fullfile(files(i).folder,files(i).name))
+    delete(fullfile(files(i).folder,files(i).name));
+end
+disp([num2str(sum([files(:).bytes])/1000000000), 'GBs deleted'])
 
+
+%% Rasters
+data = load('F:\Projects\ATNppc\ProcessedData\ATNppc01_S20190909163020.mat') 
+cortex=[1,2,3,4,5,14,15,16];
+thalamus=[6,7,8,9,10,11,12,13];
+
+tetrodes = data.spikesID.TetrodeNum ;
+tetrodes = extractBetween(tetrodes,'TT','.mat');
+
+cortexidx = find(ismember(str2double([tetrodes]),cortex));
+thalamusidx = find(ismember(str2double([tetrodes]),thalamus));
+
+X = cellfun(@transpose,data.Spikes,'un',0);
+% X = X([cortexidx;thalamusidx]);
+
+figure
+subplot(2,1,1)
+LineFormat = struct()
+LineFormat.Color = [0.9100    0.4100    0.1700];
+cortex_spikes = X(cortexidx);
+[~,I] = sort(cellfun(@length,cortex_spikes));
+cortex_spikes = cortex_spikes(I);
+[x1,y1]=plotSpikeRaster(cortex_spikes,'PlotType','vertline','LineFormat',LineFormat);hold on;
+
+subplot(2,1,2)
+LineFormat = struct()
+LineFormat.Color = [.2 .2 .2];
+thalamus_spikes = X(thalamusidx);
+[~,I] = sort(cellfun(@length,thalamus_spikes));
+thalamus_spikes = thalamus_spikes(I);
+[x2,y2]=plotSpikeRaster(thalamus_spikes,'PlotType','vertline','LineFormat',LineFormat);hold on;
+[0.9100    0.4100    0.1700]
+
+fig = figure; fig.Color = [1 1 1];
+plot(x1,y1+max(y2),'Color',[0.9100    0.4100    0.1700]);hold on
+plot(x2,y2,'Color',[0 0 1])
+% darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
+axis tight
+xlabel('Time (sec)')
+ylabel('Cells')
+export_fig('F:\Projects\ATNppc\Figures\colorraster_S20190909163020.png','-m4') 
+
+
+
+
+X = cellfun(@transpose,data.Spikes,'un',0);
+[~,I] = sort(cellfun(@length,X));
+X = X(I);
+clear x y
+for i=1:length(X)
+    [x{i},y{i}]=plotSpikeRaster(X(i),'PlotType','vertline');
+end
+for i=1:length(x)
+    plot(x{i},y{i}+i,'Color',[rand(1),rand(1),rand(1)]);hold on
+end
+axis tight
+grid on
+xlabel('Time (sec)')
+ylabel('Cells')
