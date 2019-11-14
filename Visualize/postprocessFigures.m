@@ -295,15 +295,20 @@ classdef postprocessFigures
             % plot histogram
             subplot(3,2,[3 4])
             spiketimes=vertcat(data.Spikes{:});
-            % BIN SPIKE TIMES FROM ALL CELLS OVER 500MS
-            edges=linspace(min(spiketimes),max(spiketimes),round(data.frames(end,1)/3));
+            % BIN SPIKE TIMES FROM ALL CELLS 
+            edges=min(spiketimes):3:max(spiketimes);
+            yyaxis left
             h=histogram(spiketimes,edges);
             h.FaceColor = [.7 .7 .7];
             h.EdgeColor = [.7 .7 .7];
             box off;axis tight
             xlabel('Time(sec)')
-            ylabel('Count')
-            title('All Cells Binned over 3 sec')
+            ylabel('Spike Count')
+            title('All cells 3 sec bins')
+            hold on
+            yyaxis right
+            plot(edges,smoothdata(interp1(data.frames(:,1),data.frames(:,end),edges),'movmedian',40));
+            ylabel('cm/sec')
             
             subplot(3,2,5)
             % find rows with all zeros
