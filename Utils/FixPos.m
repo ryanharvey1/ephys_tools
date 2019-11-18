@@ -47,8 +47,9 @@ x([flips{:}]) = []; % remove samples in ts and x
 y([flips{:}]) = []; % remove samples in ts and x
 ts([flips{:}]) = [];
 
-x = interp1(ts, x, ts_);
-y = interp1(ts, y, ts_);
+[ts, idx] = unique(ts);
+x = interp1(ts, x(idx), ts_);
+y = interp1(ts, y(idx), ts_);
 
 x = ndnanfilter(x, normpdf(-6:6, 0, 2)', [], 1, {}, {}, 1); % conv with gaussian and ignore NaNs
 y = ndnanfilter(y, normpdf(-3:3, 0, 2)', [], 1, {}, {}, 1);
