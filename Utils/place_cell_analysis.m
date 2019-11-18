@@ -152,7 +152,7 @@ classdef place_cell_analysis
             debugging_fig=0;
             
             p = inputParser;
-            addRequired(p,'ratemap',@isnumeric)
+            addParameter(p,'ratemap',@isnumeric)
             addParameter(p,'minPeakRate',2,@isnumeric)
             addParameter(p,'minFieldWidth',2,@isnumeric)
             addParameter(p,'maxFieldWidth',30,@isnumeric)
@@ -167,7 +167,10 @@ classdef place_cell_analysis
             maxFieldWidth = p.Results.maxFieldWidth;
             threshold = p.Results.percentThreshold; % change between peak rate and start/stop of field
             
-            
+
+            stdRates = std(ratemap,[],2)';
+            ratemap = mean(ratemap,2)';
+
             warning off  % findpeaks.m throws warnings if peak isn't found...
             
             for i=1:size(ratemap,1)
@@ -184,6 +187,10 @@ classdef place_cell_analysis
                         end
                     end
                 end
+                % remove field peaks with a half standard dev higher than the mean
+                % (unreliable fields)
+                exclude = [exclude; find( ratemap(i,locs) <  stdRates(i,locs)*.5)'];
+                
                 pks(exclude) = [];
                 locs(exclude)=[];
                 fieldCount = 1;

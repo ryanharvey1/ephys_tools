@@ -260,8 +260,9 @@ for event=1:size(data.events,2)
                 nBinsy=splitruns.(direction{iruns}).nBinsy;
                 Coherence=splitruns.(direction{iruns}).Coherence;
                 ratemap=splitruns.(direction{iruns}).SmoothRateMap;
+                laps_=reshape([splitruns.(direction{iruns}).maps{:}],[],length(splitruns.(direction{iruns}).maps));
                 
-                [fields]=place_cell_analysis.getPlaceFields(ratemap,'minPeakRate',1,...
+                [fields]=place_cell_analysis.getPlaceFields('ratemap',laps_,'minPeakRate',1,...
                     'minFieldWidth',3,'percentThreshold',.2,'maxFieldWidth',length(ratemap));
                 
                 data.linear_track{event}.(direction{iruns}){1, i}.fields=fields{1, 1};
