@@ -1,22 +1,5 @@
-function postprocessbatch(dataset,tracklength)
+function postprocessbatch(dataset)
 tic
-com=which('postprocessbatch');
-com=strsplit(com,filesep);
-basedir=[com{1},filesep,'Users',filesep,com{3},filesep,'ephys_tools'];
-addpath([basedir,filesep,'Analysis'])
-
-cd(basedir)
-addpath(fullfile('Analysis'),...
-    genpath(fullfile('io')),...
-    fullfile('LFP'),...
-    genpath(fullfile('preprocessing')),...
-    fullfile('Utils'),...
-    fullfile('Visualize'),...
-    fullfile('external_packages','CircStat2012a'),...
-    fullfile('external_packages','Pass_Index'),...
-    fullfile('external_packages','plotSpikeRaster'),...
-    fullfile('external_packages','panel'),...
-    fullfile('external_packages','Colormaps'))
 
 % check to see if the temp file exist...if not make it
 cd (dataset)
@@ -55,15 +38,7 @@ for iratID=1:length(ratID)
         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
             path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
             if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'Sorted'],'dir')==7
-                if tracklength==1
-                    track_length=TrackLength(path); % SET TRACK LENGTH
-                    if contains(path,'HPCatn')
-                        track_length=360;
-                    end
-                    postprocess(path,track_length,'yes',0); % CALL POSTPROCESS FUNCTION
-                else
-                    postprocess(path,76.5,'no',0); % CALL POSTPROCESS FUNCTION
-                end
+                postprocess('path',path,'figures',0); % CALL POSTPROCESS FUNCTION
             end
 %             waitbar(ns/nsessions,h,sprintf('%d%% done...',round((ns/nsessions)*100)))
             ns=ns+1;
