@@ -18,12 +18,13 @@ in=contiguousframes(data_video(:,5)<3,1);
 data_video_nospk=[data_video,in];
 
 % INTERPOLATE SPIKES TO TIMESTAMPS, POSITION, AND VEL DATA
-X=interp1(data_video_nospk(:,1),data_video_nospk(:,2),SpikeFile,'linear');
-Y=interp1(data_video_nospk(:,1),data_video_nospk(:,3),SpikeFile,'linear');
+[~,idx] = unique(data_video_nospk(:,1));
 
-A=interp1(data_video_nospk(:,1),data_video_nospk(:,4),SpikeFile,'linear');
-VEL=interp1(data_video_nospk(:,1),data_video_nospk(:,5),SpikeFile,'linear');
-VELidx=interp1(data_video_nospk(:,1),data_video_nospk(:,6),SpikeFile,'linear');
+X=interp1(data_video_nospk(idx,1),data_video_nospk(idx,2),SpikeFile,'linear');
+Y=interp1(data_video_nospk(idx,1),data_video_nospk(idx,3),SpikeFile,'linear');
+A=interp1(data_video_nospk(idx,1),data_video_nospk(idx,4),SpikeFile,'linear');
+VEL=interp1(data_video_nospk(idx,1),data_video_nospk(idx,5),SpikeFile,'linear');
+VELidx=interp1(data_video_nospk(idx,1),data_video_nospk(idx,6),SpikeFile,'linear');
 
 % CONCAT AND SORT
 data_video_spk=sortrows([[SpikeFile X Y A VEL VELidx ones(size(SpikeFile,1),1)];...
