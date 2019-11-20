@@ -123,7 +123,35 @@ classdef place_cell_analysis
             sparsity = num / den;
         end
         
+        
         function [fields]=getPlaceFields_2d(varargin)
+            % getPlaceFields_2d: locate firing fields in 2d map
+            % First uses uses Kmeans and contourc (segmentImage.m - RH)
+            % Then removes fields based on below params
+            %
+            %   Input:
+            %       ratemap: symmetrical 2d map (will need updated for non-symmetrical maps)
+            %       minPeakRate: min rate in hz
+            %       minFieldWidth: min field width in bins
+            %       maxFieldWidth: max field width in bins 
+            %       maze_size_cm: size of your maze in cm
+            %       debugging_fig: 0 or 1 if you want to test the code
+            %
+            %   Output: 
+            %       fields.fieldwidth: field width in cm (largest diameter)
+            %       fields.area: area of field cm^2
+            %       fields.bounds: x y boundaries of each field
+            %       fields.masked_field: binary mask of field location
+            %       fields.peakFR: peak rate in each field
+            %       fields.peakLoc: ij location of peak bin
+            %       fields.com: ij center of mass (or center of field)
+            %
+            % Note: If no field is found, the default is to output the
+            % entire rate map as a firing field. For your later place field
+            % criteria, you can just specify upper and lower boundaries for
+            % how large you think a place field is (>10cm & <50cm). 
+            %
+            % Ryan Harvey Nov. 2019
             
             p = inputParser;
             addParameter(p,'ratemap',peaks,@isnumeric)
@@ -142,14 +170,13 @@ classdef place_cell_analysis
             maze_size_cm = p.Results.maze_size_cm;
             debugging_fig = p.Results.debugging_fig;
 
-            
-            upscalefac = 15;
-            
             if debugging_fig
                 figure;
                 subplot(1,3,1)
             end
-            [BW,maskedImage,x,y,fieldarea,X] = segmentImage('map',ratemap,'upscalefac',upscalefac,'figs',debugging_fig);
+            
+            upscalefac = 15;
+            [~,~,x,y,fieldarea,X] = segmentImage('map',ratemap,'upscalefac',upscalefac,'figs',debugging_fig);
             
             if debugging_fig
                 title('kmeans & contourc')
@@ -291,7 +318,6 @@ classdef place_cell_analysis
             
             % remove fields with the same field boundaries and keep the one with
             % the highest peak rate and the smallest field width
-            
             for f = 1:length(fields.peakLoc)
                 fielddets(f,:) = [fields.peakLoc{f},fields.fieldwidth{f}];
             end
@@ -382,6 +408,7 @@ classdef place_cell_analysis
                 title('remove fields with the same field boundaries')
             end
         end
+        
         
         function [fields]=getPlaceFields(varargin)
             % USAGE
