@@ -123,6 +123,265 @@ classdef place_cell_analysis
             sparsity = num / den;
         end
         
+        function [fields]=getPlaceFields_2d(varargin)
+            
+            p = inputParser;
+            addParameter(p,'ratemap',peaks,@isnumeric)
+            addParameter(p,'minPeakRate',1,@isnumeric)
+            addParameter(p,'minFieldWidth',3,@isnumeric) % in bins
+            addParameter(p,'maxFieldWidth',30,@isnumeric) % in bins
+            addParameter(p,'maze_size_cm',100,@isnumeric)
+            addParameter(p,'debugging_fig',0,@isnumeric)
+
+            parse(p,varargin{:})
+            
+            ratemap = p.Results.ratemap;
+            minPeakRate = p.Results.minPeakRate;
+            minFieldWidth = p.Results.minFieldWidth;
+            maxFieldWidth = p.Results.maxFieldWidth;
+            maze_size_cm = p.Results.maze_size_cm;
+            debugging_fig = p.Results.debugging_fig;
+
+            
+            upscalefac = 15;
+            
+            if debugging_fig
+                figure;
+                subplot(1,3,1)
+            end
+            [BW,maskedImage,x,y,fieldarea,X] = segmentImage('map',ratemap,'upscalefac',upscalefac,'figs',debugging_fig);
+            
+            if debugging_fig
+                title('kmeans & contourc')
+                colorbar
+            end
+            
+            % collect field info
+            for f=1:length(x)
+                %rescale coordinates
+                x_temp=rescale([x{f},upscalefac+1,length(X)-upscalefac],1,(length(ratemap)));
+                y_temp=rescale([y{f},upscalefac+1,length(X)-upscalefac],1,(length(ratemap)));
+                x_temp = x_temp(1:end-2);
+                y_temp = y_temp(1:end-2);
+                
+                % get largest diameter: field width cm
+                fields.fieldwidth{f} = max(pdist([x_temp',y_temp']))*(maze_size_cm/length(ratemap));
+                
+                % get field area cm^2
+                fields.area{f} = fieldarea(f);
+                
+                % get field boundaries
+                fields.bounds{f} = [x_temp',y_temp'];
+                
+                % get field mask
+                fields.masked_field{f} = poly2mask(x_temp,y_temp,length(ratemap),length(ratemap));
+                
+                % get peak rate
+                fields.peakFR{f} = max(ratemap(logical(fields.masked_field{f})));
+                
+                % get peak location
+                temp_ratemap = ratemap;
+                temp_ratemap(~fields.masked_field{f}) = 0;
+                if isempty(fields.peakFR{f}) || isnan(fields.peakFR{f})
+                    fields.peakLoc{f} = NaN;
+                    fields.peakFR{f} = NaN;
+                else
+                    [r,c] = find(temp_ratemap == fields.peakFR{f});
+                    fields.peakLoc{f} = [r,c];
+                end
+                
+                % get center of mass
+                [x_c,y_c] = centroid(polyshape(x_temp,y_temp));
+                fields.com{f} = [x_c,y_c];
+            end
+            
+            % sort fields by firing rate
+            [~,idx]=sort([fields.peakFR{:}],'descend');
+            fields.fieldwidth = fields.fieldwidth(idx);
+            fields.area = fields.area(idx);
+            fields.bounds = fields.bounds(idx);
+            fields.masked_field = fields.masked_field(idx);
+            fields.peakFR = fields.peakFR(idx);
+            fields.peakLoc = fields.peakLoc(idx);
+            fields.com = fields.com(idx);
+            
+            % check fields against threshold params
+            for f = 1:length(x)
+                exclude(f,1) = fields.peakFR{f} < minPeakRate;
+            end
+            for f = 1:length(x)
+                exclude(f,2) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) < minFieldWidth;
+            end
+            for f = 1:length(x)
+                exclude(f,3) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) > maxFieldWidth;
+            end
+            fields.fieldwidth(any(exclude,2)) = [];
+            fields.area(any(exclude,2)) = [];
+            fields.bounds(any(exclude,2)) = [];
+            fields.masked_field(any(exclude,2)) = [];
+            fields.peakFR(any(exclude,2)) = [];
+            fields.peakLoc(any(exclude,2)) = [];
+            fields.com(any(exclude,2)) = [];
+            
+            fields.nfields = length(fields.bounds);
+
+            % if no field exist
+            if isempty(fields.fieldwidth)
+                fields.fieldwidth{1} = length(ratemap)*(maze_size_cm/length(ratemap));
+                fields.area{1} = length(ratemap)*length(ratemap)*(maze_size_cm/length(ratemap));
+                [r,c]=find(~isnan(ratemap));
+                [k,~] = convhull(r,c);
+                fields.bounds{1} = [r(k),c(k)];
+                fields.masked_field{1} = ~isnan(ratemap);
+                fields.peakFR{1} = max(ratemap(:));
+                [r,c] = find(ratemap == fields.peakFR{1});
+                fields.peakLoc{1} = [r,c];
+                [x_c,y_c] = centroid(polyshape(fields.bounds{1}(:,1),fields.bounds{1}(:,2)));
+                fields.com{1} = [x_c,y_c];
+                fields.nfields = 1;
+                
+                if debugging_fig
+                    subplot(1,3,2)
+                    imAlpha=ones(size(ratemap));
+                    imAlpha(isnan(ratemap))=0;
+                    imagesc(ratemap,'AlphaData',imAlpha);
+                    axis off
+                    axis image
+                    colormap(viridis(255))
+                    colorbar
+                    hold on
+                    for f = 1:length(fields.bounds)
+                        plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
+                    end
+                    title('check fields against threshold params')
+                end
+                return
+            end
+
+            % check for fields greater than max allowed
+            for f = find([fields.fieldwidth{:}] > length(ratemap)*(maze_size_cm/length(ratemap)))
+                fields.fieldwidth{f} = length(ratemap)*(maze_size_cm/length(ratemap));
+                fields.area{f} = length(ratemap)*length(ratemap)*(maze_size_cm/length(ratemap));
+                [r,c]=find(~isnan(ratemap));
+                [k,~] = convhull(r,c);
+                fields.bounds{f} = [r(k),c(k)];
+                fields.masked_field{f} = ~isnan(ratemap);
+                fields.peakFR{f} = max(ratemap(:));
+                [r,c] = find(ratemap == fields.peakFR{f});
+                fields.peakLoc{f} = [r,c];
+                [x_c,y_c] = centroid(polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2)));
+                fields.com{f} = [x_c,y_c];
+            end
+            
+            if debugging_fig
+                subplot(1,3,2)
+                imAlpha=ones(size(ratemap));
+                imAlpha(isnan(ratemap))=0;
+                imagesc(ratemap,'AlphaData',imAlpha);
+                axis off
+                axis image
+                colormap(viridis(255))
+                colorbar
+                hold on
+                for f = 1:length(fields.bounds)
+                    plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
+                end
+                title('check fields against threshold params')
+            end
+            
+            % remove fields with the same field boundaries and keep the one with
+            % the highest peak rate and the smallest field width
+            
+            for f = 1:length(fields.peakLoc)
+                fielddets(f,:) = [fields.peakLoc{f},fields.fieldwidth{f}];
+            end
+            [~,idx]=sort(fielddets(:,3),'ascend');
+
+            [C,ia,~]=unique(fielddets(:,1:2),'rows','stable');
+            Z=zeros(size(fielddets,1),2);
+            Z(ia,:)=C;
+            Z=Z(idx,:);
+            
+            exclude = find(all(Z==0, 2));
+            fields.fieldwidth(exclude) = [];
+            fields.area((exclude)) = [];
+            fields.bounds((exclude)) = [];
+            fields.masked_field((exclude)) = [];
+            fields.peakFR((exclude)) = [];
+            fields.peakLoc((exclude)) = [];
+            fields.com((exclude)) = [];
+            
+            if debugging_fig
+                subplot(1,3,3)
+                imAlpha=ones(size(ratemap));
+                imAlpha(isnan(ratemap))=0;
+                imagesc(ratemap,'AlphaData',imAlpha);
+                axis off
+                axis image
+                colormap(viridis(255))
+                colorbar
+                hold on
+                for f = 1:length(fields.bounds)
+                    plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
+                end
+                title('remove fields with the same field boundaries')
+            end
+            
+            polyvec = [];
+            for f = 1:length(fields.bounds)
+                polyvec = [polyvec, polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2))];
+            end
+
+            TF = overlaps(polyvec);
+            if sum(TF) == 1
+                fields.nfields = length(fields.bounds);
+                return
+            end
+            exclude = [];
+            for r = 1:length(TF)
+               for c = 2:length(TF) 
+                    if TF(r,c) == 1
+                        polyout = intersect([polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2)),...
+                            polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2))]);
+                        if round(polyarea(polyout.Vertices(:,1),polyout.Vertices(:,2)),2)==...
+                                round(polyarea(fields.bounds{c}(:,1),fields.bounds{c}(:,2)),2)
+                            exclude(r,c) = 1;
+                        end
+                    end
+               end
+            end
+            for f = length(exclude):-1:1
+                if exclude(1,f) == 1
+                    exclude_(f) = 1;
+                end
+            end
+            
+            fields.fieldwidth(logical(exclude_)) = [];
+            fields.area(logical(exclude_)) = [];
+            fields.bounds(logical(exclude_)) = [];
+            fields.masked_field(logical(exclude_)) = [];
+            fields.peakFR(logical(exclude_)) = [];
+            fields.peakLoc(logical(exclude_)) = [];
+            fields.com(logical(exclude_)) = [];
+            
+            fields.nfields = length(fields.bounds);
+
+            if debugging_fig
+                subplot(1,3,3)
+                imAlpha=ones(size(ratemap));
+                imAlpha(isnan(ratemap))=0;
+                imagesc(ratemap,'AlphaData',imAlpha);
+                axis off
+                axis image
+                colormap(viridis(255))
+                colorbar
+                hold on
+                for f = 1:length(fields.bounds)
+                    plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
+                end
+                title('remove fields with the same field boundaries')
+            end
+        end
         
         function [fields]=getPlaceFields(varargin)
             % USAGE

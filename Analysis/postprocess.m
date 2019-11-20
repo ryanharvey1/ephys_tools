@@ -61,7 +61,7 @@ data.mazetypes=get_maze_type(data);
 
 % SET UP VARIABLE NAMES & DATA STRUCTURE
 data.varnames={'InformationContent','Coherence','Sparsity','PeakRate',...
-    'OverallFiringRate','Field2Wall','FieldWidth','nSpikes','mean_vector_length',...
+    'OverallFiringRate','Field2Wall','FieldWidth','nfields','nSpikes','mean_vector_length',...
     'preferred_Direction','Direct_infoContent','DirectionalityIndex',...
     'PhPrecessSlope','PH_RSquared','lapPhPrecessSlope','lapPH_RSquared',...
     'PhlapCorrelation','lapPhaseOffset','PhcircLinCorr','Phpval','slopeCpU',...
@@ -260,8 +260,14 @@ for event=1:size(data.events,2)
                 nBinsy=splitruns.(direction{iruns}).nBinsy;
                 Coherence=splitruns.(direction{iruns}).Coherence;
                 ratemap=splitruns.(direction{iruns}).SmoothRateMap;
-                laps_=reshape([splitruns.(direction{iruns}).maps{:}],[],length(splitruns.(direction{iruns}).maps));
-                
+                if sum(ratemap)==0
+                    laps_ = ratemap';
+                else
+                    laps_=reshape([splitruns.(direction{iruns}).maps{:}],[],length(splitruns.(direction{iruns}).maps));
+                end
+                if isempty(laps_)
+                    laps_ = ratemap';
+                end
                 [fields]=place_cell_analysis.getPlaceFields('ratemap',laps_,'minPeakRate',1,...
                     'minFieldWidth',3,'percentThreshold',.2,'maxFieldWidth',length(ratemap));
                 
@@ -284,8 +290,14 @@ for event=1:size(data.events,2)
                 [ratemap,nBinsx,nBinsy,occ,Coherence]=bindata(data_video_nospk,...
                     data.samplerate,spks_VEL,track,data.maze_size_cm(event));
                 SmoothRateMap2=ratemap;
-                [field,FieldWidth]=FindFF2D(SmoothRateMap2);
-                FieldWidth=FieldWidth*(data.maze_size_cm(event)/length(field));
+                
+                fields = place_cell_analysis.getPlaceFields_2d('ratemap',ratemap,...
+                    'maxFieldWidth',length(SmoothRateMap2),...
+                    'maze_size_cm',data.maze_size_cm(event),...
+                    'debugging_fig',0);
+                field = fields.masked_field{1};
+                data.openfield{event}.fields{i} = fields;
+                
                 if isnan(field)==0
                     % in field / out field FR
                     nanPlacement=isnan(SmoothRateMap2);
@@ -347,15 +359,12 @@ for event=1:size(data.events,2)
                     fieldbound=[0 1];
                     spks_VEL4LFP=NaN;
                 else
-                    try
                     results=pass_index(data_video_nospk(:,1),data_video_nospk(:,2:3),...
                         data_video_spk(data_video_spk(:,6)==1,1),...
                         [data.lfp.ts(data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
                         [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
                         'plots',0,'method','place','binside',round(binside),'sample_along','arc_length');
-                    catch
-                        test=1
-                    end
+
                     occ4Ph=[results.ts,results.pass_index,zeros(length(results.ts),1)];
                     fieldbound=[0 1];
                     spks_VEL4LFP=data_video_spk(data_video_spk(:,6)==1,1);
@@ -508,6 +517,9 @@ for event=1:size(data.events,2)
                 stabilityoverlaps=NaN;
                 meanstability=NaN;
                 spatialcorrelation=NaN;
+                
+                FieldWidth = fields.fieldwidth{1};
+                nfields = fields.nfields;
             else
                 borderScore=NaN;
                 E=NaN;
@@ -520,11 +532,12 @@ for event=1:size(data.events,2)
                 corrected_sparsity=NaN;
                 correction_fit=NaN;
                 corrected_d=NaN;
+                nfields = length(fields{1,1});
             end
             if ~exist('Displacement','var');Displacement=NaN;DisplacementCorr=NaN;end
             
             measures=[InformationContent,Coherence,sparsity,max(ratemap(:)),...
-                nanmean(ratemap(:)),Field2Wall,FieldWidth,sum(data_video_spk(:,6)),r,...
+                nanmean(ratemap(:)),Field2Wall,FieldWidth,nfields,sum(data_video_spk(:,6)),r,...
                 preferred_Direction(1),Direct_infoContent,DirectionalityIndex,...
                 ThPrecess.slope,ThPrecess.RSquared,ThPrecess.lapSlope,ThPrecess.lapR2,...
                 ThPrecess.lapCorrelation,ThPrecess.lapPhaseOffset,ThPrecess.circLinCorr,...

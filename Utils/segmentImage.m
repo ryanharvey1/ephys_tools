@@ -60,7 +60,7 @@ im = im - mean(im);
 im = im ./ std(im);
 s = rng;
 rng('default');
-L = kmeans(im,2,'Replicates',2);
+L = kmeans(im,2,'Replicates',5);
 rng(s);
 BW = L == 2;
 BW = reshape(BW,[sz(1) sz(2)]);
