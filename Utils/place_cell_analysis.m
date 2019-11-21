@@ -210,6 +210,9 @@ classdef place_cell_analysis
                 
                 % get largest diameter: field width cm
                 fields.fieldwidth{f} = max(pdist([x_temp',y_temp']))*(maze_size_cm/length(ratemap));
+                if isempty(fields.fieldwidth{f})
+                    fields.fieldwidth{f} = NaN;
+                end
                 
                 % get field area cm^2
                 fields.area{f} = fieldarea(f);
@@ -254,10 +257,10 @@ classdef place_cell_analysis
                 exclude(f,1) = fields.peakFR{f} < minPeakRate | isnan(fields.peakFR{f});
             end
             for f = 1:length(x)
-                exclude(f,2) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) < minFieldWidth;
+                exclude(f,2) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) < minFieldWidth | isnan(fields.fieldwidth{f});
             end
             for f = 1:length(x)
-                exclude(f,3) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) > maxFieldWidth;
+                exclude(f,3) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) > maxFieldWidth | isnan(fields.fieldwidth{f});
             end
             fields.fieldwidth(any(exclude,2)) = [];
             fields.area(any(exclude,2)) = [];
@@ -370,44 +373,70 @@ classdef place_cell_analysis
                 title('remove fields with the same field boundaries')
             end
             
-            polyvec = [];
-            for f = 1:length(fields.bounds)
-                polyvec = [polyvec, polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2))];
-            end
-
-            TF = overlaps(polyvec);
-            if sum(TF) == 1
-                fields.nfields = length(fields.bounds);
-                return
-            end
-            exclude = [];
-            for r = 1:length(TF)
-               for c = 2:length(TF) 
-                    if TF(r,c) == 1
-                        polyout = intersect([polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2)),...
-                            polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2))]);
-                        if round(polyarea(polyout.Vertices(:,1),polyout.Vertices(:,2)),2)==...
-                                round(polyarea(fields.bounds{c}(:,1),fields.bounds{c}(:,2)),2)
-                            exclude(r,c) = 1;
-                        end
-                    end
-               end
-            end
-            for f = length(exclude):-1:1
-                if exclude(1,f) == 1
-                    exclude_(f) = 1;
+            % locate and remove fields entirely inside other fields
+            isInside = @(ps1,ps2)abs(area(ps2)-area(subtract(ps2,ps1))-area(ps1))<(area(ps1)*1e-06);
+            index = [];
+            for r = 1:length(fields.bounds)
+                for c = 1:length(fields.bounds)
+                    ps1 = polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2));
+                    ps2 = polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2));
+                    index = [index;r,c,isInside(ps1,ps2)];
                 end
             end
+            idx = find([index(:,1) ~= index(:,2)] & index(:,3)==1);
             
-            fields.fieldwidth(logical(exclude_)) = [];
-            fields.area(logical(exclude_)) = [];
-            fields.bounds(logical(exclude_)) = [];
-            fields.masked_field(logical(exclude_)) = [];
-            fields.peakFR(logical(exclude_)) = [];
-            fields.peakLoc(logical(exclude_)) = [];
-            fields.com(logical(exclude_)) = [];
-            
+            exclude = zeros(length(fields.bounds),1);
+            for i = 1:length(idx)
+                exclude(max(index(idx(i),1:2))) = 1;
+            end
+            fields.fieldwidth(logical(exclude)) = [];
+            fields.area((logical(exclude))) = [];
+            fields.bounds((logical(exclude))) = [];
+            fields.masked_field((logical(exclude))) = [];
+            fields.peakFR((logical(exclude))) = [];
+            fields.peakLoc((logical(exclude))) = [];
+            fields.com((logical(exclude))) = [];
             fields.nfields = length(fields.bounds);
+            
+            
+%             polyvec = [];
+%             for f = 1:length(fields.bounds)
+%                 polyvec = [polyvec, polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2))];
+%             end
+% 
+%             TF = overlaps(polyvec);
+%             if sum(TF) == 1
+%                 fields.nfields = length(fields.bounds);
+%                 return
+%             end
+%             exclude = [];
+%             for r = 1:length(TF)
+%                for c = 2:length(TF) 
+%                     if TF(r,c) == 1
+%                         polyout = intersect([polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2)),...
+%                             polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2))]);
+%                         if round(polyarea(polyout.Vertices(:,1),polyout.Vertices(:,2)),2)==...
+%                                 round(polyarea(fields.bounds{c}(:,1),fields.bounds{c}(:,2)),2)
+%                             exclude(r,c) = 1;
+%                         end
+%                     end
+%                end
+%             end
+%             for f = length(exclude):-1:1
+%                 if exclude(1,f) == 1
+%                     exclude_(f) = 1;
+%                 end
+%             end
+%             
+%             fields.fieldwidth(logical(exclude_)) = [];
+%             fields.area(logical(exclude_)) = [];
+%             fields.bounds(logical(exclude_)) = [];
+%             fields.masked_field(logical(exclude_)) = [];
+%             fields.peakFR(logical(exclude_)) = [];
+%             fields.peakLoc(logical(exclude_)) = [];
+%             fields.com(logical(exclude_)) = [];
+%             
+%             fields.nfields = length(fields.bounds);
 
             if debugging_fig
                 subplot(1,3,3)
