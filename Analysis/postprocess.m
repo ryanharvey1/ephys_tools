@@ -255,11 +255,12 @@ for event=1:size(data.events,2)
             if track==1 % UNPACK STRUCTURE
                 direction={'right','left'};
                 
-                occ=splitruns.(direction{iruns}).occ; 
-                nBinsx=splitruns.(direction{iruns}).nBinsx; 
+                occ=splitruns.(direction{iruns}).occ;
+                nBinsx=splitruns.(direction{iruns}).nBinsx;
                 nBinsy=splitruns.(direction{iruns}).nBinsy;
-                Coherence=splitruns.(direction{iruns}).Coherence;
                 ratemap=splitruns.(direction{iruns}).SmoothRateMap;
+                Coherence = compute_spatial_coherence(ratemap);
+                
                 if sum(ratemap)==0
                     laps_ = ratemap';
                 else
@@ -287,12 +288,14 @@ for event=1:size(data.events,2)
             
             % BIN & SMOOTH OPEN FIELD DATA
             if track==0
-                [ratemap,nBinsx,nBinsy,occ,Coherence]=bindata(data_video_nospk,...
+                [ratemap,nBinsx,nBinsy,occ,~]=bindata(data_video_nospk,...
                     data.samplerate,spks_VEL,track,data.maze_size_cm(event));
                 SmoothRateMap2=ratemap;
                 
+                [Coherence] = compute_spatial_coherence(ratemap);
+                
                 fields = place_cell_analysis.getPlaceFields_2d('ratemap',ratemap,...
-                    'maxFieldWidth',length(SmoothRateMap2),...
+                    'maxFieldWidth',length(ratemap),...
                     'maze_size_cm',data.maze_size_cm(event),...
                     'debugging_fig',0);
                 field = fields.masked_field{1};
