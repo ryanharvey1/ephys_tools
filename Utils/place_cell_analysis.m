@@ -233,8 +233,8 @@ classdef place_cell_analysis
             fields.com = fields.com(idx);
             
             % check fields against threshold params
-            for f = 1:length(x)
-                exclude(f,1) = fields.peakFR{f} < minPeakRate;
+            for f = 1:length(x) 
+                exclude(f,1) = fields.peakFR{f} < minPeakRate | isnan(fields.peakFR{f});
             end
             for f = 1:length(x)
                 exclude(f,2) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) < minFieldWidth;
