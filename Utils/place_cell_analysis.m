@@ -170,6 +170,23 @@ classdef place_cell_analysis
             maze_size_cm = p.Results.maze_size_cm;
             debugging_fig = p.Results.debugging_fig;
 
+            
+             if nansum(ratemap(:)) == 0
+                fields.fieldwidth{1} = length(ratemap)*(maze_size_cm/length(ratemap));
+                fields.area{1} = length(ratemap)*length(ratemap)*(maze_size_cm/length(ratemap));
+                [r,c]=find(~isnan(ratemap));
+                [k,~] = convhull(r,c);
+                fields.bounds{1} = [r(k),c(k)];
+                fields.masked_field{1} = ~isnan(ratemap);
+                fields.peakFR{1} = max(ratemap(:));
+                [r,c] = find(ratemap == fields.peakFR{1});
+                fields.peakLoc{1} = [r,c];
+                [x_c,y_c] = centroid(polyshape(fields.bounds{1}(:,1),fields.bounds{1}(:,2)));
+                fields.com{1} = [x_c,y_c];
+                fields.nfields = 1;
+                return
+             end
+             
             if debugging_fig
                 figure;
                 subplot(1,3,1)
