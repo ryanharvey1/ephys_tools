@@ -1,5 +1,8 @@
 classdef after_spikesort_cleanup
-    % after_spikesort_cleanup
+    % after_spikesort_cleanup: run after spike sorting
+    % built to bring spike sort 3d, mclust 4.4, & kilosort2/phy into a
+    % single format for postprocess.m to read
+    %
     % Ryan Harvey
     
     methods(Static)
@@ -19,7 +22,7 @@ classdef after_spikesort_cleanup
             %           tetrode number when you save from SS3D
             %
             % Ryan Harvey
-            %
+            
             
             % MClust
             if exist(fullfile(pwd,'FD'),'file')
