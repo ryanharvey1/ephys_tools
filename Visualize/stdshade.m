@@ -9,6 +9,9 @@ function stdshade(amatrix,alpha,acolor,F,smth)
 % smusall 2010/4/23
 % Copyright (c) 2010, Simon Musall
 % All rights reserved.
+
+amatrix = fliplr(amatrix);
+
 if exist('acolor','var')==0 || isempty(acolor)
     acolor='r'; 
 end
