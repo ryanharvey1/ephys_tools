@@ -157,6 +157,7 @@ classdef place_cell_analysis
             addParameter(p,'ratemap',peaks,@isnumeric)
             addParameter(p,'minPeakRate',1,@isnumeric)
             addParameter(p,'minFieldWidth',3,@isnumeric) % in bins
+            addParameter(p,'minActiveBins',10,@isnumeric) % in bins
             addParameter(p,'maxFieldWidth',30,@isnumeric) % in bins
             addParameter(p,'maze_size_cm',100,@isnumeric)
             addParameter(p,'debugging_fig',0,@isnumeric)
@@ -166,6 +167,7 @@ classdef place_cell_analysis
             ratemap = p.Results.ratemap;
             minPeakRate = p.Results.minPeakRate;
             minFieldWidth = p.Results.minFieldWidth;
+            minActiveBins = p.Results.minActiveBins;
             maxFieldWidth = p.Results.maxFieldWidth;
             maze_size_cm = p.Results.maze_size_cm;
             debugging_fig = p.Results.debugging_fig;
@@ -262,6 +264,10 @@ classdef place_cell_analysis
             for f = 1:length(x)
                 exclude(f,3) = floor(fields.fieldwidth{f} / (maze_size_cm/length(ratemap))) > maxFieldWidth | isnan(fields.fieldwidth{f});
             end
+            for f = 1:length(x)
+                exclude(f,4) = sum(fields.masked_field{f}(:)) < minActiveBins;
+            end
+            
             fields.fieldwidth(any(exclude,2)) = [];
             fields.area(any(exclude,2)) = [];
             fields.bounds(any(exclude,2)) = [];
