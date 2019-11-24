@@ -616,6 +616,8 @@ for event=1:size(data.events,2)
 end
 clearvars -except data figures
 
+data = orderfields(data);
+
 % save mat file to processed data folder
 processedpath=strsplit(data.session_path,filesep);
 processedpath(end-2:end)=[];
