@@ -36,7 +36,7 @@ classdef postprocessFigures
             
             p = inputParser;
             p.addParameter('cellid',[]);
-            p.addParameter('colorcode','phase');
+            p.addParameter('colorcode','HD');
             p.parse(varargin{:});
             cellid = p.Results.cellid;
             colorcode = p.Results.colorcode;
