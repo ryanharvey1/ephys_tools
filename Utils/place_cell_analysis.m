@@ -191,7 +191,7 @@ classdef place_cell_analysis
              
             if debugging_fig
                 figure;
-                subplot(1,3,1)
+                subplot(2,2,1)
             end
             
             upscalefac = 15;
@@ -294,7 +294,7 @@ classdef place_cell_analysis
                 fields.nfields = 1;
                 
                 if debugging_fig
-                    subplot(1,3,2)
+                    subplot(2,2,2)
                     imAlpha=ones(size(ratemap));
                     imAlpha(isnan(ratemap))=0;
                     imagesc(ratemap,'AlphaData',imAlpha);
@@ -327,7 +327,7 @@ classdef place_cell_analysis
             end
             
             if debugging_fig
-                subplot(1,3,2)
+                subplot(2,2,2)
                 imAlpha=ones(size(ratemap));
                 imAlpha(isnan(ratemap))=0;
                 imagesc(ratemap,'AlphaData',imAlpha);
@@ -364,7 +364,7 @@ classdef place_cell_analysis
             fields.com((exclude)) = [];
             
             if debugging_fig
-                subplot(1,3,3)
+                subplot(2,2,3)
                 imAlpha=ones(size(ratemap));
                 imAlpha(isnan(ratemap))=0;
                 imagesc(ratemap,'AlphaData',imAlpha);
@@ -445,7 +445,7 @@ classdef place_cell_analysis
 %             fields.nfields = length(fields.bounds);
 
             if debugging_fig
-                subplot(1,3,3)
+                subplot(2,2,3)
                 imAlpha=ones(size(ratemap));
                 imAlpha(isnan(ratemap))=0;
                 imagesc(ratemap,'AlphaData',imAlpha);
@@ -458,6 +458,65 @@ classdef place_cell_analysis
                     plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
                 end
                 title('remove fields with the same field boundaries')
+            end
+            
+            % check if boundaries represent minima instead of maxima
+            if any(max(ratemap(:)) > [fields.peakFR{:}]+eps)
+                % use FastPeakFind to find local maxima
+                try
+                    [cent, ~] = FastPeakFind(ratemap,max([min(max(ratemap,[],1)),min(max(ratemap,[],2))]),...
+                        fspecial('gaussian', 5,1),1);
+                    peak_loc = reshape(cent,2,[])';
+                catch
+                    [cent, ~] = FastPeakFind(padarray(ratemap,[3 3],0,'both'),max([min(max(ratemap,[],1)),min(max(ratemap,[],2))]),...
+                        fspecial('gaussian', 5,1),1);
+                    peak_loc = reshape(cent,2,[])' - 3;
+                end
+                
+                % use inpolygon to check if each field contains a maxima
+                clear exclude
+                for f = 1:length(fields.bounds)
+                    exclude(f,1) = ~any(inpolygon(peak_loc(:,1),peak_loc(:,2),fields.bounds{f}(:,1),fields.bounds{f}(:,2)));
+                end
+                fields.fieldwidth(logical(exclude)) = [];
+                fields.area((logical(exclude))) = [];
+                fields.bounds((logical(exclude))) = [];
+                fields.masked_field((logical(exclude))) = [];
+                fields.peakFR((logical(exclude))) = [];
+                fields.peakLoc((logical(exclude))) = [];
+                fields.com((logical(exclude))) = [];
+                fields.nfields = length(fields.bounds);
+                
+                if isempty(fields.fieldwidth)
+                    fields.fieldwidth{1} = length(ratemap)*(maze_size_cm/length(ratemap));
+                    fields.area{1} = length(ratemap)*length(ratemap)*(maze_size_cm/length(ratemap));
+                    [r,c]=find(~isnan(ratemap));
+                    [k,~] = convhull(r,c);
+                    fields.bounds{1} = [r(k),c(k)];
+                    fields.masked_field{1} = ~isnan(ratemap);
+                    fields.peakFR{1} = max(ratemap(:));
+                    [r,c] = find(ratemap == fields.peakFR{1});
+                    fields.peakLoc{1} = [r,c];
+                    [x_c,y_c] = centroid(polyshape(fields.bounds{1}(:,1),fields.bounds{1}(:,2)));
+                    fields.com{1} = [x_c,y_c];
+                    fields.nfields = 1;
+                end
+                
+                if debugging_fig
+                    subplot(2,2,4)
+                    imAlpha=ones(size(ratemap));
+                    imAlpha(isnan(ratemap))=0;
+                    imagesc(ratemap,'AlphaData',imAlpha);
+                    axis off
+                    axis image
+                    colormap(viridis(255))
+                    colorbar
+                    hold on
+                    for f = 1:length(fields.bounds)
+                        plot(fields.bounds{f}(:,1),fields.bounds{f}(:,2),'LineWidth',2)
+                    end
+                    title('remove local minima fields')
+                end
             end
         end
         
