@@ -67,7 +67,24 @@ continuous_bin_dur = table([subject;subject;subject;subject], [day;day;day;day],
 writetable(continuous_bin_dur,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\continuous_bin_dur.csv'); %save data
 
-varargout=shadedErrorBar(x,y,errBar,lineProps,transparent)
+
+timeStopped_tg1=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D1')});
+timeStopped_wt1=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D1')});
+timeStopped_tg2=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D2')});
+timeStopped_wt2=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D2')});
+
+tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
+norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
+
+wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
+norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
+
+tg2_bin = histcounts(cell2mat(timeStopped_tg2)',edges);
+norm_tg2_bin = tg2_bin/size(cell2mat(timeStopped_tg2)',1);
+
+wt2_bin = histcounts(cell2mat(timeStopped_wt2)',edges);
+norm_wt2_bin = wt2_bin/size(cell2mat(timeStopped_wt2)',1);
+ data_cue = [tg1_bin; wt1_bin];
 
 fig = figure; 
 fig.Color = [1 1 1];
@@ -81,8 +98,8 @@ b(1).FaceColor = [.25 .25 .25];
 box off
 xlabel('Time (seconds)')
 ylabel('Proportion of Stops')
-title('Day 1')
-legend({'WT','TgF344-AD'}); legend('boxoff')
+title('Test')
+legend({'F344','TgF344-AD'}); legend('boxoff')
 set(gca,'FontSize',14,'FontName','Helvetica','FontWeight','bold','LineWidth',2)
 subplot(2,1,2)
 b=bar(X,[norm_wt2_bin' norm_tg2_bin'])
@@ -91,30 +108,13 @@ b(1).FaceColor = [.25 .25 .25];
 box off
 xlabel('Time (seconds)')
 ylabel('Proportion of Stops')
-title('Day 2')
-legend({'WT','TgF344-AD'});legend('boxoff')
+title('Probe')
+legend({'F344','TgF344-AD'});legend('boxoff')
 set(gca,'FontSize',14,'FontName','Helvetica','FontWeight','bold','LineWidth',2)
 
  export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\Binned_Stops.png','-m4') 
  
-% timeStopped_tg1=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D1')});
-% timeStopped_wt1=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D1')});
-% timeStopped_tg2=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D2')});
-% timeStopped_wt2=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D2')});
-% 
-% tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
-% norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
-% 
-% wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
-% norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
-% 
-% tg2_bin = histcounts(cell2mat(timeStopped_tg2)',edges);
-% norm_tg2_bin = tg2_bin/size(cell2mat(timeStopped_tg2)',1);
-% 
-% wt2_bin = histcounts(cell2mat(timeStopped_wt2)',edges);
-% norm_wt2_bin = wt2_bin/size(cell2mat(timeStopped_wt2)',1);
-%  data_cue = [tg1_bin; wt1_bin];
-% 
+
 % contingency_cue = table(subject, day, group, data_cue(:,1),data_cue(:,2),data_cue(:,3),data_cue(:,4)...
 %     ,'VariableNames',vars,'RowNames',{'TgF344-AD','F344'});
 % 
@@ -147,11 +147,175 @@ for i=1:size(params.HBcenter,1)
 end
 
 
-%Create contingency Tables 
-tg1=primary_hbDistBinary(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
-wt1=primary_hbDistBinary(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
-tg2=primary_hbDistBinary(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
-wt2=primary_hbDistBinary(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+tg1=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+wt1=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+tg2=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+wt2=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+
+sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+
+
+h  = figure('Color', [1 1 1]); 
+
+subaxis(2,2,1)
+p1 = plot(mean([tg1 tg2]));
+set(p1, 'LineWidth', 4,'Color','r')
+hold on
+
+e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([0 3])
+ylim([0 max([tg1;tg2;wt1;wt2])])
+
+hold on;
+
+p1 = plot(mean([wt1 wt2]));
+set(p1, 'LineWidth', 4,'Color','k')
+hold on
+
+e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([.5 2.5])
+ylabel('Number of Stops')
+xticks([1 2])
+xticklabels({'Test','Probe'})
+set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+box off
+
+
+tg1=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+wt1=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+tg2=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+wt2=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+
+sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+
+subaxis(2,2,2)
+p1 = plot(mean([tg1 tg2]));
+set(p1, 'LineWidth', 4,'Color','r')
+hold on
+
+e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([0 3])
+ylim([0 max([tg1;tg2;wt1;wt2])])
+
+hold on;
+
+p1 = plot(mean([wt1 wt2]));
+set(p1, 'LineWidth', 4,'Color','k')
+hold on
+
+e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([.5 2.5])
+ylabel('Number of Entries')
+xticks([1 2])
+xticklabels({'Test','Probe'})
+set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+box off
+
+
+
+tg1=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+wt1=primary_area(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+tg2=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+wt2=primary_area(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+
+sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+
+subaxis(2,2,3)
+p1 = plot(mean([tg1 tg2]));
+set(p1, 'LineWidth', 4,'Color','r')
+hold on
+
+e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([0 3])
+ylim([0 max([tg1;tg2;wt1;wt2])])
+
+hold on;
+
+p1 = plot(mean([wt1 wt2]));
+set(p1, 'LineWidth', 4,'Color','k')
+hold on
+
+e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([.5 2.5])
+ylabel('Area (cm)')
+xticks([1 2])
+xticklabels({'Test','Probe'})
+set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+box off
+
+tg1=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+wt1=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+tg2=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+wt2=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+
+sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+
+subaxis(2,2,4)
+p1 = plot(mean([tg1 tg2]));
+set(p1, 'LineWidth', 4,'Color','r')
+hold on
+
+e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([0 3])
+ylim([0 max([tg1;tg2;wt1;wt2])])
+
+hold on;
+
+p1 = plot(mean([wt1 wt2]));
+set(p1, 'LineWidth', 4,'Color','k')
+hold on
+
+e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+
+eline = get(e1, 'Children');
+set(eline,  'LineWidth', 4)
+xlim([.5 2.5])
+ylabel('Time in Home Base (s)')
+xticks([1 2])
+xticklabels({'Test','Probe'})
+set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+box off
 
 %Day 1 close/far
 %row: tg,wt, col:close,far
@@ -260,33 +424,41 @@ fig = figure;
 fig.Color = [1 1 1];
 
 labels = {'One','Two','Three'};
-subplot(2,2,1)
 tg_d1 = numHB(day_idx == 0 & group_idx ==1,1);
-pie(histcounts(tg_d1,[1 2 3 4]))
+h= pie(histcounts(tg_d1,[1 2 3 4]))
+set(findobj(h,'type','text'),'fontsize',18)
 legend(labels,'Orientation','horizontal','Location','southoutside')
 legend('boxoff')
-title('Tg-F344-AD Day 1')
+title('Tg-F344-AD Test')
 set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
-subplot(2,2,2)
 wt_d1 = numHB(day_idx == 0 & group_idx ==0,1);
-pie(histcounts(wt_d1,[1 2 3 4]))
+
+fig = figure; 
+fig.Color = [1 1 1];
+h= pie(histcounts(wt_d1,[1 2 3 4]))
+set(findobj(h,'type','text'),'fontsize',18)
 legend(labels,'Orientation','horizontal','Location','southoutside')
 legend('boxoff')
-title('F344 Day 1')
+title('F344 Test')
 set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
-subplot(2,2,3)
 tg_d2 = numHB(day_idx == 1 & group_idx ==1,1);
-pie(histcounts(tg_d2,[1 2 3 4]))
+
+fig = figure; 
+fig.Color = [1 1 1];
+h= pie(histcounts(tg_d2,[1 2 3 4]))
+set(findobj(h,'type','text'),'fontsize',18)
 legend(labels,'Orientation','horizontal','Location','southoutside')
 legend('boxoff')
-title('Tg-F344-AD Day 2')
+title('Tg-F344-AD Probe')
 set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
-subplot(2,2,4)
+
+fig = figure; 
+fig.Color = [1 1 1];
 wt_d2 = numHB(day_idx == 1 & group_idx ==0,1);
-pie(histcounts(wt_d2,[1 2 3 4]))
-legend(labels,'Orientation','horizontal','Location','southoutside')
+h= pie(histcounts(wt_d2,[1 2 3 4]));
+set(findobj(h,'type','text'),'fontsize',18)
 legend('boxoff')
-title('F344 Day 2')
+title('F344 Probe')
 set(gca,'FontSize',13,'FontName','Helvetica','FontWeight','bold')
 
 export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\Home_base_pie.png','-m4') 
@@ -324,18 +496,16 @@ writetable(bin_entries,...
 fig = figure; 
 fig.Color=[1 1 1];
 
-subplot(2,2,1)
-plotspread_wrapper(CueEntries_wt,CueEntries_tg,{'F344','TgF344-AD'})
+subplot(1,2,1)
+stat_plot(CueEntries_wt,CueEntries_tg,{'F344','TgF344-AD'},{'Cue Zone Entries'},'plots',2)
 set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
-ylim([0 max([CueEntries_wt;CueEntries_tg;CueStops_wt;CueStops_tg])])
-title('Entries')
-
-subplot(2,2,2)
-plotspread_wrapper(CueStops_wt,CueStops_tg,{'F344','TgF344-AD'})
+legend({'F344','TgF344-AD'})
+subplot(1,2,2)
+stat_plot(CueStops_wt,CueStops_tg,{'F344','TgF344-AD'},{'Cue Zone Stops'},'plots',2)
 set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
-ylim([0 max([CueEntries_wt;CueEntries_tg;CueStops_wt;CueStops_tg])])
-title('Stops')
-
+legend({'F344','TgF344-AD'})
+ legend boxoff
+ 
 subplot(2,2,3)
 plotspread_wrapper(BinEntries(12:end,:),BinEntries(1:12,:),{'F344','TgF344-AD'})
 set(gca,'FontWeight','bold','FontName','Helvetica','FontSize',14)
@@ -388,19 +558,19 @@ for i=1:size(params.HBcenter,1)
     
 end
 
-% figure; 
-% subplot(1,2,1)
-% plotspread_wrapper(cell2mat(wt1),cell2mat(tg1),{'WT','Tg'})
-% title('Time to first stop in Primary HB - Cue Present')
-% ylim([0 max([cell2mat(wt1);cell2mat(tg1);cell2mat(wt2);cell2mat(tg2)])])
-% ylabel('time (s)')
-% subplot(1,2,2)
-% plotspread_wrapper(cell2mat(wt2),cell2mat(tg2),{'WT','Tg'})
-% title('Time to first stop in Primary HB - Cue Absent')
-% ylim([0 max([cell2mat(wt1);cell2mat(tg1);cell2mat(wt2);cell2mat(tg2)])])
-% ylabel('time (s)')
-% 
-% 
+fig = figure; fig.Color = [1 1 1]; 
+subplot(1,2,1)
+plotspread_wrapper(cell2mat(wt1),cell2mat(tg1),{'WT','Tg'})
+title('Test')
+ylim([0 max([cell2mat(wt1);cell2mat(tg1);cell2mat(wt2);cell2mat(tg2)])])
+ylabel('time (s)')
+subplot(1,2,2)
+plotspread_wrapper(cell2mat(wt2),cell2mat(tg2),{'WT','Tg'})
+title('Probe')
+ylim([0 max([cell2mat(wt1);cell2mat(tg1);cell2mat(wt2);cell2mat(tg2)])])
+ylabel('time (s)')
+
+
 fig = figure; 
 fig.Color = [1 1 1];
 subplot(1,2,1)

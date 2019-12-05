@@ -5,7 +5,7 @@ data=compileResults('F:\ClarkP30_Recordings\ProcessedData');
 control={'LB01','LB03','LB05','ATN04','ATN05','ATN08','ATN14','ATN16','ATN10','ATN17','ATN16','ATN18'};
 transgenic={'LB04','LB06','LB07','ATN07','ATN09','ATN15'}; 
 
-rats={'LB03','LB04','LB05','LB06','LB07','ATN04','ATN05','ATN07','ATN08','ATN09','ATN10','ATN14','ATN15','ATN17','ATN16','ATN18'};
+rats={'ATN05','ATN07','ATN08','ATN09','ATN10','ATN14','ATN15','ATN17','ATN16','ATN17','ATN18'};
 
 %% COMPILE DATA FROM INDIVIDUAL RATS
 data.measures=[]; %control measures
@@ -29,170 +29,78 @@ clear colstodelete data
 %% Forgo analyzing cells with low firing rate (< 1hz) and limited spikes (< 100spikes) in the first session
 [group,groupid]=quality_filter(group,groupid,varnames);
 
-% Initalize Matrix for new measures
-hd_data_vars = {'cell_id','session_num','num_components','mean_prominence','score','four_quarter','signal2noise'};
-hd_data = zeros(size(groupid,1),size(groupid,2),size(groupid,3));
-
-% LOOP THROUGH CELLS TO FIND ESTIMATED NUMBER OF PEAKS 
-for i=1:size(groupid,1)
-    temp=load(['F:\ClarkP30_Recordings\ProcessedData\',groupid{i,1}],...
-        'events','frames','spikesID','Spikes','samplerate','ratemap','hdTuning');
-    
-    cell=find(contains(temp.spikesID.TetrodeNum,groupid{i,2}) & ismember(temp.spikesID.CellNum,str2double(groupid{i,3})))';
-    
-    ses=size(temp.events,2);
-   
-    
-    for ii = 1:ses
-        
-        if ii > 4 %don't look at the exploratory data sessions
-            continue
-        end
-        
-        hd_data(i,1,ii) = cell;
-        hd_data(i,2,ii) = ii;
-        
-        % Let's check for multimodal cells using an autocor methods adapted
-        % from Kevin Allen's group. 
-        [num_components , mean_prom , score] = get_nComponents(temp,ii, cell,0);
-        
-        hd_data(i,3,ii) = num_components;
-        hd_data(i,4,ii) = mean_prom;
-        hd_data(i,5,ii) = max(score);
-   
-        [data_video_spk,~]=createframes_w_spikebinary(temp,ii,cell);
-        [within_Coeff,~,~]=HD_cell_analysis.four_quarter_stability(data_video_spk,temp.samplerate,'std');
-        
-        hd_data(i,6,ii)  = within_Coeff;
-        
-        pfr = group(cell,contains(varnames, 'PeakRate'),ii);
-        
-        afr = group(cell,contains(varnames, 'OverallFiringRate'),ii);
-        
-        signal2noise = pfr./afr;
-        
-        hd_data(i,7,ii) = signal2noise; 
-       
-        clear data_video_spk 
-        
-
-    end
-
-    
-    
-end
-
 %% Compile data from above with Measures 
-group(:,:,5:6) = []; %remove data from exploratory sessions
-
-% Cat HD data with postprocess measures 
-dir_measures_all = cat(2,hd_data,group);
-vars = [hd_data_vars varnames];
-
-
-fig = figure; 
-fig.Color = [1 1 1];
-r = dir_measures_all(:,contains(vars, 'mean_vector_length'),1);
-dic = dir_measures_all(:,contains(vars, 'Direct_infoContent'),1);
-peakfr = dir_measures_all(:,contains(vars, 'PeakRate'),1);
-
-scatter(r,dic,'filled','r')
-hold on; 
-ax=gca;
-plot([.2 .2],[ax.YLim(1) ax.YLim(2)],'--k','LineWidth',2)
-plot([ax.XLim(1) ax.XLim(2)],[.2 .2],'--k','LineWidth',2)
-
-ylabel('Direct Info Content (Bits/Spike)')
-xlabel('mean vector length')
-set(gca,'FontSize',14,'FontName','Helvetica')
-
-
-%% HD Filter
-[groupHD,groupHDid,HD_idx]=headdirectionfilter(dir_measures_all,groupid,vars);
-% visualize_cells(groupHDid,'d:\Users\BClarkLab\Desktop\Laura Temp\HD_met')
-
-%% Bidirectional filter 
-[group_BD,groupid_BD,BD_idx]=bidirectional_filter(dir_measures_all,groupid,vars);
+group(:,:,5:end) = []; %remove data from exploratory sessions
 
 %% place cell filter 
-[group_place,groupid_place,place_idx]=place_cell_filter(dir_measures_all,groupid,vars);
+[group_place,groupid_place,place_idx]=place_cell_filter(group,groupid,varnames); 
+genotype = double(contains(groupid_place(:,1),transgenic)); % 1 if Tg+, 0 if control; 
+region = double(contains(groupid_place(:,1),'ATN')); % 1 if ATN, 0 if cortex; 
 
-%% Interneuron filter 
+%Lets look at what the place cell filter finds
+data = load('ATN07_S20180712182441','openfield','ratemap')
+figure;
+nm = ceil(sqrt(size(data.ratemap,1)));
+for i = 1:size(data.ratemap,1)
+    subplot(nm,nm,i)
+    imAlpha=ones(size(data.ratemap{i,1}));
+    imAlpha(isnan(data.ratemap{i,1}))=0;
+    imagesc(data.ratemap{i,1},'AlphaData',imAlpha);
+    axis xy; axis off; hold on; box off; axis image;
+    colormap(viridis(255))
+    data.openfield{1, 1}.fields{1, i}
+    hold on
+    for f = 1:length(data.openfield{1, 1}.fields{1, i}.bounds)
+        plot(data.openfield{1, 1}.fields{1, i}.bounds{f}(:,1),...
+            data.openfield{1, 1}.fields{1, i}.bounds{f}(:,2),'LineWidth',3)
+    end
+    pause(.00001)
+end
 
- [group,groupid_IN,IN_idx]=interneuron_filter(dir_measures_all,groupid,vars);
+stat_plot(group_place(genotype==0,:,1),group_place(genotype==1,:,1),{'WT','Tg+'},varnames)
 
- IN_idx_final = IN_idx & ~HD_idx & ~BD_idx & ~place_idx; %can't meet critera for spatial cells. 
- HD_idx_final = HD_idx & ~BD_idx & ~place_idx & ~IN_idx; 
- BD_idx_final = BD_idx & ~HD_idx & ~place_idx & ~IN_idx; 
- place_idx_final = place_idx & ~HD_idx & ~BD_idx & ~IN_idx; 
- 
- visualize_cells(groupid(BD_idx_final,:),'d:\Users\BClarkLab\Desktop\Laura Temp\BD_met')
- 
-% Create region ID 
-region = double(contains(groupid(:,1),'ATN')); % 1 if ATN, 0 if Cortex 
-genotype = double(contains(groupid(:,1),transgenic)); % 1 if Tg+, 0 if control; 
-vars = [{'region','genotype','HD_cell','BD_cell','place_Cell','IN_cell'} vars];
+% visualize_cells(groupid(place_idx,:),'d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Projects\ClarkP30_Ephys\Analysis\Place_data\Figures\Met_Place')
 
 % compile measures
-all_data = [region genotype HD_idx_final BD_idx_final place_idx_final IN_idx_final dir_measures_all(:,:,1);...
-    region genotype HD_idx_final BD_idx_final place_idx_final IN_idx_final dir_measures_all(:,:,2);...
-    region genotype HD_idx_final BD_idx_final place_idx_final IN_idx_final dir_measures_all(:,:,3);...
-    region genotype HD_idx_final BD_idx_final place_idx_final IN_idx_final dir_measures_all(:,:,4)]; 
+all_data = [region genotype ones(size(genotype,1),1)  group_place(:,:,1);...
+    region genotype ones(size(genotype,1),1)+1  group_place(:,:,2);...
+    region genotype ones(size(genotype,1),1)+2 group_place(:,:,3);...
+    region genotype ones(size(genotype,1),1)+3 group_place(:,:,4)]; 
 
-dir_id = [groupid;groupid;groupid;groupid];
+varnames = [{'region','genotype','sess_num'} varnames];
+place_data_all = cell2table(num2cell(all_data),'VariableNames',varnames);
 
-HD_data_all = cell2table([dir_id num2cell(all_data)],'VariableNames',[{'ID','tetrode','channel'} vars]);
-
-writetable(HD_data_all,'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\UNM PhD\Conferences\SFN 2019\data\hd_data_all.csv')
+% writetable(place_data_all,'d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Projects\ClarkP30_Ephys\Analysis\Place_data\place_data_all.csv')
 
 %% Some example figs 
+% plot heatplots for top 20 IC per group
 
-HD_cell_data = dir_measures_all(HD_idx & ~place_idx & ~BD_idx & ~genotype,:);
-HD_cell_id = groupid(HD_idx & ~place_idx & ~BD_idx & ~genotype,:);
-for i = 1:length(HD_cell_id)
+%Gather data for each group
+IC_Tg = place_data_all(genotype == 1,contains(varnames,'corrected_info_content'));
+IC_WT = place_data_all(genotype == 0,contains(varnames,'corrected_info_content'));
+
+%Find top 20 location
+[~,Tg_idx]=sort(IC_Tg.InformationContent,1);
+[~,WT_idx]=sort(IC_WT.InformationContent,1);
+
+
+Tg_place_id = groupid_place(Tg_idx <= 20,:);
+ses = 1; %only look at session 1 
+for i = 1:length(Tg_place_id)
     
-    temp=load(['F:\ClarkP30_Recordings\ProcessedData\',HD_cell_id{i,1}],...
-        'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm','hdTuning');
+    temp=load(['F:\ClarkP30_Recordings\ProcessedData\',Tg_place_id{i,1}],...
+        'events','frames','spikesID','Spikes','samplerate','ratemap','maze_size_cm');
     
-    cell=find(contains(temp.spikesID.TetrodeNum,HD_cell_id{i,2}) & ismember(temp.spikesID.CellNum,str2double(HD_cell_id{i,3})))';
-    
-    ses=size(temp.events,2);
-    
-    [data_video_spk,~]=createframes_w_spikebinary(temp,1,cell);
+    cell=find(contains(temp.spikesID.TetrodeNum,Tg_place_id{i,2}) & ismember(temp.spikesID.CellNum,str2double(Tg_place_id{i,3})))';
+        
+    [data_video_spk,~]=createframes_w_spikebinary(temp,ses,cell);
     [~,within,~]=HD_cell_analysis.four_quarter_stability(data_video_spk,temp.samplerate,'std');
         
-    % Plot Spikes on Path by HD 
+    % Plot ratemap 
+    
     fig = figure;
-    
-    fig.Color = [1 1 1];
-    
-    angBins=0:6:360;
-    bin_centers=movmedian(angBins,2);
-    bin_centers(1)=[];
-    Polarplot = polar(deg2rad(bin_centers),temp.tuning{cell,1},'b');
-    set(Polarplot,'linewidth',1,'color','k');
-    axis off
-    set(0,'Showhiddenhandles','on')
-    extrastuff = setdiff(get(gca,'children'),Polarplot);
-    delete(extrastuff)
-    hold on
-    horizontal=line([-max(tuning) max(tuning)],[0 0]); % for running max and min
-    vertical=line([0 0],[-max(tuning) max(tuning)]);
-    set(horizontal,'linewidth',2,'color',[.4 .4 .4]);
-    set(vertical,'linewidth',2,'color',[.4 .4 .4]);
-    axis image
-    
-    uistack(horizontal,'bottom')
-    uistack(vertical,'bottom')
-    
-    title(sprintf('r: %4.2f DIC: %4.2f' ,[r,Ispk]))
-    
-    h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-        'k');
-    set(h,'FaceAlpha',.5)
-    
-    postprocessFigures.plot_HD_tuning(temp,1,cell)
-    xlabel(HD_cell_id{i,1})
+    postprocessFigures.ratemaps_2d(fig,temp.ratemap{i,ses},group_place(i,:,ses),varnames)
+    xlabel(Tg_place_id{i,1})
 %     
 %     print(fig,'-dpng', '-r300',['d:\Users\BClarkLab\Desktop\Laura Temp\TG_HD',...
 %         HD_cell_id{i,1},'.png'])
@@ -200,6 +108,8 @@ for i = 1:length(HD_cell_id)
 %     
     
 end
+
+% Phase precession (spike on phase) plots for Tg+ and WT rats 
 
 
 %% ___________________________LOCAL FUNCTION BELOW_________________________
