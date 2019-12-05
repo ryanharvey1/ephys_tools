@@ -30,8 +30,8 @@ classdef place_cell_analysis
             %
             %   occupancy           occupancy maps
             %
-            %   n_spikes            number of spikes 
-
+            %   n_spikes            number of spikes
+            
             % Modified from TSToolbox by Ryan Harvey 2019
             
             p = inputParser;
@@ -66,8 +66,8 @@ classdef place_cell_analysis
             spatial_information = nansum(SB);
             
             % where spiking was too low, get rid of spatial information score
-            spatial_information(n_spikes<n_thresh) = NaN; 
-
+            spatial_information(n_spikes<n_thresh) = NaN;
+            
         end
         
         
@@ -133,11 +133,11 @@ classdef place_cell_analysis
             %       ratemap: symmetrical 2d map (will need updated for non-symmetrical maps)
             %       minPeakRate: min rate in hz
             %       minFieldWidth: min field width in bins
-            %       maxFieldWidth: max field width in bins 
+            %       maxFieldWidth: max field width in bins
             %       maze_size_cm: size of your maze in cm
             %       debugging_fig: 0 or 1 if you want to test the code
             %
-            %   Output: 
+            %   Output:
             %       fields.fieldwidth: field width in cm (largest diameter)
             %       fields.area: area of field cm^2
             %       fields.bounds: x y boundaries of each field
@@ -149,7 +149,7 @@ classdef place_cell_analysis
             % Note: If no field is found, the default is to output the
             % entire rate map as a firing field. For your later place field
             % criteria, you can just specify upper and lower boundaries for
-            % how large you think a place field is (>10cm & <50cm). 
+            % how large you think a place field is (>10cm & <50cm).
             %
             % Ryan Harvey Nov. 2019
             
@@ -161,7 +161,7 @@ classdef place_cell_analysis
             addParameter(p,'maxFieldWidth',30,@isnumeric) % in bins
             addParameter(p,'maze_size_cm',100,@isnumeric)
             addParameter(p,'debugging_fig',0,@isnumeric)
-
+            
             parse(p,varargin{:})
             
             ratemap = p.Results.ratemap;
@@ -171,9 +171,9 @@ classdef place_cell_analysis
             maxFieldWidth = p.Results.maxFieldWidth;
             maze_size_cm = p.Results.maze_size_cm;
             debugging_fig = p.Results.debugging_fig;
-
             
-             if nansum(ratemap(:)) == 0
+            
+            if nansum(ratemap(:)) == 0
                 fields.fieldwidth{1} = length(ratemap)*(maze_size_cm/length(ratemap));
                 fields.area{1} = length(ratemap)*length(ratemap)*(maze_size_cm/length(ratemap));
                 [r,c]=find(~isnan(ratemap));
@@ -187,8 +187,8 @@ classdef place_cell_analysis
                 fields.com{1} = [x_c,y_c];
                 fields.nfields = 1;
                 return
-             end
-             
+            end
+            
             if debugging_fig
                 figure;
                 subplot(2,2,1)
@@ -255,7 +255,7 @@ classdef place_cell_analysis
             fields.com = fields.com(idx);
             
             % check fields against threshold params
-            for f = 1:length(x) 
+            for f = 1:length(x)
                 exclude(f,1) = fields.peakFR{f} < minPeakRate | isnan(fields.peakFR{f});
             end
             for f = 1:length(x)
@@ -277,7 +277,7 @@ classdef place_cell_analysis
             fields.com(any(exclude,2)) = [];
             
             fields.nfields = length(fields.bounds);
-
+            
             % if no field exist
             if isempty(fields.fieldwidth)
                 fields.fieldwidth{1} = length(ratemap)*(maze_size_cm/length(ratemap));
@@ -310,7 +310,7 @@ classdef place_cell_analysis
                 end
                 return
             end
-
+            
             % check for fields greater than max allowed
             for f = find([fields.fieldwidth{:}] > length(ratemap)*(maze_size_cm/length(ratemap)))
                 fields.fieldwidth{f} = length(ratemap)*(maze_size_cm/length(ratemap));
@@ -348,7 +348,7 @@ classdef place_cell_analysis
                 fielddets(f,:) = [fields.peakLoc{f},fields.fieldwidth{f}];
             end
             [~,idx]=sort(fielddets(:,3),'ascend');
-
+            
             [C,ia,~]=unique(fielddets(:,1:2),'rows','stable');
             Z=zeros(size(fielddets,1),2);
             Z(ia,:)=C;
@@ -405,45 +405,45 @@ classdef place_cell_analysis
             fields.nfields = length(fields.bounds);
             
             
-%             polyvec = [];
-%             for f = 1:length(fields.bounds)
-%                 polyvec = [polyvec, polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2))];
-%             end
-% 
-%             TF = overlaps(polyvec);
-%             if sum(TF) == 1
-%                 fields.nfields = length(fields.bounds);
-%                 return
-%             end
-%             exclude = [];
-%             for r = 1:length(TF)
-%                for c = 2:length(TF) 
-%                     if TF(r,c) == 1
-%                         polyout = intersect([polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2)),...
-%                             polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2))]);
-%                         if round(polyarea(polyout.Vertices(:,1),polyout.Vertices(:,2)),2)==...
-%                                 round(polyarea(fields.bounds{c}(:,1),fields.bounds{c}(:,2)),2)
-%                             exclude(r,c) = 1;
-%                         end
-%                     end
-%                end
-%             end
-%             for f = length(exclude):-1:1
-%                 if exclude(1,f) == 1
-%                     exclude_(f) = 1;
-%                 end
-%             end
-%             
-%             fields.fieldwidth(logical(exclude_)) = [];
-%             fields.area(logical(exclude_)) = [];
-%             fields.bounds(logical(exclude_)) = [];
-%             fields.masked_field(logical(exclude_)) = [];
-%             fields.peakFR(logical(exclude_)) = [];
-%             fields.peakLoc(logical(exclude_)) = [];
-%             fields.com(logical(exclude_)) = [];
-%             
-%             fields.nfields = length(fields.bounds);
-
+            %             polyvec = [];
+            %             for f = 1:length(fields.bounds)
+            %                 polyvec = [polyvec, polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2))];
+            %             end
+            %
+            %             TF = overlaps(polyvec);
+            %             if sum(TF) == 1
+            %                 fields.nfields = length(fields.bounds);
+            %                 return
+            %             end
+            %             exclude = [];
+            %             for r = 1:length(TF)
+            %                for c = 2:length(TF)
+            %                     if TF(r,c) == 1
+            %                         polyout = intersect([polyshape(fields.bounds{r}(:,1),fields.bounds{r}(:,2)),...
+            %                             polyshape(fields.bounds{c}(:,1),fields.bounds{c}(:,2))]);
+            %                         if round(polyarea(polyout.Vertices(:,1),polyout.Vertices(:,2)),2)==...
+            %                                 round(polyarea(fields.bounds{c}(:,1),fields.bounds{c}(:,2)),2)
+            %                             exclude(r,c) = 1;
+            %                         end
+            %                     end
+            %                end
+            %             end
+            %             for f = length(exclude):-1:1
+            %                 if exclude(1,f) == 1
+            %                     exclude_(f) = 1;
+            %                 end
+            %             end
+            %
+            %             fields.fieldwidth(logical(exclude_)) = [];
+            %             fields.area(logical(exclude_)) = [];
+            %             fields.bounds(logical(exclude_)) = [];
+            %             fields.masked_field(logical(exclude_)) = [];
+            %             fields.peakFR(logical(exclude_)) = [];
+            %             fields.peakLoc(logical(exclude_)) = [];
+            %             fields.com(logical(exclude_)) = [];
+            %
+            %             fields.nfields = length(fields.bounds);
+            
             if debugging_fig
                 subplot(2,2,3)
                 imAlpha=ones(size(ratemap));
@@ -564,10 +564,10 @@ classdef place_cell_analysis
             maxFieldWidth = p.Results.maxFieldWidth;
             threshold = p.Results.percentThreshold; % change between peak rate and start/stop of field
             
-
+            
             stdRates = std(ratemap,[],2)';
             ratemap = mean(ratemap,2)';
-
+            
             warning off  % findpeaks.m throws warnings if peak isn't found...
             
             for i=1:size(ratemap,1)
@@ -799,7 +799,7 @@ classdef place_cell_analysis
             
             % PLOT
             % figure;
-            % PlotPhasePrecession(data,stats)            
+            % PlotPhasePrecession(data,stats)
             spks_VEL_working = interp1(phase(:,1),phase(:,2),spks_VEL(:,1)','linear');
             
             % COMPUTE PHASE LOCKING
@@ -833,6 +833,75 @@ classdef place_cell_analysis
             ThPrecess.lapPhaseOffset=nanmean(phi0_deg);
             
             [ThPrecess.circLinCorr,ThPrecess.pval,ThPrecess.slopeCpU,ThPrecess.phaseOffset]=kempter_lincirc(data.position.x,data.position.phase);
+        end
+        
+        
+        function median_ic = bootstrap_ic_2d(data,session,cell,varargin)
+            % bootstrap_ic_2d: To prevent cells that were active in only a small section of time from
+            % having spuriously high spatial information content (IC), we performed a bootstrapping
+            % procedure for estimating average firing rate & firing rate over spatial bins
+            % On each iteration of the bootstrap (30 total iterations), 67% of the session
+            % were chosen with replacement and the IC was calculated from the cellular
+            % activity in these sections. The median IC across bootstrapping iterations was taken
+            % as the final IC value.
+            %
+            % Ryan Harvey 2019
+            
+            p = inputParser;
+            addParameter(p,'time_segment',0.67,@isnumeric)
+            addParameter(p,'iterations',30,@isnumeric)
+            p.parse(varargin{:});
+            time_segment = p.Results.time_segment;
+            iterations = p.Results.iterations;
+            
+            for c = 1:length(cell)
+                [frames_spk,frames]=createframes_w_spikebinary(data,session,cell(c));
+                
+                n = ceil(length(frames)*time_segment);
+                
+                
+                nBinsx = round(data.maze_size_cm(session)/3);
+                nBinsy = round(data.maze_size_cm(session)/3);
+                MinY = min(frames_spk(:,3));
+                MaxY = max(frames_spk(:,3));
+                MinX = min(frames_spk(:,2));
+                MaxX = max(frames_spk(:,2));
+                edges{1} = linspace(MinY, MaxY, nBinsy+1);
+                edges{2} = linspace(MinX, MaxX, nBinsx+1);
+                
+                for i = 1:iterations
+                    
+                    idx = zeros(length(frames),1);
+                    idx(randperm(numel(idx), n)) = 1;
+                    ts = frames(logical(idx),1);
+                    idx = ismembertol(frames_spk(:,1),ts,1/data.samplerate,'DataScale',1);
+                    temp_frames_spk = frames_spk(logical(idx),:);
+
+                    Omatrix = hist3([temp_frames_spk(temp_frames_spk(:,6)==0,3),...
+                        temp_frames_spk(temp_frames_spk(:,6)==0,2)],'Edges',edges);
+                    Omatrix(end,:) = [];
+                    Omatrix(:,end) = [];
+                    occ = Omatrix/data.samplerate;
+                    
+                    Smatrix = hist3([temp_frames_spk(temp_frames_spk(:,6)==1,3),...
+                        temp_frames_spk(temp_frames_spk(:,6)==1,2)],'Edges',edges);
+                    Smatrix(end,:) = [];
+                    Smatrix(:,end) = [];
+                    
+                    FilledRateMatrix = Smatrix./occ;
+                    FilledRateMatrix(isinf(FilledRateMatrix))=0;
+                    
+                    % SMOOTH
+                    filtWidth = [5 5]; filtSigma = 1;
+                    imageFilter=fspecial('gaussian',filtWidth,filtSigma);
+                    SmoothRateMap = nanconv(FilledRateMatrix,imageFilter, 'nanout');
+                    
+                    InformationContent(i,1) = place_cell_analysis.SpatialInformation('ratemap',...
+                        SmoothRateMap,'occupancy',occ,'n_spikes',sum(frames_spk(:,6)));
+                    
+                end
+                median_ic(c,1) = nanmedian(InformationContent);
+            end
         end
     end
 end
