@@ -850,15 +850,19 @@ classdef place_cell_analysis
             p = inputParser;
             addParameter(p,'time_segment',0.67,@isnumeric)
             addParameter(p,'iterations',30,@isnumeric)
+            addParameter(p,'method','rand_perm')
+            addParameter(p,'debugging_fig',0,@isnumeric)
+
             p.parse(varargin{:});
             time_segment = p.Results.time_segment;
             iterations = p.Results.iterations;
-            
+            method = p.Results.method;
+            debugging_fig = p.Results.debugging_fig;
+
             for c = 1:length(cell)
                 [frames_spk,frames]=createframes_w_spikebinary(data,session,cell(c));
                 
                 n = ceil(length(frames)*time_segment);
-                
                 
                 nBinsx = round(data.maze_size_cm(session)/3);
                 nBinsy = round(data.maze_size_cm(session)/3);
@@ -872,9 +876,14 @@ classdef place_cell_analysis
                 for i = 1:iterations
                     
                     idx = zeros(length(frames),1);
-                    idx(randperm(numel(idx), n)) = 1;
+                    if contains(method,'rand_perm')
+                        idx(randperm(numel(idx), n)) = 1;
+                    elseif contains(method,'circ_shift')
+                        idx(1:n) = 1;
+                        idx = circshift(idx,randi([1 length(idx)],1));
+                    end
                     ts = frames(logical(idx),1);
-                    idx = ismembertol(frames_spk(:,1),ts,1/data.samplerate,'DataScale',1);
+                    idx = ismembertol(frames_spk(:,1),ts,(1/data.samplerate)/2,'DataScale',1);
                     temp_frames_spk = frames_spk(logical(idx),:);
 
                     Omatrix = hist3([temp_frames_spk(temp_frames_spk(:,6)==0,3),...
@@ -898,6 +907,22 @@ classdef place_cell_analysis
                     
                     InformationContent(i,1) = place_cell_analysis.SpatialInformation('ratemap',...
                         SmoothRateMap,'occupancy',occ,'n_spikes',sum(frames_spk(:,6)));
+                    
+                    if debugging_fig
+                        figure(c)
+                        subplot(ceil(sqrt(iterations)),ceil(sqrt(iterations)),i)
+                        
+                        imAlpha=ones(size(SmoothRateMap));
+                        imAlpha(isnan(SmoothRateMap))=0;
+                        imagesc(SmoothRateMap,'AlphaData',imAlpha);
+                        axis off
+                        axis image
+                        colormap(viridis(255))
+                        colorbar
+                        hold on
+                        title(num2str(InformationContent(i,1)))
+                        pause(.00001)
+                    end
                     
                 end
                 median_ic(c,1) = nanmedian(InformationContent);
