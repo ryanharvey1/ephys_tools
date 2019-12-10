@@ -65,24 +65,41 @@ for wave = 1:size(data.avgwave,1)
     wf_32 = interp1(wf_x,wf,1:32);
     
     MaxWaves(wave,:) = wf_32;
+    
+    clear wf_32 wf_x wf maxpos all_waves
 end
 
 %% get trough-peak delay times
 for a = 1:size(MaxWaves,1)
+    
     thiswave = MaxWaves(a,:);
-    
-    
-    [minval,minpos] = min(thiswave);
+    [~,minpos] = min(thiswave); %find the trough
     minpos = minpos(1);
-    [maxval,maxpos] = max(thiswave);
-        [dummy,maxpos] = max(thiswave(minpos+1:end));
-        if isempty(maxpos)
-            warning('Your Waveform may be erroneous')
-            maxpos = 1
-        end
-        maxpos=maxpos(1);
-        maxpos = maxpos+minpos;
-        tp(a) = maxpos-minpos; %In number of samples
+    
+    [~,maxpos] = max(thiswave); %find the largest peak 
+    maxpos = maxpos(1); 
+    
+    if isempty(maxpos)
+        warning('Your Waveform may be erroneous')
+        maxpos = 1;
+    end
+    
+    if minpos < maxpos
+        thiswave = thiswave*-1; %flip waveform so peak becomes trough - for waveforms that have large trough preceeding peak.
+        [~,minpos] = min(thiswave); %recalculate trough
+        minpos = minpos(1);
+    end
+    
+    % Find time from min to left
+    [~,maxpos_left] = max(thiswave(1:minpos-1)); %finds peak before trough
+    
+    % Find time from min to right
+    [~,maxpos_right] = max(thiswave(minpos+1:end)); %finds peak after trough
+   
+    
+    maxpos=maxpos(1);
+    maxpos = maxpos+minpos;
+    tp(a) = maxpos-minpos; %In number of samples
 end
 
 %% get spike width by taking inverse of max frequency in spectrum (based on Adrien's use of Eran's getWavelet)
