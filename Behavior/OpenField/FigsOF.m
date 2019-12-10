@@ -2,7 +2,7 @@
 %%
 %%%%%%%%%%% Plot Paths with home base outline and cue location
 % load('params_V8');
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V17');
+load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V18');
 param_idx=params.subID;
 
 vars=fieldnames(params);
@@ -12,6 +12,7 @@ vars=fieldnames(params);
 varlabel={'Path Length (cm)','Running Speed (cm/s)','Number of Stops','Search Area'};
 idx=1;
 fig=figure; fig.Color=[1 1 1];
+
 for i=1:size(row,1)
 tg1=vertcat(params.(vars{row(i)}){contains(param_idx,'Tg') & contains(param_idx,'D1')});
 wt1=vertcat(params.(vars{row(i)}){contains(param_idx,'WT') & contains(param_idx,'D1')});
@@ -19,15 +20,15 @@ tg2=vertcat(params.(vars{row(i)}){contains(param_idx,'Tg') & contains(param_idx,
 wt2=vertcat(params.(vars{row(i)}){contains(param_idx,'WT') & contains(param_idx,'D2')});
 
 subplot(size(row,1),2,idx)
-plotspread_wrapper(wt1,tg1,{'WT','TgF344-AD'})
+plotspread_wrapper(wt1,tg1,{'F344','TgF344-AD'})
 ylim([0 max([wt2;tg2;wt1;tg1])])
 ylabel(varlabel{i})
-title('Day 1')
+title('Test')
 idx=idx+1;
 subplot(size(row,1),2,idx)
-plotspread_wrapper(wt2,tg2,{'WT','TgF344-AD'})
+plotspread_wrapper(wt2,tg2,{'F344','TgF344-AD'})
 ylim([0 max([wt2;tg2;wt1;tg1])])
-title('Day 2')
+title('Probe')
 idx=idx+1;
 end
 
@@ -46,11 +47,25 @@ stat_plot(tg2,wt2,{'Tg','WT'},vars{row(i)},'plots',2)
 end
 
 %%
-tg1=vertcat(params.time2HB{contains(param_idx,'Tg') & contains(param_idx,'D1')});
-wt1=vertcat(params.time2HB{contains(param_idx,'WT') & contains(param_idx,'D1')});
-tg2=vertcat(params.time2HB{contains(param_idx,'Tg') & contains(param_idx,'D2')});
-wt2=vertcat(params.time2HB{contains(param_idx,'WT') & contains(param_idx,'D2')});
+tg1=horzcat(params.time2HB{contains(param_idx,'Tg') & contains(param_idx,'D1')});
+wt1=horzcat(params.time2HB{contains(param_idx,'WT') & contains(param_idx,'D1')});
+tg2=horzcat(params.time2HB{contains(param_idx,'Tg') & contains(param_idx,'D2')});
+wt2=horzcat(params.time2HB{contains(param_idx,'WT') & contains(param_idx,'D2')});
 
+fig = figure;
+fig.Color = [1 1 1];
+subplot(1,2,1)
+[h1,h2]=CoolHistogram(cell2mat(wt1)',cell2mat(tg1)',10,{'Time to Home Base (s)'})
+title('Test')
+legend({'F344','TgF344-AD'})
+ylim([0 1])
+legend boxoff
+subplot(1,2,2)
+[h1,h2]=CoolHistogram(cell2mat(wt2)',cell2mat(tg2)',10,{'Time to Home Base (s)'})
+title('Probe')
+legend({'F344','TgF344-AD'})
+legend boxoff
+ylim([0 1])
 
 %% Figure 2 - Median dwell time per qudrant
 tg1=median(vertcat(params.dwellQuad{contains(param_idx,'Tg') & contains(param_idx,'D1')}),1);
@@ -200,7 +215,7 @@ wt2=nanmean(vertcat(params.pathLQuad{contains(param_idx,'WT') & contains(param_i
 
 
 %Histograms for quadrant dwell time
-subplot(5,2,9)
+subplot(1,2,1)
 bar(wt1,'FaceColor','k','FaceAlpha',.5);
 title('Cue Present')
 xlabel('Quadrant')
@@ -210,7 +225,7 @@ ylabel('Path Length (cm)')
  set(gca,'FontSize',11,'FontWeight','bold','FontName','Calibri')
 box off 
 
-subplot(5,2,10)
+subplot(1,2,2)
 bar(wt2,'FaceColor','k','FaceAlpha',.5);
 title('Cue Absent')
 xlabel('Quadrant')
@@ -284,18 +299,18 @@ imAlpha4(isnan(wt2))=0;
 
 fig=figure; fig.Color=[1 1 1];
 subaxis(2,2,1) 
-surf(tg1,'AlphaData',imAlpha1); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
-title('TgF344-AD Cue Present')
+imagesc(tg1,'AlphaData',imAlpha1); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
+title('TgF344-AD Test')
 subaxis(2,2,3) 
-surf(wt1,'AlphaData',imAlpha2); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
-title('Wild Type Cue Present')
+imagesc(wt1,'AlphaData',imAlpha2); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
+title('Wild Type Test')
 subaxis(2,2,2) 
-surf(tg2,'AlphaData',imAlpha3); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
-title('TgF344-AD Cue Absent')
+imagesc(tg2,'AlphaData',imAlpha3); colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
+title('TgF344-AD Probe')
 subaxis(2,2,4) 
-surf(wt2,'AlphaData',imAlpha4);colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
-title('Wild Type Cue Absent')
-
+imagesc(wt2,'AlphaData',imAlpha4);colormap(viridis(255));axis xy;hold on; box off; axis image;shading flat;
+title('Wild Type Probe')
+axis off
 
 %% Cross corr of occupancy maps
 row=1;
@@ -324,6 +339,8 @@ figure;
 histogram(primaryHBdist(13:end,1),10,'FaceColor','k','FaceAlpha',.5); 
 hold on; histogram(primaryHBdist(1:12,1),10,'FaceColor','r','FaceAlpha',.5)
 legend({'F344','TgF344-AD'})
+
+
 %% Stops by stop duration (size) and time in trial (color)
 for i=1:size(params.tsStop,1) 
     for ii=1:size(params.tsStop{i},2)
@@ -470,10 +487,6 @@ set(h2,'FaceColor','r','EdgeColor','k')
 set(gca,'box','off','FontWeight','bold','FontSize',18,'LineWidth',3)
 xlabel('Binned Degrees')
 
-%% Heading while moving
-
-for 
-end
 
 %% Heading across entire trial 
 tg1=horzcat(params.timeMoving{contains(param_idx,'Tg') & contains(param_idx,'D1')});
