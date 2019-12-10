@@ -45,12 +45,12 @@ classdef HD_cell_analysis
             %Computes the directional information content on unsmoothed ratemap for
             %directional data. Adapted from Langston et al 2010. by LB March 2018
             %
-            %Input: 
+            %Input:
             %    histAng:   histogram of time spent in angular tuning
-            %               curve. 
-            %    hdTuning:  head direction tuning curve. 
-            %    OverallFR: overall mean firing rate of the cell. 
-            %Output: 
+            %               curve.
+            %    hdTuning:  head direction tuning curve.
+            %    OverallFR: overall mean firing rate of the cell.
+            %Output:
             %   DIC: directional information content in bits/spk
             %
             % by LB March 2018
@@ -62,7 +62,7 @@ classdef HD_cell_analysis
             DIC = sum(ICi)/OverallFR;
         end
         
-        function stability=stability(data_video_spk,samplerate)
+        function stable_score=stability(data_video_spk,samplerate)
             %Computes the correlation of tuning curves generated after each
             %complete sampling of the horizontal azimuth.
             %Input:
@@ -73,7 +73,7 @@ classdef HD_cell_analysis
             %
             %Output:
             %   stability: mean correlation between all pairwise
-            %   correlations of tuning curves 
+            %   correlations of tuning curves
             %
             % By LB & RH 2018, updated by LB September 2019
             
@@ -87,9 +87,11 @@ classdef HD_cell_analysis
             hdTuning = [];
             heading = data_video_spk(:,4);
             
-            figure;
-            plot(data_video_spk(:,2),data_video_spk(:,3),'.k')
-            
+            %             if fig
+            %             figure;
+            %             plot(data_video_spk(:,2),data_video_spk(:,3),'.k')
+            %             end
+            %
             while ii < length(heading)
                 histAng = histcounts(heading(i:ii),angBins);
                 if sum(histAng>0)==length(angBins)-1
@@ -99,10 +101,10 @@ classdef HD_cell_analysis
                     [~,~,~,~,~,hdtuning] = tuningcurve(a,spk_a,samplerate);
                     hdTuning = [hdTuning;hdtuning];
                     chunk = [chunk;i,ii];
-                    hold on
-                    plot(data_video_spk(i:ii,2),data_video_spk(i:ii,3))
-                    i = ii+1;
-                    ii = ii+1;
+                    %                     hold on
+                    %                     plot(data_video_spk(i:ii,2),data_video_spk(i:ii,3))
+                    %                     i = ii+1;
+                    %                     ii = ii+1;
                 end
                 ii = ii+1;
             end
@@ -114,11 +116,11 @@ classdef HD_cell_analysis
                 store = [store;data];
             end
             
-            stability = nanmean(store);
+            stable_score = nanmean(store);
             
         end
         
-        function [within_Coeff,within,normWithin] = four_quarter_stability(data_video_spk,sampleRate)
+        function [within_Coeff,within,normWithin] = four_quarter_stability(data_video_spk,sampleRate,method)
             %four_quarter_stability computes the 4-quarter stability score for head direction signals based off
             %Boccara et al.
             
@@ -160,26 +162,40 @@ classdef HD_cell_analysis
             end
             clear block
             
-            %calculate correlation for all pairs
-            first=corr2(within.hdTuning{1,1},within.hdTuning{2,1});
-            second=corr2(within.hdTuning{1,1},within.hdTuning{3,1});
-            third=corr2(within.hdTuning{1,1},within.hdTuning{4,1});
-            fourth=corr2(within.hdTuning{2,1},within.hdTuning{3,1});
-            fifth=corr2(within.hdTuning{2,1},within.hdTuning{4,1});
-            sixth=corr2(within.hdTuning{3,1},within.hdTuning{4,1});
+            temp = [within.hdTuning{1,1}; within.hdTuning{2,1}; within.hdTuning{3,1}; within.hdTuning{4,1}];
             
-            %warning if data is nan
-            if sum(isnan([first,second,third,fourth,fifth,sixth]))>1
-                warning('NaNs within the data are preventing an accurate calculation of stability. Check your data')
+            normWithin = (temp - min(temp(:))) / (max(temp(:)) - min(temp(:)));
+            
+            if strcmp(method,'cor')
+                
+                %calculate correlation for all pairs
+                first=corr2(within.hdTuning{1,1},within.hdTuning{2,1});
+                second=corr2(within.hdTuning{1,1},within.hdTuning{3,1});
+                third=corr2(within.hdTuning{1,1},within.hdTuning{4,1});
+                fourth=corr2(within.hdTuning{2,1},within.hdTuning{3,1});
+                fifth=corr2(within.hdTuning{2,1},within.hdTuning{4,1});
+                sixth=corr2(within.hdTuning{3,1},within.hdTuning{4,1});
+                
+                %warning if data is nan
+                if sum(isnan([first,second,third,fourth,fifth,sixth]))>1
+                    warning('NaNs within the data are preventing an accurate calculation of stability. Check your data')
+                    
+                end
+                
+                within_Coeff=nanmean([first,second,third,fourth,fifth,sixth]);
+                
+            elseif strcmp(method, 'std')
+      
+                within_Coeff = nanmean(nanstd(normWithin));
+                
             end
             
-            normTemp=[];
-            for i=1:4
-                tempTune=within.hdTuning{i,:};
-                normTemp=[normTemp; rescale(tempTune,0,1)];
-            end
-            normWithin=normTemp;
-            within_Coeff=nanmean([first,second,third,fourth,fifth,sixth]);
+%             normTemp=[];
+%             for i=1:4
+%                 tempTune=within.hdTuning{i,:};
+%                 normTemp=[normTemp; rescale(tempTune,0,1)];
+%             end
+%             normWithin=normTemp;
         end
         
         function anticipatory_time_interval=computeATI(data,session,cell)
@@ -197,7 +213,7 @@ classdef HD_cell_analysis
             
             in_phase_hd = interp1(data_video_nospk(:,1),data_video_nospk(:,4),new_time,'linear');
             in_phase_ang_vel = interp1(new_time,anglevel,new_time,'linear');
-
+            
             
             spk_ts = data_video_spk(data_video_spk(:,6)==1,1);
             
@@ -206,12 +222,12 @@ classdef HD_cell_analysis
             in_phase_hd_spk = interp1(new_time,in_phase_hd,...
                 spk_ts,'linear');
             
-            % Identify clockwise (v > 90deg/s), counterclockwise(v > -90deg/s), and still frames |v| < 30deg/s and 
+            % Identify clockwise (v > 90deg/s), counterclockwise(v > -90deg/s), and still frames |v| < 30deg/s and
             % make tuning curves.
             
             [~,~,~,~,prefdirec,hdTuning_c]=...
                 tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk > 90),30)
-
+            
             [~,~,~,~,prefdirec,hdTuning_cc]=...
                 tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk < -90),30)
             
@@ -222,7 +238,7 @@ classdef HD_cell_analysis
                 tuningcurve(data_video_nospk(:,4),data_video_spk(data_video_spk(:,6)==1,4),30)
             
             % ADD CROSS_VALIDATION FOR ABOVE TO VERIFY MEAN DIRECTION IS
-            % NOT OBTAINED BY CHANCE 
+            % NOT OBTAINED BY CHANCE
             
             figure;
             
@@ -234,19 +250,19 @@ classdef HD_cell_analysis
             legend({'Still','clockwise','counter clockwise','Overall'})
             ylabel('Firing Rate')
             xlabel('Binned Direction')
-
+            
             %Identify subcategories of fast and slow
-                %Clkfast (v >= 270 deg/s)
-                %Clkslow (30 deg/s <= v < 270 deg/s)
-                %CCfast (v >= -270 deg/s)
-                %CCslow (-30 deg/s <= v < -270 deg/s)
-                %Still (-30 deg/s < v < 30 deg/s)
-                
+            %Clkfast (v >= 270 deg/s)
+            %Clkslow (30 deg/s <= v < 270 deg/s)
+            %CCfast (v >= -270 deg/s)
+            %CCslow (-30 deg/s <= v < -270 deg/s)
+            %Still (-30 deg/s < v < 30 deg/s)
+            
             %Compute angular difference between tuning curves of each
-            %category 
+            %category
             
             %time-shift analysis for future (add 1/samplerate to ts) and past
-            %(subtract 1/samplerate to ts) and current 
+            %(subtract 1/samplerate to ts) and current
             
             
         end
