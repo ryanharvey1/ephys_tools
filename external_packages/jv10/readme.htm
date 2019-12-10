@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Paul Bays</title>
+
+<meta name="author" content="Paul Bays">
+<meta name="title" content="Paul Bays">
+<meta name="description" content="Homepage of Paul Bays, Post-Doctoral Research Fellow, Institute of Cognitive Neuroscience, University College London.">
+<meta name="keywords" content="Bays, BAYS, bays, Paul Bays, p m bays, pm bays, pmbays, P M Bays, p.m. bays, p.m.bays, working memory, visual memory, VWM, neglect, parietal, salience, sensorimotor control, Sensorimotor, Motor Control, motor control, lab, laboratory, research, Research, experiments, neuroscience, motor system, neurology, neurophysiology, sensorimotor, movement, psychology, motor learning, forward models, motor representation, motor generalisation, motor generalization, visual attention, selective attention, learning, modularity, cognitive neurology, cognition, cognitive, cognitive neuroscience, daniel wolpert, masud husain, institute of cognitive neuroscience, institute of neurology, ucl, university college london, brain, neural, wellcome, science">
+
+<style type="text/css">
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #FFFFFF;
+	margin: 0;
+	padding: 10px;
+	color: #000000;
+	width: 680px;
+	background: #FFFFFF;
+	margin: 0 auto;
+}
+.style1 {
+	font-size: 14px;
+	font-family: "trebuchet MS";
+	text-align: justify;
+}
+
+a {
+	color: #000000;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #0033FF;
+}
+.icon {
+	padding-right: 5px;
+	vertical-align: baseline;
+}
+.style10 {
+	line-height: normal;
+	font-family: "trebuchet MS";
+	font-size: 18px;
+	font-weight: bold;
+}
+.style13 {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 14px;
+}
+.style15 {font-size: 12px; font-family: "trebuchet MS"; text-align: justify; }
+</style>
+</head><body>
+<p align="left"><a href="http://www.paulbays.com/"><img src="readme_files/title.gif" alt="Paul Bays" border="0" height="31" width="162"></a></p>
+<p align="left"><img src="readme_files/dots.gif" alt="" height="6" width="667"></p>
+<p class="style10" align="justify"><strong>Some  MATLAB functions for analyzing recall errors in a circular response space</strong></p>
+<p class="style12" align="justify"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></p>
+<p class="style1" align="justify">I’ve had quite a few requests for the code relating to my <a href="file:///C:/PMB/Web/Homepage/pdf/BayCatHus09.pdf">article</a> [<a href="#refs">1</a>]
+ on the distribution of recall errors in continuous response 
+spaces.&nbsp;I've made the relevant MATLAB  functions available for 
+download <u><a href="file:///C:/PMB/Web/Homepage/code/JV10/jv10.zip">here</a></u>.<br>
+  <br>
+  This code is released under a <a href="http://creativecommons.org/licenses/GPL/2.0/">GNU General Public  License</a>:
+ feel free to use and adapt these functions as you like, but credit  
+should be given if they contribute to your work, by citing:<br>
+  <br>
+  <strong>Bays PM, Catalao RFG &amp;  Husain M. The precision of visual working memory is set by allocation of a  shared resource. <em>Journal  of Vision</em> 9(10): 7, 1-11  (2009) </strong><br>
+  <br>
+If you refer to this code directly, please also include the URL of this webpage, or my homepage <a href="http://www.paulbays.com/">www.paulbays.com</a>. If you have any comments, requests or suggestions please <a href="mailto:p.bays@ion.ucl.ac.uk">email</a> me.</p>
+<p class="style12" align="left"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></p>
+<p class="style10" align="left"><strong>Introduction</strong></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td valign="top" width="55%"><div align="justify">
+      <p class="style1">The  following functions were developed for 
+analyzing errors on recall  tasks where both stimuli and responses are 
+chosen from a circular parameter  space. A typical example is the colour
+ report task developed by Wilken &amp; Ma [<a href="#refs">2</a>], illustrated right.</p>
+      <p class="style1">The circular  parameter space in this case is 
+represented by a ‘color wheel’. On each trial a  memory array is 
+presented consisting of a set of items with colors chosen at  random 
+from the wheel. After a retention period, one array location is  
+indicated (cued) and the participant clicks on the wheel to indicate the
+ colour  they recall at that location.</p>
+      <p class="style1">&nbsp;</p>
+    </div></td>
+    <td width="45%"><img src="readme_files/Fig1.gif" alt="Colour report task" style="border: 10px solid white;" height="263" width="280"></td>
+  </tr>
+</tbody></table>
+<p class="style1" align="justify">The data  available for analysis on each trial therefore consist of a <strong>response</strong> value (the colour at the  location of the click), a <strong>target</strong> value (the colour of the cued item), and a set of <strong>non-target</strong>
+ values (the colours of each of the uncued items). The following  MATLAB
+ functions require that each of these values be given in <em>radians</em>,  in the range <em>—π</em> ≤ x &lt; <em>π</em>.   A function <span class="style13">wrap</span> is  provided to constrain values to this range. </p>
+<p class="style1" align="justify">E.g., if responses are coded as angles in the range 0°<em>—</em>360°,  they should be converted to radians as follows:</p>
+<p class="style13" align="center">X = wrap(X_deg/180*pi)</p>
+<p class="style1">When adding  or subtracting response values, the results may fall outside the desired range, and the <span class="style13">wrap</span> function should again be used. E.g. the <strong>error</strong> on a trial can be calculated as the deviation between the response value <span class="style13">X</span> and the target value <span class="style13">T</span>:</p>
+<p class="style13" align="center">E = wrap(X-T)</p>
+<p class="style1" align="left">will ensure the resulting error measure is still in  the range <em>—π</em> ≤ <span class="style13">E</span> &lt; <em>π</em>.</p>
+<p class="style1">There is the  possibility of confusion with tasks 
+testing recall of orientations. If the task involves reporting the 
+remembered orientation of a bar, for example, responses might be coded 
+in the range  0°<em>—</em>360°, but the range of <em>unique</em> angles is only 0°<em>—</em>180°. So, orientation values should be mapped onto radians thus:</p>
+<p class="style13" align="center">X = wrap(X_deg/90*pi)</p>
+<p class="style12" align="left"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></p>
+<p class="style10" align="left">Bias and Precision</p>
+<p class="style1">It is &nbsp;common in error analysis to distinguish two independent  measures of performance: <strong>bias</strong> and <strong>precision</strong>.
+ The bias (or ‘accuracy’)  measures systematic deviations in responses 
+from the target value; the  precision measures the trial-to-trial 
+variability in the response error.<br>
+  <br>
+In&nbsp;a Euclidean (non-circular)  response space, bias is typically 
+measured by the mean error, and precision can be measured by  the 
+inverse of the standard deviation of error (inverse variance is also 
+sometimes used). The function <span class="style13">JV10_error</span> can be used to calculate equivalent precision and bias estimates for responses in a circular parameter space: </p>
+<p class="style13" align="center">[P B] = JV10_error(X,T)</p>
+<p class="style1" align="left">The inputs <span class="style13">X</span> and <span class="style13">T</span> are (n×1) vectors of responses and target values respectively, in the  range<em> —π</em> ≤ x &lt; <em>π</em>. Output P returns the <strong>precision</strong> (inverse of circular  s.d., corrected for chance*), and  <span class="style13">B</span> returns the <strong>bias</strong> (circular  mean). </p>
+<table border="0" width="100%">
+  <tbody><tr>
+     <td class="style1" align="left" valign="top" width="45%">Bias and 
+precision for some example  error distributions are illustrated right. 
+Note that these performance measures are non–parametric: their 
+calculation makes no assumptions about the shape of the error 
+distribution (e.g. gaussian versus mixture, see below).    </td>
+        <td rowspan="2" width="55%"><span class="style1"><img src="readme_files/Fig3.gif" alt="Bias and precision examples" style="border: 10px solid white;" height="353" width="365"></span></td>
+  </tr>
+  <tr>
+    <td align="left" valign="bottom"><p class="style1" align="justify">&nbsp;</p>
+    <p class="style15" align="left">* This function uses Fisher's definition of mean and s.d. for circular data [<a href="#refs">3</a>].
+ While  asymptotically unbiased, Fisher’s formula systematically 
+underestimates the s.d. of population  distributions that are close to 
+uniform even with very large n. The <span class="style13">JV10_error</span>
+ function  incorporates a  correction ensuring that the expected 
+precision estimate for uniformly  distributed responses (‘guessing’) is 
+zero.</p></td>
+  </tr>
+</tbody></table>
+<p class="style1" align="left"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></p>
+<p class="style1"><strong class="style10">Von Mises distribution</strong></p>
+<p class="style1">The Von  Mises distribution is a circular analogue of 
+the familiar Gaussian (or normal) distribution.  It is parameterized by a
+ mean, μ, and concentration, κ.
+</p><p align="center"><span class="style13">y = vonmisespdf(x,mu,K)  </span></p>
+  <p align="left"><span class="style1">returns the Von  Mises probability density function evaluated at values <em>—π</em> ≤ </span><span class="style13">x</span><span class="style1"> &lt; <em>π.</em> Note that setting </span><span class="style13">K = 0 </span><span class="style1">will return a uniform distribution.</span></p>
+
+<p class="style13" align="center">r = randvonmises(n,mu,K)</p>
+<p class="style1" align="center">returns <span class="style13">n</span> random samples from a Von Mises distribution (method of Best  &amp; Fisher [<a href="#refs">4</a>]). 
+  Conversion between the Von Mises concentration parameter and standard  deviation is achieved with the functions:<br>
+</p>
+<p class="style13" align="center">sd = k2sd(K)<br>
+  K = sd2k(sd)<br>
+  </p>
+<p class="style1" align="center">which use the method of Jammalamadaka &amp; Sengupta [<a href="#refs">5</a>].</p>
+<p class="style1"><span class="style12"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></span></p>
+<p class="style10" align="left"><strong>Mixture modeling</strong></p>
+<p class="style1" align="left">Bays et al. [<a href="#refs">1</a>] proposed a probabilistic mixture model [<a href="#refs">6</a>] to account for the <em>distribution</em>
+ of errors on  recall tasks. According to this model, the overall 
+response distribution comprises a mixture of three different components:</p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td height="367" width="74%"><p class="style1" align="left"><strong>(1) Target responses</strong> <em>—</em> the observer correctly reports the  feature value (e.g. colour) of the cued item (with some variability <em>K</em>),</p>
+      <p class="style1"><strong>(2) Non-target responses </strong><em>—</em>
+ the observer mistakenly reports the  feature value of one of the other,
+ uncued items held in memory (with the same  variability <em>K</em>),</p>
+      <p class="style1"><strong>(3) Uniform responses </strong>&nbsp;<em>—</em> the observer generates a random response  unrelated to either cued or uncued items.
+        
+      </p>
+      <p class="style1">Each of these  components has a corresponding 
+probability density function,  illustrated right for a 3-item memory  
+array (one target value, <em>T</em>, and two  nontarget values, <em>N</em>).</p>
+    <p class="style1">The contribution made  by each of these components to the overall response distribution can be  estimated with the function <span class="style13">JV10_fit</span>. The function uses an EM algorithm [<a href="#refs">7</a>, <a href="#refs">8</a>], with a range of initial parameter values, to fit the  mixture model described above to input data:</p></td>
+    <td width="26%"><span class="style1"><img src="readme_files/Fig2.gif" alt="Three component model" style="border: 10px solid white;" height="328" width="158"></span></td>
+  </tr>
+</tbody></table>
+<p class="style13" align="center">[B LL] = JV10_fit(X,  T, NT)</p>
+<p class="style1">where <span class="style13">X</span> is an (n×1) vector of responses, <span class="style13">T</span> is an (n×1) vector of target values, and <span class="style13">NT</span> is an (n×m) matrix of non-target  values. &nbsp;The output <span class="style13">B</span> contains 4 values corresponding to maximum likelihood estimates of the  parameters of the mixture model: </p>
+<p class="style13" align="center">B == [K pT pN pU] </p>
+<p class="style1">where <span class="style13">K</span> is the concentration parameter of the Von Mises distribution describing  response variability, and <span class="style13">[pT pN pU]</span> are mixture parameters indicating the estimated probability of <strong>target</strong>, <strong>non-target</strong> and <strong>uniform</strong> responses, respectively.<span class="style13"> LL</span> returns the log likelihood of the fitted model. If the  input <span class="style13">NT</span> is omitted, the function will fit a  mixture of <strong>target</strong> &amp; <strong>uniform  </strong>components
+ only. Note that the fitting function is unlikely to provide reliable  
+parameter estimates for n &lt; 50 trials, and may fail altogether for 
+small n.</p>
+<p class="style1"><span class="style12"><img src="readme_files/header.gif" alt="spacer" height="1" width="650"></span></p>
+<p class="style10" align="left"><a name="refs"><strong>References</strong></a></p>
+<p class="style1" align="left">[1] Bays PM, Catalao RFG &amp;  Husain M. The precision of visual working memory is set by allocation of a  shared resource. <em>Journal  of Vision</em> 9(10): 7, 1-11  (2009) [<a href="file:///C:/PMB/Web/Homepage/pdf/BayCatHus09.pdf">pdf</a>]</p>
+<p class="style1" align="left">[2] Wilken P &amp; Ma, WJ. A detection theory account of change detection. <span style="font-style: italic;">Journal of Vision</span> 4, 1120-1135 (2004)</p>
+<p class="style1" align="left">[3] Fisher NI. <span style="font-style: italic;">Statistical analysis of circular data</span>.   (1993)</p>
+<p class="style1" align="left">[4] Best DJ &amp; Fisher NI. Efficient simulation of the von Mises distribution. <span style="font-style: italic;">Applied Statistics</span> 28, 152–157 (1979)</p>
+<p class="style1" align="left">[5] Jammalamadaka, S.R. &amp; Sengupta, A. <span style="font-style: italic;">Topics in circular statistics</span>.  (2001)</p>
+<p class="style1">[6] McLachlan  GJ, Peel D.&nbsp; <em>Finite mixture models</em>. (2000)</p>
+<p class="style1">[7] Bilmes  JA.&nbsp;A gentle tutorial of the EM 
+algorithm and its  application to parameter estimation for Gaussian 
+mixture and hidden Markov  models. <em>International Computer Science Institute</em> <em>Technical Report</em> <em>ICSI-TR-97-021</em>  (1997)</p>
+<p class="style1">[8] Dhillon IS and  Sra S. Modeling data using directional distributions. <em>Technical Report</em> <em>TR-03-06,<br>
+Department of Computer Sciences, University of Texas</em> (2003)</p>
+<p class="style1" align="left"><img src="readme_files/dots.gif" alt="" height="6" width="667"></p>
+<!-- Start of StatCounter Code -->
+<script type="text/javascript">
+var sc_project=3873699; 
+var sc_invisible=1; 
+var sc_partition=31; 
+var sc_click_stat=1; 
+var sc_security="1c7d38ec"; 
+</script>
+
+<script type="text/javascript" src="readme_files/counter.js"></script>
+<!-- End of StatCounter Code -->
+</body></html>
