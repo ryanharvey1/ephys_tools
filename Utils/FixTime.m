@@ -26,8 +26,10 @@ data.events=(data.events-data.frames(1,1))./10^6;
 % uncorrected frames from linear track
 if isfield(data,'linear_track')
     for i=1:length(data.linear_track)
-        data.linear_track{i}.nonlinearFrames(:,1)=...
-            (data.linear_track{i}.nonlinearFrames(:,1)-data.frames(1,1))./10^6;
+        if isfield(data.linear_track{i},'nonlinearFrames')
+            data.linear_track{i}.nonlinearFrames(:,1)=...
+                (data.linear_track{i}.nonlinearFrames(:,1)-data.frames(1,1))./10^6;
+        end
     end
 end
 
