@@ -1,4 +1,4 @@
-function  [CellClass] = bz_CellClassification (data)
+function  [CellClass] = bz_CellClassification_adapted (basepath)
 % Loads cell spike waveforms from the local folder, characterizes them and
 % separates them into E vs I cells.  Manual verification based on clickable
 % gui from Shige.
@@ -48,16 +48,25 @@ knownI = p.Results.knownI;
 SAVEMAT = p.Results.saveMat;
 
 
+
 %%
-OneMs = round(32000/1000); %sample rate is 32k hz. divide by 1000 to put into ms
+sessions = dir([basepath,'*.mat']);
+all_waves = [];
+wave_id = [];
+for s = 1:length(sessions)
+    temp = load(sessions(s).name,'avgwave','spikesID');
+    wave_id = [wave_id; cellstr(repmat(sessions(s).name,size(temp.avgwave,1),1))...
+        temp.spikesID.TetrodeNum num2cell(temp.spikesID.CellNum)];
+    all_waves = [all_waves; temp.avgwave]; 
+end
 
 %% gather waves & select waveform with maximum amplitude
-for wave = 1:size(data.avgwave,1) 
+for wave = 1:size(all_waves,1) 
     
     %find highest amplitude waveform. 
-    all_waves = data.avgwave{wave}; 
-    [~,maxpos] = max(max(abs(all_waves),[],2)); %use abs to capture peak amplitude, positive or negative, whichever is greater.
-    wf = all_waves(maxpos,:);
+    temp_waves = all_waves{wave}; 
+    [~,maxpos] = max(max(abs(temp_waves ),[],2)); %use abs to capture peak amplitude, positive or negative, whichever is greater.
+    wf = temp_waves (maxpos,:);
     
     %because of differences in spike sorting methods, stored waveforms are
     %different lengths. Let's scale to 1 ms or 32 samples. 
@@ -66,9 +75,10 @@ for wave = 1:size(data.avgwave,1)
     
     MaxWaves(wave,:) = wf_32;
     
-    clear wf_32 wf_x wf maxpos all_waves
+    clear wf_32 wf_x wf maxpos temp_waves
 end
 
+clear wave
 %% get trough-peak delay times
 for a = 1:size(MaxWaves,1)
     
@@ -79,9 +89,11 @@ for a = 1:size(MaxWaves,1)
     [~,maxpos] = max(thiswave); %find the largest peak 
     maxpos = maxpos(1); 
     
-    if isempty(maxpos)
+    if maxpos >= 25 || isempty(maxpos) || isempty(minpos) || minpos >= 31
         warning('Your Waveform may be erroneous')
-        maxpos = 1;
+        peak_trough(a,:) = 4;
+        trough_peak(a,:) = 4;
+        continue
     end
     
     if minpos < maxpos
@@ -91,35 +103,65 @@ for a = 1:size(MaxWaves,1)
     end
     
     % Find time from min to left
-    [~,maxpos_left] = max(thiswave(1:minpos-1)); %finds peak before trough
+    [max_left,~] = max(thiswave(1,1:minpos-1)); %finds peak before trough
+    maxpos_left = find(thiswave == max_left(1));
+    
+    peak_trough(a,:) = (minpos - maxpos_left(1))/32; % in ms
     
     % Find time from min to right
-    [~,maxpos_right] = max(thiswave(minpos+1:end)); %finds peak after trough
-   
+    [max_right,~] = max(thiswave(1,minpos+1:end)); %finds peak after trough
+    maxpos_right = find(thiswave == max_right(1));
     
-    maxpos=maxpos(1);
-    maxpos = maxpos+minpos;
-    tp(a) = maxpos-minpos; %In number of samples
+    trough_peak(a,:) = (maxpos_right(1) -  minpos)/32; % in ms
+    
 end
 
 %% get spike width by taking inverse of max frequency in spectrum (based on Adrien's use of Eran's getWavelet)
-for a = 1:size(MaxWaves,2)
-    w = MaxWaves(:,a);
+for a = 1:size(MaxWaves,1)
+    w = MaxWaves(a,:)';
+    [~,maxpos] = max(w); %find the largest peak
+    maxpos = maxpos(1);
+     if maxpos >= 25 || isempty(maxpos) || isempty(minpos) || minpos >= 31
+        warning('Your Waveform may be erroneous')
+        spkW(a,1) = 4;
+        continue
+    end
     w = [w(1)*ones(1000,1);w;w(end)*ones(1000,1)];
-    [wave f t] = getWavelet(w,20000,500,3000,128);
+    [wave, f, t] = getWavelet(w,32000,300,8000,128);
     %We consider only the central portion of the wavelet because we
     %haven't filtered it before hand (e.g. with a Hanning window)
     wave = wave(:,int16(length(t)/4):3*int16(length(t)/4));
     %Where is the max frequency?
-    [maxPow ix] = max(wave);
-    [dumy mix] = max(maxPow);
+    [maxPow, ix] = max(wave);
+    [~, mix] = max(maxPow);
     ix = ix(mix);
-    spkW(a) = 1000/f(ix);
+    spkW(a,1) = 1000/f(ix);
 end
 
+clear wave 
+
 %% Generate separatrix for cells 
-x = tp'/OneMs;%trough to peak in ms
-y = spkW';%width in ms of wavelet representing largest feature of spike complex... ie the full trough including to the tip of the peak
+X=[trough_peak,spkW];
+[idx,C] = kmeans(X,2, 'Replicates',10,'Distance','cityblock');
+
+figure;
+plot(X(idx==1,1),X(idx==1,2),'r.','MarkerSize',12)
+hold on
+plot(X(idx==2,1),X(idx==2,2),'b.','MarkerSize',12)
+plot(C(:,1),C(:,2),'kx',...
+     'MarkerSize',15,'LineWidth',3) 
+legend('Cluster 1','Cluster 2','Centroids',...
+       'Location','NW')
+title 'Cluster Assignments and Centroids'
+hold off
+
+figure; 
+plot(mean(MaxWaves(idx ==2,:),1),'r')
+hold on;
+plot(mean(MaxWaves(idx ==1,:),1),'b')
+
+x = trough_peak;
+y = spkW;%width in ms of wavelet representing largest feature of spike complex... ie the full trough including to the tip of the peak
 
 xx = [0 0.8];
 yy = [2.4 0.4];
@@ -128,55 +170,5 @@ b = yy( 1 ) - m * xx( 1 );  % y = ax+b
 RS = y>= m*x+b;
 INT = ~RS;
 
-%% Plot for manual selection of boundary, with display of separatrix as a guide.
-h = figure;
-title({'Discriminate pyr and int (select Pyramidal)','left click to draw boundary', 'center click/ENTER to complete)'});
-fprintf('\nDiscriminate pyr and int (select Pyramidal)');
-xlabel('Trough-To-Peak Time (ms)')
-ylabel('Wave width (via inverse frequency) (ms)')
-[ELike,PyrBoundary] = ClusterPointsBoundaryOutBW([x y],knownE,knownI,m,b);
 
-%% Mean waveforms output
-CellClass.UID = spikes.UID; %ADD CELL IDX 
-CellClass.pE = ELike';
-CellClass.pI = ~ELike';
-CellClass.label = cell(size(CellClass.UID));
-CellClass.label(CellClass.pE) = {'pE'};
-CellClass.label(CellClass.pI) = {'pI'};
-CellClass.detectionparms.TroughPeakMs = x';
-CellClass.detectionparms.SpikeWidthMs = y';
-CellClass.detectionparms.PyrBoundary = PyrBoundary;
-CellClass.detectionparms.Waveforms = MaxWaves;
-
-if SAVEMAT
-    save(savefile,'CellClass')
-end
-
-%%
-if SAVEFIG
-    figure
-    subplot(2,2,1)
-        plot(CellClass.detectionparms.TroughPeakMs(CellClass.pE),...
-            CellClass.detectionparms.SpikeWidthMs(CellClass.pE),'k.')
-        hold on
-        plot(CellClass.detectionparms.TroughPeakMs(CellClass.pI),...
-            CellClass.detectionparms.SpikeWidthMs(CellClass.pI),'r.')
-        axis tight
-        plot(CellClass.detectionparms.PyrBoundary(:,1),...
-            CellClass.detectionparms.PyrBoundary(:,2))
-        xlim([0 max([x+0.1;2])])
-        ylim([0 max([y+0.1;2])])
-        xb = get(gca,'XLim');
-        yb = get(gca,'YLim');
-        plot(xb,[m*xb(1)+b m*xb(2)+b])
-        xlabel('Trough to Peak Time (ms)')
-        ylabel('Spike Width (ms)')
-        
-    subplot(2,2,2)
-        plot([1:size(MaxWaves,1)]./OneMs,MaxWaves(:,CellClass.pE),'color',[0 0.6 0])
-        hold on
-        plot([1:size(MaxWaves,1)]./OneMs,MaxWaves(:,CellClass.pI),'color',[0.6 0 0])
-        axis tight
-        xlabel('t (ms)')
-        
 end
