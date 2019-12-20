@@ -119,7 +119,6 @@ end
 load('mazesize.mat','mazesize')
 [~,b]=ismember(data.mazetypes,[mazesize{:,1}]');
 data.maze_size_cm=[mazesize{b,2}];
-mazesize=max(data.maze_size_cm);
 clear b
 
 % patch for linear track maze size bug
@@ -127,6 +126,7 @@ if datenum([data.sessionID(2:5),'-',data.sessionID(6:7),'-',data.sessionID(8:9)]
         datenum('2016-07-14','yyyy-mm-dd') && any(contains(data.mazetypes,'track','IgnoreCase',true))
     data.maze_size_cm(1) = 90;
 end
+mazesize=max(data.maze_size_cm);
 
 % GET VELOCITY
 [vel_cmPerSec,~,pixelDist]=InstaVel([data_video(:,2),data_video(:,3)],mazesize,data.samplerate);
