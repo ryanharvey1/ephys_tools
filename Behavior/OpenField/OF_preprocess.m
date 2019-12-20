@@ -15,7 +15,7 @@
 %
 %Pipeline Description:
 %
-%   raw coordinates --> smoothed/transformed to cm --> calculate measures:
+%   raw coordinates --> transformed to cm --> calculate measures:
 %
 
 
