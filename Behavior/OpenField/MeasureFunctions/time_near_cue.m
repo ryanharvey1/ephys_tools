@@ -1,10 +1,11 @@
 % time_near_cue
 % Ryan Harvey 2019; updated by LB 2019 to included entries/stop measures
-load('d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V18.mat')
+% load('d:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V19.mat')
 tic
 for i=1:size(params.subID)
     
     if any(isnan(params.cueCM{i}))
+        
         % rescale cue by 5 cm
         scaled_cuecords_x=rescale(params.cueCM{i-1}(:,1),min(params.cueCM{i-1}(:,1))-5,max(params.cueCM{i-1}(:,1))+5);
         scaled_cuecords_y=rescale(params.cueCM{i-1}(:,2),min(params.cueCM{i-1}(:,2))-5,max(params.cueCM{i-1}(:,2))+5);
@@ -24,65 +25,63 @@ for i=1:size(params.subID)
     tempIn=inpolygon(params.backCM{i,1}(:,1),params.backCM{i,1}(:,2),scaled_cuecords_x',scaled_cuecords_y');
     if sum(tempIn) == 0
         params.CueEntries(i)=0;
+        params.tsEntry_cue{i} = nan;
     else
         tempOut=contiguousframes(tempIn,60); %has to be inside of cue for at least 2 sec to count as entry
         [start_CueEntries,~,params.CueEntries(i)]=findgroups(tempOut);
+         params.tsEntry_cue{i} = params.ts{i}(start_CueEntries,1);
     end
+
+    clear tempIn
     
-    
-    
+    % Bin Entry over begining middle end 
     if exist('start_CueEntries','var')
-        edges = [0 2];
-        edges = edges*60; % convert edges into seconds
-        
-        params.bin_entries{i} = histcounts(params.ts{i}(start_CueEntries,1),edges);
+        edges = [1 601 1201 1800]; % 10 minute bins 
+        params.bin_entries_cue{i} = histcounts(params.ts{i}(start_CueEntries,1),edges);
     else
-        params.bin_entries{i} = zeros(1,15);
+        params.bin_entries_cue{i} = zeros(1,3);
     end
     
+    clear start_CueEntries
     % Retrieve Stops in Cue Zone
     
     stops = params.stops{i};
-    
     for ii = 1:length(stops)
         
-        temp_stop = stops{1,ii}(1,1:2);
+        temp_stop = stops{1,ii};
         
-        stop_in_cue(ii,1) = inpolygon(temp_stop(:,1),...
+        stop_in_cue{ii,1} = inpolygon(temp_stop(:,1),...
             temp_stop(:,2),scaled_cuecords_x',scaled_cuecords_y'); %Find number of times animals initiated a stop in the cue zone
+         
+        clear temp_stop
         
         % compile timestamps of stop in cue
-        if stop_in_cue (ii,1) == 1
+        if sum(stop_in_cue{ii,1}) >= 1
+            
+            stop_in_cue_binary(ii,1) = 1;
             
             %sanity check
-            plot(scaled_cuecords_x',scaled_cuecords_y'); hold on; plot(temp_stop(1,1),temp_stop(1,2),'*r')
-            
+%             plot(scaled_cuecords_x',scaled_cuecords_y'); hold on; plot(temp_stop(1,1),temp_stop(1,2),'*r')
             temp_ts = params.tsStop{i}{1,ii}(1,1); % get first ts for stop
+            params.tsStop_cue{i}(ii,1) = temp_ts;
             
-            tsStops(ii,1) = temp_ts;
-            
+            clear temp_ts
         else
-            tsStops(ii,1) = NaN;
-            
+            params.tsStop_cue{i}(ii,1) = nan;
+            stop_in_cue_binary(ii,1) = 0;
         end
         
+        clear stop_in_cue
     end
     
-    params.CueStops(i)=nansum(stop_in_cue); %number of stops in cue zone
     
-    % Bin stops that occur in cue zone over time
+    % Bin Stops over begining middle end 
+    edges = [1 601 1201 1800]; % 10 minute bins
+    params.bin_stops_cue{i} = histcounts(params.tsStop_cue{i}(ii,1),edges);
     
-    if exist('tsStops','var')
-        edges = [0 2];
-        edges = edges*60; % convert edges into seconds
-        
-        params.bin_stops{i} = histcounts(tsStops,edges);
-    else
-        params.bin_stops{i} = zeros(1,16);
-    end
-    
-    clear stop_in_cue tsStops
-    
+    params.CueStops(i)=nansum(stop_in_cue_binary); %number of stops in cue zone
+
+    clear stop_in_cue_binary
     % locate path in cue zone
     innose=inpolygon(params.noseCM{i}(:,1),params.noseCM{i}(:,2),scaled_cuecords_x,scaled_cuecords_y);
     inhead=inpolygon(params.headCM{i}(:,1),params.headCM{i}(:,2),scaled_cuecords_x,scaled_cuecords_y);
