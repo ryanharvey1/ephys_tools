@@ -486,8 +486,10 @@ classdef postprocessFigures
             imagesc(ratemap,'AlphaData',imAlpha);
             axis xy; axis off; hold on; box off; axis image;
             colormap(ax,viridis(255))
-            title(sprintf('IC: %4.2f  %4.2f hz',...
-                measures(contains(varnames,["InformationContent","PeakRate"]))))
+            if ~isempty(varnames)
+                title(sprintf('IC: %4.2f  %4.2f hz',...
+                    measures(contains(varnames,["InformationContent","PeakRate"]))))
+            end
         end
         
         function phase_by_pos(ax,dataspks,lfp_ts,theta_phase,ratemap,trackinfo)
