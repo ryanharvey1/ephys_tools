@@ -37,7 +37,7 @@ theta_phase=signal;
 theta_amp=signal;
 
 % resample time stamps & convert to sec for fma below
-ts = interp1(1:length(ts), ts, 1:length(signal));
+ts = interp1(linspace(1,length(signal),length(ts)), ts, 1:length(signal));
 ts_sec=ts/10^6;
 ts_sec=ts_sec-(ts_sec(1));
         
