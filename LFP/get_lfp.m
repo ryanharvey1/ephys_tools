@@ -55,8 +55,8 @@ for ii=1:length(lfpfile)
     ch = str2double(extractAfter(filename,'CSC'));
 
     [Samples]= Nlx2MatCSC(lfpfile{ii}, [0 0 0 0 1], 0, 1);
-
-    signal(ch,:) = resample(Samples(:), fnew, fold);
+    
+    signal(ch,1:length(Samples(:))*fnew/fold) = resample(Samples(:), fnew, fold);
         
     % filter for theta
     % normalized by the nyquist frequency
