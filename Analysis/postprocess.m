@@ -152,7 +152,7 @@ if length(dir(fullfile(path,'*.ncs'))) ~= length(dir(fullfile(path,'*.ntt')))
     end
 end
 
-[data]=downsampleLFP(lfpfile,data);
+data = get_lfp(lfpfile,data);
 clear tetrodes lfpfile
 
 % FIX TIMESTAMPS (set a zero point and convert microseconds to seconds)
