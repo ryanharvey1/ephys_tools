@@ -63,7 +63,7 @@ for i = 1:size(param_idx,1)
     median_timeStop(i,1) = nanmedian(cell2mat(params.timeStopped{i}));
     median_segDist(i,1) = nanmedian(cell2mat(params.seg_distance{i}));
     median_seg_stop_out(i,1) = nanmedian(params.stop_out_hb_dur{i});
-    
+
 end
 
 vars = {'subject','day','group','seg_circ','seg_dur','stop_dur','seg_dist','seg_dur_out'};
@@ -74,6 +74,24 @@ seg2python = table(subject,day,group,median_circuity,...
 
 writetable(seg2python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\segment_measures.csv'); %save data
+
+% eCDF of Circuity for all animals Fig 2 
+
+param_idx=params.subID;
+for i=1:2:48
+    [f,x] = ecdf(cell2mat(params.seg_circuity{i})');
+    if contains(param_idx(i),'Tg')
+        plot(x,f,'LineWidth',3,'Color','r');
+    else
+        plot(x,f,'LineWidth',3,'Color',[.2 .2 .2]);
+    end
+    hold on;
+end
+grid on
+
+ylabel('Proportion')
+xlabel('Circuity')
+
 
 %% Get Primary home base measures lb 9/18/19 Add mean stop duration in home base (#3) 
 
@@ -171,8 +189,11 @@ CueEntries_diff = CueEntries(2:2:end,:) - CueEntries(1:2:end,:);
 CueStops = params.CueStops;
 CueStops_diff = CueStops(2:2:end,:) - CueStops(1:2:end,:);
 
+InZoneTime= cell2mat(params.time_in_zone);
+InZoneTime_diff = InZoneTime(2:2:end,:) - InZoneTime(1:2:end,:);
+
 vars={'Subject','day','group','pathL_diff','searchArea_diff','runSpeed_diff','runAngVel_diff','stopAngVel_diff'...
-    ,'numRuns_diff','numStops_diff','outside_hb_stop_diff','CueEntries_diff','CueStops_diff','runAcell_diff'};
+    ,'numRuns_diff','numStops_diff','outside_hb_stop_diff','CueEntries_diff','CueStops_diff','runAcell_diff','cue_dwell_diff'};
 %Now we'll create variables for levels of independent variables as well as
 %make the unique subject id. 
 day=repmat({'D2'},size(CueStops_diff,1),1); %create day variable 
@@ -184,7 +205,7 @@ subject=unique(id(:,1)); %create subID as a within-subjects factor
 %We can now create a table with only our new vars 
 wholeTrial2Python=table(subject,day,group,pathL_diff,searchArea_diff,...
     runSpeed_diff,runAngVel_diff,stopAngVel_diff,numRuns_diff,numStops_diff,outside_hb_stop_diff,...
-    CueEntries_diff,CueStops_diff,runAcell_diff,'VariableNames',vars); %make table
+    CueEntries_diff,CueStops_diff,runAcell_diff,InZoneTime_diff,'VariableNames',vars); %make table
 
 writetable(wholeTrial2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\wholeTrial_difference_day2.csv'); %save data
@@ -218,19 +239,11 @@ for i=1:size(params.HBcenter,1)
     primary_hbStopDuration(i,1) = cell2mat(params.slowInHB{i}(1,occIdx(i,1)))/params.HBstops{i}{1,occIdx(i,1)};
 end
 
-% Proximity of primary hb day 1 versus primary hb day 2
-row=1;
-for i=1:2:size(params,1)
-    primaryHBdist(row,1)=sqrt((params.HBcenter{i,1}{1,occIdx(i,1)}(1,1)-params.HBcenter{i+1,1}{1,occIdx(i+1,1)}(1,1))^2+...
-        (params.HBcenter{i,1}{1,occIdx(i,1)}(1,2)-params.HBcenter{i+1,1}{1,occIdx(i+1,1)}(1,2))^2);
-    row=row+1;
-end
-
 timeInCue=cell2mat(params.time_in_zone);
 
 vars={'Subject','day','group','NumHBs','Occupancy','Entries',...
     'Distance2Cue','NumStops','AvgVelocity','area','avgStopDist',...
-    'numCloseStops','clos2cue','time2hb','timeInCue','avgStopDuration'}; %varnames act as headers for hbMeas2Python
+    'numCloseStops','clos2cue','time2hb','timeInCue','avgStopDuration',}; %varnames act as headers for hbMeas2Python
 day=repmat({'D1';'D2'},size(params.HBcenter,1)/2,1); %create day variable 
 group=[repmat({'Tg'},size(params.HBcenter,1)/2,1);...%create grouping variable
     repmat({'Wt'},size(params.HBcenter,1)/2,1)];
@@ -246,13 +259,54 @@ hbMeas2Python=table(subject,day,group,numHB,primary_hbOcc,...
 writetable(hbMeas2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\hbData.csv'); %save data
 
+% SECOND PARAGRAPH RESULTS (PROBE TEST: PROXIMAL CUE REMOVAL). 
+for i = 1:length(param_idx)
+    temp = params.tsStop_cue{i};
+    temp(isnan(params.tsStop_cue{i}),:)=[];
+    tsStop_cue{i,1} = temp;
+    clear temp
+end
+Tg_bin_entry = [];
+Wt_bin_entry = [];
+for i = 1:length(param_idx)
+    temp_ts_entry(i,1) = params.tsEntry_cue{i}(1,1);
+    temp_bin_entry(i,:) = params.bin_entries_cue{i};
+end
+% SECOND PARAGRAPH RESULTS (PROBE TEST: PROXIMAL CUE REMOVAL). 
 
-% Interaction with cue 
+day2_Tg = temp_ts_entry(contains(param_idx,{'Tg'}) & contains(param_idx,{'D2'}),:);
+day2_Wt = temp_ts_entry(contains(param_idx,{'WT'}) & contains(param_idx,{'D2'}),:);
 
-edges = [1 2 60 1800];
+cue_measure = table(subject,day,group,temp_ts_entry,'VariableNames',{'subject','day','group','time2cue'});
+writetable(cue_measure,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\cueData.csv'); %save data
 
+% SECOND PARAGRAPH RESULTS (PROBE TEST: PROXIMAL CUE REMOVAL). 
+edges = [1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31];
+edges = edges*60;
 for i=1:length(param_idx)
-   bin_dur_mat(i,:)=histcounts(cell2mat(params.timeStopped{i})',edges); 
+   
+    bin_dur_mat(i,:)=histcounts(params.tsEntry_cue{i},edges); 
     
 end
 
+prop_cue_day2_Tg = sum(sum(bin_dur_mat(contains(param_idx,{'Tg'}) & contains(param_idx,{'D2'}),:),2)~=0) ;
+prop_cue_day2_Wt = sum(sum(bin_dur_mat(contains(param_idx,{'WT'}) & contains(param_idx,{'D2'}),:),2)~=0) ;
+
+[h,p, chi2stat,df] = prop_test([prop_cue_day2_Tg prop_cue_day2_Wt],[12 12],'true')
+
+% Proximity of primary hb day 1 versus primary hb day 2 (RESULTS LAST
+% PARAGRAPH)
+row=1;
+for i=1:2:size(params,1)
+    primaryHBdist(row,1)=sqrt((params.HBcenter{i,1}{1,occIdx(i,1)}(1,1)-params.HBcenter{i+1,1}{1,occIdx(i+1,1)}(1,1))^2+...
+        (params.HBcenter{i,1}{1,occIdx(i,1)}(1,2)-params.HBcenter{i+1,1}{1,occIdx(i+1,1)}(1,2))^2);
+    row=row+1;
+end
+
+subject = unique(subject,'sorted');
+group=[repmat({'Tg'},size(primaryHBdist,1)/2,1);...%create grouping variable
+    repmat({'Wt'},size(primaryHBdist,1)/2,1)];
+cue_measure = table(subject,group,primaryHBdist,'VariableNames',{'subject','group','primaryHBdist'});
+writetable(cue_measure,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\HBdist.csv'); %save data
