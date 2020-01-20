@@ -3,7 +3,7 @@
 %  Most data are exported as csv files for further analysis in Python.
 %  However, some measures are directly analyzed below. 
 
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V18');
+load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\params_V19');
 param_idx=params.subID;
 
 %% Compile single numeric Measures for whole trial analysis (#1)
@@ -21,15 +21,22 @@ param_idx=params.subID;
 % Python. 
 
 %Here we'll define the variable names. 
-vars={'Subject','day','group','pathL','searchArea','runSpeed','numStops','CueEntries','CueStops'};
+vars={'Subject','day','group','pathL','searchArea','runSpeed','runAngVel','stopAngVel'...
+    ,'numRuns','numStops','outside_hb_stop','CueEntries','CueStops','runAcell'};
 
 %Lets pull the variables from the table. 
-pathL=cell2mat(params.pathL); 
-searchArea=cell2mat(params.searchArea);
-runSpeed=cell2mat(params.runSpeed);
-numStops=cell2mat(params.NumStops); 
-CueEntries=params.CueEntries;
-CueStops=params.CueStops;
+pathL = cell2mat(params.pathL); 
+searchArea = cell2mat(params.searchArea);
+runSpeed = cell2mat(params.meanLinVel_run);
+runAcell = params.med_lin_accel; 
+runAngVel = cell2mat(params.meanAngVel_run);
+stopAngVel = cell2mat(params.meanAngVel_stop);
+numRuns = cell2mat(params.NumRuns);
+numStops = cell2mat(params.NumStops); 
+outside_hb_stop = cell2mat(params.outside_hb_stops);
+CueEntries = params.CueEntries;
+CueStops = params.CueStops;
+
 
 %Now we'll create variables for levels of independent variables as well as
 %make the unique subject id. 
@@ -40,13 +47,37 @@ id=split(params.subID,'_'); %create subID as a within-subjects factor
 [~,~,subject]=unique(id(:,1)); %create subID as a within-subjects factor 
 
 %We can now create a table with only our new vars 
-wholeTrial2Python=table(subject,day,group,pathL,searchArea,runSpeed,numStops,CueEntries,CueStops,'VariableNames',vars); %make table
+wholeTrial2Python=table(subject,day,group,pathL,searchArea,...
+    runSpeed,runAngVel,stopAngVel,numRuns,numStops,outside_hb_stop,...
+    CueEntries,CueStops,runAcell,'VariableNames',vars); %make table
 
 writetable(wholeTrial2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\wholeTrial_measures.csv'); %save data
 
+%% Distance of Runs and Circuity of Runs (Fig 1 E, D)
+
+for i = 1:size(param_idx,1)
+
+    median_circuity(i,1) = nanmedian(cell2mat(params.seg_circuity{i}));
+    median_timeMove(i,1) = nanmedian(cell2mat(params.timeMoving{i}));
+    median_timeStop(i,1) = nanmedian(cell2mat(params.timeStopped{i}));
+    median_segDist(i,1) = nanmedian(cell2mat(params.seg_distance{i}));
+    median_seg_stop_out(i,1) = nanmedian(params.stop_out_hb_dur{i});
+    
+end
+
+vars = {'subject','day','group','seg_circ','seg_dur','stop_dur','seg_dist','seg_dur_out'};
+
+seg2python = table(subject,day,group,median_circuity,...
+    median_timeMove,median_timeStop,median_segDist,...
+    median_seg_stop_out,'VariableNames',vars);
+
+writetable(seg2python,...
+    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\segment_measures.csv'); %save data
+
+
 %% Get Binned Stop time duration (#2)
-edges = [0 2 10 60 1800];
+edges = [1 301 601 901 1201 1501 1800];
 
 for i=1:length(param_idx)
    bin_dur_mat(i,:)=histcounts(cell2mat(params.timeStopped{i})',edges); 
@@ -73,11 +104,11 @@ timeStopped_wt1=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(p
 timeStopped_tg2=horzcat(params.timeStopped{contains(param_idx,'Tg') & contains(param_idx,'D2')});
 timeStopped_wt2=horzcat(params.timeStopped{contains(param_idx,'WT') & contains(param_idx,'D2')});
 
-tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
-norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
-
-wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
-norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
+% tg1_bin = histcounts(cell2mat(timeStopped_tg1)',edges);
+% norm_tg1_bin = tg1_bin/size(cell2mat(timeStopped_tg1)',1);
+% 
+% wt1_bin = histcounts(cell2mat(timeStopped_wt1)',edges);
+% norm_wt1_bin = wt1_bin/size(cell2mat(timeStopped_wt1)',1);
 
 tg2_bin = histcounts(cell2mat(timeStopped_tg2)',edges);
 norm_tg2_bin = tg2_bin/size(cell2mat(timeStopped_tg2)',1);
@@ -113,26 +144,24 @@ legend({'F344','TgF344-AD'});legend('boxoff')
 set(gca,'FontSize',14,'FontName','Helvetica','FontWeight','bold','LineWidth',2)
 
  export_fig('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Figures\PNGs\Binned_Stops.png','-m4') 
- 
-
-% contingency_cue = table(subject, day, group, data_cue(:,1),data_cue(:,2),data_cue(:,3),data_cue(:,4)...
-%     ,'VariableNames',vars,'RowNames',{'TgF344-AD','F344'});
-% 
-% data_probe = [tg2_bin; wt2_bin];
-% 
-% contingency_probe = table(subject, day, group,  data_probe(:,1),data_probe(:,2),data_probe(:,3),data_probe(:,4)...
-%     ,'VariableNames',vars,'RowNames',{'TgF344-AD','F344'});
-% writetable(contingency_cue,...
-%     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\binned_duration_cue.csv'); %save data
-% writetable(contingency_probe,...
-%     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\binned_duration_probe.csv'); %save data
-
 
 %% Get Primary home base measures lb 9/18/19 Add mean stop duration in home base (#3) 
-numHb=cellfun('size',params.hbOcc,2); 
+
+
+%Get logical of whether moving slow critera was met
+for i=1:size(params.HBcenter,1)
+    for ii = 1:size(params.hbOcc{i},2)
+        move_slow{i,1}(1,ii) = cell2mat(params.HBclass{i}(1,ii)) > .75;
+    end
+end
+
+%num of HB that meet above 
+for i = 1 : length (params.hbOcc)
+    numHB(i,1)= sum(move_slow{i});
+end
 
 for i=1:size(params.HBcenter,1)
-    [~,occIdx(i,1)]=max(params.hbOcc{i});
+    [~,occIdx(i,1)]=max(params.hbOcc{i}(move_slow{i})); %max given moving slow most of time;
     primary_hbOcc(i,1)=params.hbOcc{i}(1,occIdx(i,1));
     primary_hbEntry(i,1)=params.entries{i}{1,occIdx(i,1)};
     primary_hbDist2Cue(i,1)=params.HBdist2Cue{i}{1,occIdx(i,1)};
@@ -146,198 +175,18 @@ for i=1:size(params.HBcenter,1)
     primary_hbStopDuration(i,1) = cell2mat(params.slowInHB{i}(1,occIdx(i,1)))/params.HBstops{i}{1,occIdx(i,1)};
 end
 
-
-tg1=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
-wt1=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
-tg2=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
-wt2=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
-
-sem_tg1 = std(tg1)/sqrt(size(tg1,1));
-sem_tg2 = std(tg2)/sqrt(size(tg2,1));
-sem_wt1 = std(tg1)/sqrt(size(wt1,1));
-sem_wt2 = std(tg1)/sqrt(size(wt2,1));
-
-
-h  = figure('Color', [1 1 1]); 
-
-subaxis(2,2,1)
-p1 = plot(mean([tg1 tg2]));
-set(p1, 'LineWidth', 4,'Color','r')
-hold on
-
-e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
-set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([0 3])
-ylim([0 max([tg1;tg2;wt1;wt2])])
-
-hold on;
-
-p1 = plot(mean([wt1 wt2]));
-set(p1, 'LineWidth', 4,'Color','k')
-hold on
-
-e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
-set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([.5 2.5])
-ylabel('Number of Stops')
-xticks([1 2])
-xticklabels({'Test','Probe'})
-set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
-box off
-
-
-tg1=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
-wt1=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
-tg2=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
-wt2=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
-
-sem_tg1 = std(tg1)/sqrt(size(tg1,1));
-sem_tg2 = std(tg2)/sqrt(size(tg2,1));
-sem_wt1 = std(tg1)/sqrt(size(wt1,1));
-sem_wt2 = std(tg1)/sqrt(size(wt2,1));
-
-subaxis(2,2,2)
-p1 = plot(mean([tg1 tg2]));
-set(p1, 'LineWidth', 4,'Color','r')
-hold on
-
-e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
-set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([0 3])
-ylim([0 max([tg1;tg2;wt1;wt2])])
-
-hold on;
-
-p1 = plot(mean([wt1 wt2]));
-set(p1, 'LineWidth', 4,'Color','k')
-hold on
-
-e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
-set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([.5 2.5])
-ylabel('Number of Entries')
-xticks([1 2])
-xticklabels({'Test','Probe'})
-set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
-box off
-
-
-
-tg1=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
-wt1=primary_area(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
-tg2=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
-wt2=primary_area(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
-
-sem_tg1 = std(tg1)/sqrt(size(tg1,1));
-sem_tg2 = std(tg2)/sqrt(size(tg2,1));
-sem_wt1 = std(tg1)/sqrt(size(wt1,1));
-sem_wt2 = std(tg1)/sqrt(size(wt2,1));
-
-subaxis(2,2,3)
-p1 = plot(mean([tg1 tg2]));
-set(p1, 'LineWidth', 4,'Color','r')
-hold on
-
-e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
-set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([0 3])
-ylim([0 max([tg1;tg2;wt1;wt2])])
-
-hold on;
-
-p1 = plot(mean([wt1 wt2]));
-set(p1, 'LineWidth', 4,'Color','k')
-hold on
-
-e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
-set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([.5 2.5])
-ylabel('Area (cm)')
-xticks([1 2])
-xticklabels({'Test','Probe'})
-set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
-box off
-
-tg1=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
-wt1=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
-tg2=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
-wt2=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
-
-sem_tg1 = std(tg1)/sqrt(size(tg1,1));
-sem_tg2 = std(tg2)/sqrt(size(tg2,1));
-sem_wt1 = std(tg1)/sqrt(size(wt1,1));
-sem_wt2 = std(tg1)/sqrt(size(wt2,1));
-
-subaxis(2,2,4)
-p1 = plot(mean([tg1 tg2]));
-set(p1, 'LineWidth', 4,'Color','r')
-hold on
-
-e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
-set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([0 3])
-ylim([0 max([tg1;tg2;wt1;wt2])])
-
-hold on;
-
-p1 = plot(mean([wt1 wt2]));
-set(p1, 'LineWidth', 4,'Color','k')
-hold on
-
-e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
-set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
-
-eline = get(e1, 'Children');
-set(eline,  'LineWidth', 4)
-xlim([.5 2.5])
-ylabel('Time in Home Base (s)')
-xticks([1 2])
-xticklabels({'Test','Probe'})
-set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
-box off
-
-%Day 1 close/far
-%row: tg,wt, col:close,far
-day1=[sum(tg1) sum(tg1==0); sum(wt1) sum(wt1==0)];
-[d1h,d1p,d1stats] = fishertest(day1);
-%Day 1 close/far
-%row: tg,wt, col:close,far
-day2=[sum(tg2) sum(tg2==0); sum(wt2) sum(wt2==0)];
-[d2h,d2p,d2stats] = fishertest(day2);
-
 timeInCue=cell2mat(params.time_in_zone);
 
 vars={'Subject','day','group','NumHBs','Occupancy','Entries',...
     'Distance2Cue','NumStops','AvgVelocity','area','avgStopDist',...
-    'numCloseStops','clos2cue','time2hb','timeInCue','avtStopDuration'}; %varnames act as headers for hbMeas2Python
+    'numCloseStops','clos2cue','time2hb','timeInCue','avgStopDuration'}; %varnames act as headers for hbMeas2Python
 day=repmat({'D1';'D2'},size(params.HBcenter,1)/2,1); %create day variable 
 group=[repmat({'Tg'},size(params.HBcenter,1)/2,1);...%create grouping variable
     repmat({'Wt'},size(params.HBcenter,1)/2,1)];
 id=split(params.subID,'_'); %create subID as a within-subjects factor
 [~,~,subject]=unique(id(:,1)); %create subID as a within-subjects factor 
 
-hbMeas2Python=table(subject,day,group,numHb,primary_hbOcc,...
+hbMeas2Python=table(subject,day,group,numHB,primary_hbOcc,...
     primary_hbEntry, primary_hbDist2Cue,...
     primary_hbStops, primary_hbvel,primary_area,...
     primary_distHBstop,primary_numCloseHBstops,...
@@ -346,78 +195,14 @@ hbMeas2Python=table(subject,day,group,numHb,primary_hbOcc,...
 writetable(hbMeas2Python,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\hbData.csv'); %save data
 
-%% get velocity measures during stopping (item 5)
-
-
-%standard error of linear and angular velocity
-param_idx=params.subID;
-ang_vel_Tg=[];
-ang_vel_WT=[];
-for i=1:length(param_idx)
-    runIdx=params.runIdx{i};
-    temp_angVel=params.angVel{i};
-    temp_linVel=params.pathIV{i};
-    
-    if contains(param_idx(i),'Tg')
-        motion(i,1)=1;
-        ang_vel_Tg=[ang_vel_Tg; temp_angVel];
-    else
-        motion(i,1)=0;
-        ang_vel_WT=[ang_vel_WT; temp_angVel];
-    end
-    
-    if mod(i,2)==0
-        motion(i,2)=2;
-    else
-        motion(i,2)=1;
-    end
-    
-    motion(i,3)=nanstd(abs(temp_angVel));
-    motion(i,4)=nanstd(abs(temp_linVel));
-    motion(i,5)=nanstd(abs(temp_angVel(runIdx)));
-    motion(i,6)=nanstd(abs(temp_linVel(runIdx)));
-    motion(i,7)=nanmean(abs(temp_angVel(~runIdx)));
-    motion(i,8)=nanstd(abs(temp_angVel(~runIdx)));
-    
-end
-
-vars={'group','day','mean_abs_vel','std_abs_vel'};
-
-velocity_data = table(motion(:,1),motion(:,2),...
-    motion(:,7),motion(:,8),'VariableNames',vars);
-
-writetable(velocity_data,...
-    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\velocity_data.csv'); %save data
-
 
 %% Number of Rats with x num of home bases 
-
-% Get home bases that are minimum 5 min in duration 
-
-for i = 1 : length (params.hbOcc)
-
-    numHB(i,1)= sum(params.hbOcc{i} > 300);
-    
-end
-
-day_idx = zeros(48,1);
-day_idx([2:2:48]',1)=1; 
-group_idx = [ones(24,1) ;zeros(24,1)];
-
-vars = {'group','day','number_of_homebase'};
-num_hb = table(group_idx, day_idx, numHB,'VariableNames',vars);
-
-writetable(num_hb,...
-    'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\num_hb.csv'); %save data
-
 
 edges = [1 2 3 4];
 tg_binned_1 = histcounts(numHB(group_idx == 1 & day_idx == 0,1),edges);
 wt_binned_1 = histcounts(numHB(group_idx == 0 & day_idx == 0,1),edges);
 tg_binned_2 = histcounts(numHB(group_idx == 1 & day_idx == 1,1),edges);
 wt_binned_2 = histcounts(numHB(group_idx == 0 & day_idx == 1,1),edges);
-
-
 
 
 fig = figure; 
@@ -490,8 +275,6 @@ writetable(bin_stop,...
 
 writetable(bin_entries,...
     'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\bin_entry.csv'); %save data
-
-
 
 fig = figure; 
 fig.Color=[1 1 1];
@@ -701,3 +484,185 @@ quadMeas2Python=table(subject,day,group,dwellQuad_stats,AngQuad_stats,linearQuad
     pathLQuad_stats,'VariableNames',vars);
 
 writetable(quadMeas2Python,'D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\TgF344-AD_OF\Data\quadData.csv');
+%% 
+
+% 
+% 
+% tg1=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+% wt1=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+% tg2=primary_hbStops(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+% wt2=primary_hbStops(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+% 
+% sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+% sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+% sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+% sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+% 
+% 
+% h  = figure('Color', [1 1 1]); 
+% 
+% subaxis(2,2,1)
+% p1 = plot(mean([tg1 tg2]));
+% set(p1, 'LineWidth', 4,'Color','r')
+% hold on
+% 
+% e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+% set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([0 3])
+% ylim([0 max([tg1;tg2;wt1;wt2])])
+% 
+% hold on;
+% 
+% p1 = plot(mean([wt1 wt2]));
+% set(p1, 'LineWidth', 4,'Color','k')
+% hold on
+% 
+% e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+% set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([.5 2.5])
+% ylabel('Number of Stops')
+% xticks([1 2])
+% xticklabels({'Test','Probe'})
+% set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+% box off
+% 
+% 
+% tg1=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+% wt1=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+% tg2=primary_hbEntry(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+% wt2=primary_hbEntry(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+% 
+% sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+% sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+% sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+% sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+% 
+% subaxis(2,2,2)
+% p1 = plot(mean([tg1 tg2]));
+% set(p1, 'LineWidth', 4,'Color','r')
+% hold on
+% 
+% e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+% set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([0 3])
+% ylim([0 max([tg1;tg2;wt1;wt2])])
+% 
+% hold on;
+% 
+% p1 = plot(mean([wt1 wt2]));
+% set(p1, 'LineWidth', 4,'Color','k')
+% hold on
+% 
+% e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+% set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([.5 2.5])
+% ylabel('Number of Entries')
+% xticks([1 2])
+% xticklabels({'Test','Probe'})
+% set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+% box off
+% 
+% 
+% 
+% tg1=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+% wt1=primary_area(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+% tg2=primary_area(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+% wt2=primary_area(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+% 
+% sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+% sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+% sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+% sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+% 
+% subaxis(2,2,3)
+% p1 = plot(mean([tg1 tg2]));
+% set(p1, 'LineWidth', 4,'Color','r')
+% hold on
+% 
+% e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+% set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([0 3])
+% ylim([0 max([tg1;tg2;wt1;wt2])])
+% 
+% hold on;
+% 
+% p1 = plot(mean([wt1 wt2]));
+% set(p1, 'LineWidth', 4,'Color','k')
+% hold on
+% 
+% e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+% set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([.5 2.5])
+% ylabel('Area (cm)')
+% xticks([1 2])
+% xticklabels({'Test','Probe'})
+% set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+% box off
+% 
+% tg1=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D1'),1);
+% wt1=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D1'),1);
+% tg2=primary_hbOcc(contains(param_idx,'Tg') & contains(param_idx,'D2'),1);
+% wt2=primary_hbOcc(contains(param_idx,'WT') & contains(param_idx,'D2'),1);
+% 
+% sem_tg1 = std(tg1)/sqrt(size(tg1,1));
+% sem_tg2 = std(tg2)/sqrt(size(tg2,1));
+% sem_wt1 = std(tg1)/sqrt(size(wt1,1));
+% sem_wt2 = std(tg1)/sqrt(size(wt2,1));
+% 
+% subaxis(2,2,4)
+% p1 = plot(mean([tg1 tg2]));
+% set(p1, 'LineWidth', 4,'Color','r')
+% hold on
+% 
+% e1 = errorbar(mean([tg1 tg2]), [sem_tg1 sem_tg2]); 
+% set(e1, 'LineStyle', 'none','Color','r','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([0 3])
+% ylim([0 max([tg1;tg2;wt1;wt2])])
+% 
+% hold on;
+% 
+% p1 = plot(mean([wt1 wt2]));
+% set(p1, 'LineWidth', 4,'Color','k')
+% hold on
+% 
+% e1 = errorbar(mean([wt1 wt2]), [sem_wt1 sem_wt2]); 
+% set(e1, 'LineStyle', 'none','Color','k','LineWidth',4);
+% 
+% eline = get(e1, 'Children');
+% set(eline,  'LineWidth', 4)
+% xlim([.5 2.5])
+% ylabel('Time in Home Base (s)')
+% xticks([1 2])
+% xticklabels({'Test','Probe'})
+% set(gca,'FontName','Helvetica','FontWeight','bold','FontSize',18)
+% box off
+% 
+% %Day 1 close/far
+% %row: tg,wt, col:close,far
+% day1=[sum(tg1) sum(tg1==0); sum(wt1) sum(wt1==0)];
+% [d1h,d1p,d1stats] = fishertest(day1);
+% %Day 1 close/far
+% %row: tg,wt, col:close,far
+% day2=[sum(tg2) sum(tg2==0); sum(wt2) sum(wt2==0)];
+% [d2h,d2p,d2stats] = fishertest(day2);
