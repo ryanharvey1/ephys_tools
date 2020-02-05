@@ -133,6 +133,15 @@ else
     count = accumarray(loc(hasdata,:), 1, sz);
 end
 
+for i=1:length(edges)
+   if  size(count,i)==numel(edges{i})
+       temp = permute(count,[i [1:i-1] [i+1:length(edges)]]);
+       temp(1,:)=temp(1,:)+temp(end,:);
+       temp=temp(1:end-1,:);
+       count = permute(temp,[2:i 1 i+1:numel(edges)]);
+   end
+end
+
 return
 
 end % histcn
