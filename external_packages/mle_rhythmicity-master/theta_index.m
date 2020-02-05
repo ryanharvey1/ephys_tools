@@ -64,6 +64,9 @@ p.addParamValue('calcci',true);
 p.addParamValue('t',0:0.01:0.5);
 p.addParamValue('pmethod','bootstrap');
 p.addParamValue('shufflet',10);
+p.addParamValue('theta',[4 12]);
+p.addParamValue('boostrapped_n',1000);
+
 p.parse(varargin{:});
 for j = fields(p.Results)'
     eval([j{1} ' = p.Results.' j{1} ';']);
@@ -105,7 +108,7 @@ f = Fs/2*linspace(0,1,NFFT/2+1);
 Y = fft(b-mean(b),NFFT);
 Y = abs(Y(1:NFFT/2+1)).^2;
 Y = conv(Y,ones(1,round(2/mode(diff(f)))),'same')';
-[~,pk] = nanmax((f(:)>5&f(:)<11).*Y(:));
+[~,pk] = nanmax((f(:) > theta(1) & f(:) < theta(2)).*Y(:));
 pk0 = pk;
 
 thetaindex = mean(Y(abs(f-f(pk))<=1))/mean(Y);
@@ -154,7 +157,7 @@ if calcci
 end
 
 %% Bootstrap: uniformly jitter lag by 1/2 cycle and recalculate
-N = 1000;
+N = boostrapped_n;
 
 if calcp
     % Calc shufflet if nessesary
@@ -186,7 +189,7 @@ if calcp
                 Y = fft(shuffled_b-mean(shuffled_b),NFFT);
                 Y = abs(Y(1:NFFT/2+1)).^2;
                 Y = smooth(Y,2/mode(diff(f)));
-                [~,pk] = nanmax((f>5&f<11).*Y');
+                [~,pk] = nanmax((f > theta(1) & f < theta(2)).*Y');
                 F(j) = mean(Y(abs(f-f(pk))<=1))/mean(Y);
             end
         case 'shuffle'

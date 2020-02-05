@@ -23,13 +23,11 @@ for i=1:length(ratID)
     s=table2cell(struct2table(dir([dataset,filesep,ratID{i}])));
     nsessions(i)=sum(~contains([s(:,1)],'.'));
 end
-nsessions=sum(nsessions);ns=1;
 
 close all
-% h = waitbar(0,'Initializing waitbar...');
-
+WaitMessage = parfor_wait(sum(nsessions),'Waitbar', true,'ReportInterval', 1);
 % CYCLE THROUGH ALL DATA
-for iratID=1:length(ratID)
+parfor iratID=1:length(ratID)
     parent = strcat(dataset,filesep,ratID(iratID)); % CHANGE BASED ON PARENT FOLDER
     disp(['CYCLING THROUGH RAT:',char(ratID(iratID))])
     parent=char(parent);
@@ -37,16 +35,18 @@ for iratID=1:length(ratID)
     for I=1:length(structdir) % 1 TO # OF FILES IN DIR
         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
             path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
-            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 && exist([path,filesep,'Sorted'],'dir')==7
-                postprocess('path',path,'figures',0); % CALL POSTPROCESS FUNCTION
+            if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 &&...
+                    exist([path,filesep,'Sorted'],'dir')==7
+                
+                % CALL POSTPROCESS FUNCTION
+                postprocess('path',path,'figures',0); 
+                
+                % update wait 
+                WaitMessage.Send;
+                
             end
-%             waitbar(ns/nsessions,h,sprintf('%d%% done...',round((ns/nsessions)*100)))
-            ns=ns+1;
         end
     end
-    %     perc=(iratID/length(ratID))*100;
-%     waitbar(perc/100,h,sprintf('%d%% done...',round(perc)))
 end
-% close(h)
-toc
+WaitMessage.Destroy;
 end
