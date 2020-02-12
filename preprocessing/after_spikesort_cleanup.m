@@ -74,11 +74,9 @@ classdef after_spikesort_cleanup
                 ii=1;
                 for i=clust
                     % ISOLATION DISTANCE
-                    try
-                        grades(ii,5)=IsolationDistance(FD,find(CellNumbers==i));
-                    catch
-                        test=1
-                    end
+                    
+                    grades(ii,5)=IsolationDistance(FD,find(CellNumbers==i));
+                    
                     % L RATIO
                     [l_output,~]=L_Ratio(FD,find(CellNumbers==i));
                     grades(ii,1)=l_output.Lratio;
