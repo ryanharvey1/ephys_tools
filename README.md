@@ -45,7 +45,7 @@ Currently, ephys_tools only supports Neuralynx data formats (more formats should
 
 Ephys_tools has functions to convert your spike sorted data into a single .mat format that lives within a "Sorted" subfolder in your raw data folder. You can spike sort your Neuralynx data in Spike Sort 3D, MClust, or Kilosort2 / Phy. 
 
-#####Kilosort2 / Phy
+##### Kilosort2 / Phy
 
 Dependencies:
 
@@ -100,7 +100,7 @@ Dependencies:
 
     
 
-#####Spike Sort 3D & MClust
+##### Spike Sort 3D & MClust
 
 The Spike sort 3d & MClust work flows are very much the same as the steps above starting at step 4. For specific differences in processing spike sort 3d, see documentation in `after_spikesort_cleanup.m` 
 
@@ -108,7 +108,7 @@ Ephys_tools contains a forked version of MClust-4.4 with dark mode and a few oth
 
 
 
-###Acknowledgements
+### Acknowledgements
 
 Ephys_tools structure and workflow was largely inspired by [CMBHOME]( https://github.com/hasselmonians/CMBHOME) & [buzcode](https://github.com/buzsakilab/buzcode) and relies on many other packages located within the 'external_packages' folder. 
 
