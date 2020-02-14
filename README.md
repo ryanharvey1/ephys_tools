@@ -62,7 +62,7 @@ Dependencies:
 
 4. Now that you have saved and are happy with your Phy results, cd to your current session folder and run `after_spikesort_cleanup.main`. This will create a 'Sorted' folder that contains your your spike time stamps and quality metrics. 
 
-5. Now is a good time to set up animal metadata. run `handleAnimalMetaData` and answer a couple questions in the command window. Animal metadata stores info like species, birth date, surgery info, manipulation info, recording sites, electrode turn record, recording session info, etc.
+5. Now is a good time to set up animal metadata. run `handleAnimalMetaData` and answer a couple questions in the command window. Animal metadata stores info like strain, birth date, surgery info, manipulation info, recording sites, electrode turn record, recording session info, etc.
 
 6. cd back to your current session folder and run `postprocess`. This will compile spikes, lfp, and behavior, calculate several features, and save them to a processed data .m file in the 'ProcessedData' folder. These processed data files can then be used for much or all future analyses. Below shows the contents of a processed data file. 
 
