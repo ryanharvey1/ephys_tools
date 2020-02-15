@@ -100,7 +100,7 @@ tempangle(tempangle<0)=tempangle(tempangle<0)+360;
 
 data_video=[ts',xtemp,ytemp,tempangle]; clear xtemp ytemp ts
 
-% make circular and linear track coords linear 
+% make circular and linear track coords linear
 if any(contains(data.mazetypes,'track','IgnoreCase',true))
     for nmaze=find(contains(data.mazetypes,'track','IgnoreCase',true))
         templinear=data_video(data_video(:,1)>=StartofRec(nmaze) & data_video(:,1)<=EndofRec(nmaze),:);
@@ -145,7 +145,7 @@ disp('Have patience...Loading LFP')
 channels=table2cell(struct2table(dir([path,filesep,'*.ncs'])));
 lfpfile=[strcat(channels(:,2),filesep,channels(:,1))];
 
-if length(dir(fullfile(path,'*.ncs'))) ~= length(dir(fullfile(path,'*.ntt')))   
+if length(dir(fullfile(path,'*.ncs'))) ~= length(dir(fullfile(path,'*.ntt')))
     clear lfpfile
     for ch=1:length(dir(fullfile(path,'*.ntt')))
         lfpfile{ch,1}=fullfile(path,['CSC',num2str(ch),'.ncs']);
@@ -202,7 +202,7 @@ for event=1:size(data.events,2)
         disp([extractBefore(data.spikesID.TetrodeNum{i},'.'),...
             ' Cell ',num2str(data.spikesID.CellNum(i))])
         
-        % combine and limit video and spike data 
+        % combine and limit video and spike data
         [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,event,i);
         
         % SEE IF SPIKES REGULARLY OCCUR OVER TIME
@@ -211,7 +211,7 @@ for event=1:size(data.events,2)
         % calculate IFR
         [ifr,~]=instantfr(unique(data.Spikes{i}(data.Spikes{i}>data.events(1,event)...
             & data.Spikes{i}<data.events(2,event))),data_video_spk(1,1):.2:data_video_spk(end,1));
-
+        
         % correlation ifr to average running speed to see if firing rate
         % increases as a function of running speed
         b=data.binned_vel{event}; % the averaged vector
@@ -226,7 +226,7 @@ for event=1:size(data.events,2)
             data.binned_vel{event}=b;
         end
         SpeedScore=corr(b,ifr,'rows','complete');
-
+        
         data.ifr{i,event}=ifr;
         clear ifr b I
         
@@ -253,7 +253,7 @@ for event=1:size(data.events,2)
             
             splitruns.right=right;
             splitruns.left=left;
-
+            
         else
             runiteration=1;
         end
@@ -373,7 +373,7 @@ for event=1:size(data.events,2)
                         [data.lfp.ts(data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
                         [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) & data.lfp.ts<=data.events(2,event))]',...
                         'plots',0,'method','place','binside',round(binside),'sample_along','arc_length');
-
+                    
                     occ4Ph=[results.ts,results.pass_index,zeros(length(results.ts),1)];
                     fieldbound=[0 1];
                     spks_VEL4LFP=data_video_spk(data_video_spk(:,6)==1,1);
@@ -445,7 +445,7 @@ for event=1:size(data.events,2)
                 % to retain our current measures stucture, lets find (variable I)
                 % the phase precession output for the field with the highest peak
                 ThPrecess=data.linear_track{event}.(direction{iruns}){1, i}.fields{I}.ThPrecess;
-
+                
             else
                 [ThPrecess]=place_cell_analysis.PHprecession([ts',theta_phase'],spks_VEL4LFP,occ4Ph,fieldbound);
             end
@@ -495,15 +495,15 @@ for event=1:size(data.events,2)
             % direction related firing using factorial Maximum Likelihood Model
             if track==0
                 
-               [corrected_p,corrected_d,correction_fit]=FMLM_wrapper(data,i,event);
-
+                [corrected_p,corrected_d,correction_fit]=FMLM_wrapper(data,i,event);
+                
                 if ~isnan(correction_fit)
                     
                     % corrected direction metrics
                     corrected_r = circ_r(deg2rad(3:6:357)',corrected_d,deg2rad(6));
                     corrected_dic = HD_cell_analysis.computeDIC(histcounts(data_video_spk(data_video_spk(:,6)==0,4),0:6:360),...
                         corrected_d',sum(data_video_spk(:,6))/sum(data_video_spk(:,6)==0)*data.samplerate);
-            
+                    
                     % corrected position metrics
                     corrected_info_content = place_cell_analysis.SpatialInformation('ratemap',...
                         corrected_p,'occupancy',occ,'n_spikes',sum(data_video_spk(:,6)));
@@ -545,6 +545,7 @@ for event=1:size(data.events,2)
             end
             if ~exist('Displacement','var');Displacement=NaN;DisplacementCorr=NaN;end
             
+            % compile measures into vector (would be better as a table in the future)
             measures=[InformationContent,Coherence,sparsity,max(ratemap(:)),...
                 nanmean(ratemap(:)),Field2Wall,FieldWidth,nfields,sum(data_video_spk(:,6)),r,...
                 preferred_Direction(1),Direct_infoContent,DirectionalityIndex,...
@@ -559,63 +560,32 @@ for event=1:size(data.events,2)
                 lap_perm_stability,stabilityoverlaps,meanstability,spatialcorrelation,egomod,bordermod,...
                 burstIdx,corrected_r,corrected_dic,corrected_info_content,corrected_sparsity,correction_fit];
             
-            if event==1 && iruns==1
-                data.measures(i,:,event)=measures;
-                data.ratemap{i,event}=ratemap;
-                data.thetaautocorr{i,event}=cor;
-                data.ThPrecess{i,event}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event}=hdTuning;
-                data.hdTuning_corrected{i,event}=corrected_d;
-            elseif event==1 && iruns>1
-                data.measures(i,:,event+1)=measures;
-                data.ratemap{i,event+1}=ratemap;
-                data.thetaautocorr{i,event+1}=cor;
-                data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event+1}=hdTuning;
-                data.hdTuning_corrected{i,event+1}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'track','IgnoreCase',true) && iruns==1
-                data.measures(i,:,event+1)=measures;
-                data.ratemap{i,event+1}=ratemap;
-                data.thetaautocorr{i,event+1}=cor;
-                data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event+1}=hdTuning;
-                data.hdTuning_corrected{i,event+1}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'track','IgnoreCase',true) && iruns==2
-                data.measures(i,:,event+2)=measures;
-                data.ratemap{i,event+2}=ratemap;
-                data.thetaautocorr{i,event+2}=cor;
-                data.ThPrecess{i,event+2}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event+2}=hdTuning;
-                data.hdTuning_corrected{i,event+2}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'Cylinder','IgnoreCase',true) && ~contains(data.session_path,'PAE')
-                data.measures(i,:,event)=measures;
-                data.ratemap{i,event}=ratemap;
-                data.thetaautocorr{i,event}=cor;
-                data.ThPrecess{i,event}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event}=hdTuning;
-                data.hdTuning_corrected{i,event}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'Cylinder','IgnoreCase',true) && contains(data.session_path,'PAE')
-                data.measures(i,:,event+1)=measures;
-                data.ratemap{i,event+1}=ratemap;
-                data.thetaautocorr{i,event+1}=cor;
-                data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event+1}=hdTuning;
-                data.hdTuning_corrected{i,event+1}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'Box','IgnoreCase',true) && ~contains(data.mazetypes{event-1},'track','IgnoreCase',true) 
-                data.measures(i,:,event)=measures;
-                data.ratemap{i,event}=ratemap;
-                data.thetaautocorr{i,event}=cor;
-                data.ThPrecess{i,event}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event}=hdTuning;
-                data.hdTuning_corrected{i,event}=corrected_d;
-            elseif event>1 && contains(data.mazetypes{event},'Box','IgnoreCase',true)
-                data.measures(i,:,event+1)=measures;
-                data.ratemap{i,event+1}=ratemap;
-                data.thetaautocorr{i,event+1}=cor;
-                data.ThPrecess{i,event+1}=ThPrecess.scatteredPH;
-                data.hdTuning{i,event+1}=hdTuning;
-                data.hdTuning_corrected{i,event+1}=corrected_d;
+            % compensate for track data which is split into both running directions
+            if iruns > 1
+                add_one = 1;
+            else
+                add_one = 0;
             end
+            
+            % check if there are more columns than expected given the
+            % current event. This would indicate the rats went on the
+            % track at some point in the session. Also, lets make sure we
+            % have the same amount of rows as cell so we don't mess up the
+            % first event by writing to event 2 instead of event 1. 
+            if isfield(data,'ratemap')
+                [r,c]=size(data.ratemap);
+                if event + add_one <= c && length(data.Spikes) == r 
+                    add_one = 1;
+                end
+            end
+            
+            % store data based on the above event + add one reasoning
+            data.measures(i,:,event + add_one)=measures;
+            data.ratemap{i,event + add_one}=ratemap;
+            data.thetaautocorr{i,event + add_one}=cor;
+            data.ThPrecess{i,event + add_one}=ThPrecess.scatteredPH;
+            data.hdTuning{i,event + add_one}=hdTuning;
+            data.hdTuning_corrected{i,event + add_one}=corrected_d;
         end
         clearvars -except track figures i event data clusterquality prop pixelDist path
     end
