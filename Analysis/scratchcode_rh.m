@@ -226,8 +226,6 @@ ylabel('Cells')
 export_fig('F:\Projects\ATNppc\Figures\colorraster_S20190909163020.png','-m4') 
 
 
-
-
 X = cellfun(@transpose,data.Spikes,'un',0);
 [~,I] = sort(cellfun(@length,X));
 X = X(I);
@@ -242,3 +240,62 @@ axis tight
 grid on
 xlabel('Time (sec)')
 ylabel('Cells')
+
+
+%% bootstrap std rate maps
+
+mins = 6;
+n = mins*60;
+% bins = data_video_nospk(1,1):120:data_video_nospk(end,1);
+for ibin = 1:1000
+    %     idx = data_video_spk(:,1) >= bins(ibin) & data_video_spk(:,1) <= bins(ibin+1);
+    %     idx = randi([0 1],length(data_video_spk),1);
+    
+    idx = zeros(length(data_video_spk),1);
+    idx(randperm(numel(idx), n)) = 1;
+    
+    [ratemap(:,:,ibin),nBinsx,nBinsy,occ,Coherence]=bindata(data_video_spk(idx & data_video_spk(:,6)==0 ,:),...
+        data.samplerate,...
+        data_video_spk(idx & data_video_spk(:,6)==1,:),...
+        track,...
+        data.maze_size_cm(event));
+end
+
+figure
+subplot(1,3,1)
+pcolor(SmoothRateMap2)
+axis image
+hold on
+title('rate map')
+colorbar 
+
+subplot(1,3,2)
+pcolor(nanmean(ratemap,3))
+axis image
+hold on
+title('mean bootstrapped rate map')
+colorbar 
+
+
+subplot(1,3,3)
+pcolor(nanstd(ratemap,[],3))
+axis image
+hold on
+title('std')
+colorbar 
+
+%% draw max diameter
+D = pdist([x_temp',y_temp']);
+[fieldwidth,I] = max(D);
+
+Z = squareform(D);
+[row,col] = find(Z==fieldwidth);
+
+
+Z = squareform(D);
+[row2,col2] = find(Z==D(I+1));
+
+figure
+plot(x_temp([row2(1),row(1)]),y_temp([row2(2),row(2)]))
+hold on
+plot(x_temp,y_temp)
