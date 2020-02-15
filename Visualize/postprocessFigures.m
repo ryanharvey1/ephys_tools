@@ -6,9 +6,9 @@
 %
 % List of Methods
 %   main
-%       input: 
+%       input:
 %               data: full postprocessed data structure
-%               optional 
+%               optional
 %                   cellid: id of cell or cells you want to plot
 %                   colorcode: spike color choice of 'HD', 'phase', or 'r'
 %   raster
@@ -21,6 +21,7 @@
 %   phase_by_pos
 %   phase_by_pos_2d
 %   phase_map
+%   phasemap_2d
 %   autocors
 %   avg_waveforms
 %   phase_colormap
@@ -52,18 +53,18 @@ classdef postprocessFigures
             if sum(contains(data.mazetypes,'track'))>1
                 nsessions=sum(contains(data.mazetypes,'track'))*2+sum(~contains(data.mazetypes,'track'));
             end
-         
+            
             
             if ~isempty(cellid)
                 cells_to_find=strcat(cellid{1},num2str(cellid{2}));
-
+                
                 cell_list=strcat(data.spikesID.TetrodeNum,num2str(data.spikesID.CellNum));
-
+                
                 cells=find(ismember(strrep(cell_list,' ',''),cells_to_find))';
                 
                 plotraster=0;
                 xcorr=0;
-
+                
             else
                 cells=1:ncells;
                 plotraster=1;
@@ -243,9 +244,8 @@ classdef postprocessFigures
                         % PLOT TUNNING CURVE
                         p(1, ns).select();
                         [data_video_spk,~]=createframes_w_spikebinary(data,ns-1,i);
-%                         postprocessFigures.plot_HD_tuning(data_video_spk,data.samplerate)
                         postprocessFigures.plot_HD_tuning(data,ns-1,i)
-
+                        
                         
                         % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
                         % CODED BY ITS THETA PHASE
@@ -272,8 +272,12 @@ classdef postprocessFigures
                             data.measures(i,:,ns),...
                             data.varnames)
                         
-                        % PLOT AUTOCORRELATION
+                        % plot phase map
                         p(5, ns).select();
+                        postprocessFigures.phasemap_2d(data,ns-1,i)
+                        
+                        % PLOT AUTOCORRELATION
+                        p(6, ns).select();
                         postprocessFigures.autocors(data.thetaautocorr{i,ns},...
                             data.measures(i,:,ns),...
                             data.varnames)
@@ -284,7 +288,6 @@ classdef postprocessFigures
                         % PLOT TUNNING CURVE
                         p(1, ns).select();
                         [data_video_spk,~]=createframes_w_spikebinary(data,ns,i);
-%                         postprocessFigures.plot_HD_tuning(data_video_spk,data.samplerate)
                         postprocessFigures.plot_HD_tuning(data,ns,i)
                         
                         % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
@@ -311,15 +314,19 @@ classdef postprocessFigures
                             data.measures(i,:,ns),...
                             data.varnames)
                         
-                        % PLOT AUTOCORRELATION
+                        % plot phase map
                         p(5, ns).select();
+                        postprocessFigures.phasemap_2d(data,ns,i)
+                        
+                        % PLOT AUTOCORRELATION
+                        p(6, ns).select();
                         postprocessFigures.autocors(data.thetaautocorr{i,ns},...
                             data.measures(i,:,ns),...
                             data.varnames)
                         
                         % PLOT AVERAGE WAVEFORMS
                         if ns==1
-                            p(6, ns).select();
+                            p(7, ns).select();
                             postprocessFigures.avg_waveforms(data.avgwave{i},...
                                 data.measures(i,:,ns),...
                                 data.varnames)
@@ -367,7 +374,7 @@ classdef postprocessFigures
             % plot histogram
             subplot(3,2,[3 4])
             spiketimes=vertcat(data.Spikes{:});
-            % BIN SPIKE TIMES FROM ALL CELLS 
+            % BIN SPIKE TIMES FROM ALL CELLS
             edges=min(spiketimes):3:max(spiketimes);
             yyaxis left
             h=histogram(spiketimes,edges);
@@ -465,7 +472,7 @@ classdef postprocessFigures
             
             spkts=spkframes(spkframes(:,6)==1,1);
             unlinear_together=vertcat(unlinear_{:});
-            if contains(mazetypes{1},'LinearTrack') 
+            if contains(mazetypes{1},'LinearTrack')
                 [~,unlinear_together(:,2:3),~] = pca([unlinear_together(:,2),...
                     unlinear_together(:,3)]);
             end
@@ -475,7 +482,7 @@ classdef postprocessFigures
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
                     interp1(rad2deg(theta)',color,...
-                    interp1(ts,unlinear_together(idx,4),spkts)),'filled');  
+                    interp1(ts,unlinear_together(idx,4),spkts)),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
@@ -531,7 +538,7 @@ classdef postprocessFigures
             axis image
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
-                 scatter(x(spkbinary),y(spkbinary),20,...
+                scatter(x(spkbinary),y(spkbinary),20,...
                     interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),y(spkbinary),20,...
@@ -577,7 +584,7 @@ classdef postprocessFigures
             if isempty(dataspks)
                 return
             end
-               
+            
             % PHASE BY POSITION
             x=rescale(dataspks(:,2),0,1);
             
@@ -654,9 +661,73 @@ classdef postprocessFigures
             phasemap=phasemap(:,bins:(bins-1)*2);
             
             % plot
-            pcolor(flipud(rot90(phasemap)));shading flat;box off;axis off;axis tight;
+            imagesc(flipud(rot90(phasemap)));shading flat;box off;axis off;axis tight;
             colormap(ax,viridis(255))
         end
+        
+        function phasemap_2d(data,session,cell)
+            
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
+            [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
+            
+            binside=mean([range(data_video_nospk(:,2))/length(data.ratemap{cell,session}),...
+                range(data_video_nospk(:,3))/length(data.ratemap{cell,session})]);
+            
+            results=pass_index(data_video_nospk(:,1),data_video_nospk(:,2:3),...
+                data_video_spk(data_video_spk(:,6)==1,1),...
+                [data.lfp.ts(data.lfp.ts>=data.events(1,session) &...
+                data.lfp.ts<=data.events(2,session))]',...
+                [data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,session) &...
+                data.lfp.ts<=data.events(2,session))]',...
+                'plots',0,'method','place','binside',round(binside),...
+                'sample_along','arc_length');
+            
+            
+            bins=length(data.ratemap{cell,session});
+            xedge=linspace(-1,1,bins+1);
+            phaseedge=linspace(0,720,bins*4);
+            
+            
+            phase_spk = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
+                data_video_spk(data_video_spk(:,6)==1,1));
+            
+            x_spk = interp1(results.ts,results.pass_index,...
+                data_video_spk(data_video_spk(:,6)==1,1));
+            
+            spkmap=histcounts2([x_spk;x_spk],[phase_spk;phase_spk+2*pi]*180/pi,...
+                xedge,phaseedge);
+            
+            
+            phase_occ = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
+                data_video_spk(data_video_spk(:,6)==0,1));
+            
+            x_occ = interp1(results.ts,results.pass_index,...
+                data_video_spk(data_video_spk(:,6)==0,1));
+            
+            occ=histcounts2([x_occ;x_occ],[phase_occ;phase_occ+2*pi]*180/pi,...
+                xedge,phaseedge);
+            
+            occ = occ/data.samplerate;
+            
+            phasemap=spkmap./occ;
+            
+            phasemap(isnan(phasemap)) = 0;
+            phasemap(isinf(phasemap)) = 0;
+            
+            h=4;
+            phase_size = size(phasemap,2);
+            myfilter = fspecial('gaussian',[4 24]*h, h);
+            phasemap = imfilter([phasemap,phasemap,phasemap],myfilter,'replicate');
+            phasemap = phasemap(:,phase_size:phase_size*2);
+            
+            imagesc(flipud(rot90(phasemap)));shading flat;box off;axis off;axis tight;
+            colormap(gca,viridis(255))
+            axis square
+        end
+        
         
         function autocors(thetaautocorr,measures,varnames)
             % PLOT AUTOCORRELATION
@@ -685,7 +756,7 @@ classdef postprocessFigures
         end
         
         function phase_colormap(colorcode)
-            % input: 
+            % input:
             %   colorcode: just the title of the plot
             %
             % Set parameters (these could be arguments to a function)
@@ -717,7 +788,7 @@ classdef postprocessFigures
         function plot_HD_tuning(data,session,cell)
             % PLOT TUNNING CURVE
             [data_video_spk,~]=createframes_w_spikebinary(data,session,cell);
-
+            
             [r,~,Ispk,~,~,tuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),...
                 data_video_spk(data_video_spk(:,6)==1,4),data.samplerate);
             
@@ -745,7 +816,7 @@ classdef postprocessFigures
             h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
                 'k');
             set(h,'FaceAlpha',.5)
-
+            
         end
     end
 end
