@@ -11,22 +11,34 @@
 %               optional
 %                   cellid: id of cell or cells you want to plot
 %                   colorcode: spike color choice of 'HD', 'phase', or 'r'
-%   raster
-%   plot_corr_line
-%   unlinearpath
-%   spikesonpath
-%   spikesonpath_2d
-%   ratemaps
-%   ratemaps_2d
-%   phase_by_pos
-%   phase_by_pos_2d
-%   phase_map
-%   phasemap_2d
-%   autocors
-%   avg_waveforms
-%   phase_colormap
-%   plot_HD_tuning
+%   raster(data)
 %
+%   unlinearpath(data,session,cell,direction,colorcode)
+%
+%   spikesonpath(data,session,cell,direction,colorcode)
+%
+%   spikesonpath_2d(data,session,cell,colorcode) 
+%
+%   ratemaps(data,session,cell,direction)
+%
+%   ratemaps_2d(data,session,cell)
+%
+%   phase_by_pos(data,session,cell,direction)
+%
+%   phase_by_pos_2d(data,session,cell)
+%
+%   phase_map(data,session,cell,direction)
+%
+%   phasemap_2d(data,session,cell)
+%
+%   autocors(data,session,cell,direction)
+%
+%   avg_waveforms(data,session,cell)
+%
+%   phase_colormap(colorcode)
+%
+%   plot_HD_tuning(data,session,cell)
+
 
 % Ryan Harvey 2019
 
@@ -79,8 +91,6 @@ classdef postprocessFigures
             for i=cells
                 tetrode=strsplit(data.spikesID.paths{i},filesep);
                 tetrode=tetrode{end};
-                trodeID=str2double(extractBetween(tetrode,'TT','.'));
-                
                 % SET UP FIGURE
                 pause(.0001)
                 fig=figure('Name',[data.rat,'  ',data.sessionID,'  ',...
@@ -98,7 +108,6 @@ classdef postprocessFigures
                 
                 for ns=1:nsessions
                     p(1, ns).select();
-                    ax=gca;
                     
                     if contains(data.mazetypes{round(ns/2)},'track','IgnoreCase',true)
                         
@@ -106,130 +115,65 @@ classdef postprocessFigures
                             if ~isfield(data.linear_track{round(ns/2)},'right')
                                 continue
                             end
-                            postprocessFigures.unlinearpath(ax,...
-                                data.linear_track{round(ns/2)}.nonlinearFrames,...
-                                data.linear_track{round(ns/2)}.right{1,i}.laps,...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks,...
-                                data.mazetypes,...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                colorcode)
+                            
+                            postprocessFigures.unlinearpath(data,round(ns/2),i,'right',colorcode)
                             
                             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
                             % CODED BY ITS THETA PHASE
                             p(2, ns).select();
-                            ax=gca;
-                            postprocessFigures.spikesonpath(ax,...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks,...
-                                data.ratemap{i,ns},...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                colorcode)
+                            postprocessFigures.spikesonpath(data,round(ns/2),i,'right',colorcode)
                             
                             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
                             % SUPERIMPOSED
                             p(3, ns).select();
-                            ax = gca;
-                            postprocessFigures.ratemaps(ax,...
-                                data.linear_track{round(ns/2)}.right{1,i}.maps,...
-                                data.ratemap{i,ns},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
+                            postprocessFigures.ratemaps(data,ns,i,'right')
                             
                             % PHASE BY POSITION
                             p(4, ns).select();
-                            ax = gca;
-                            postprocessFigures.phase_by_pos(ax,...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks,...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                data.ratemap{i,ns},...
-                                data.linear_track{round(ns/2)}.right{i})
-                            
+                            postprocessFigures.phase_by_pos(data,ns,i,'right')
+
                             % PHASE MAP
                             p(5, ns).select();
-                            ax = gca;
-                            postprocessFigures.phase_map(ax,...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks(data.linear_track{round(ns/2)}.right{1,i}.dataspks(:,6)==0,1),...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks(data.linear_track{round(ns/2)}.right{1,i}.dataspks(:,6)==0,2),...
-                                data.linear_track{round(ns/2)}.right{1,i}.dataspks(data.linear_track{round(ns/2)}.right{1,i}.dataspks(:,6)==1,1),...
-                                data.lfp,...
-                                data.ratemap{i,ns},...
-                                trodeID,data.samplerate)
+                            postprocessFigures.phase_map(data,ns,i,'right') 
                             
                             % PLOT AUTOCORRELATION
                             p(6, ns).select();
-                            postprocessFigures.autocors(data.thetaautocorr{i,ns},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
+                            postprocessFigures.autocors(data,ns,i)
                             
                             % PLOT AVERAGE WAVEFORMS
                             p(7, ns).select();
-                            postprocessFigures.avg_waveforms(data.avgwave{i},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
+                            postprocessFigures.avg_waveforms(data,ns,i)
+
                             
                         elseif ns==2 || ns==4% FOR RIGHT RUNNING DIRECTION
                             if ~isfield(data.linear_track{round(ns/2)},'left')
                                 continue
                             end
-                            postprocessFigures.unlinearpath(ax,...
-                                data.linear_track{round(ns/2)}.nonlinearFrames,...
-                                data.linear_track{round(ns/2)}.left{1,i}.laps,...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks,...
-                                data.mazetypes,...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                colorcode)
+                            
+                            postprocessFigures.unlinearpath(data,round(ns/2),i,'left',colorcode)
                             
                             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
                             % CODED BY ITS THETA PHASE
                             p(2, ns).select();
-                            ax = gca;
-                            postprocessFigures.spikesonpath(ax,...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks,...
-                                data.ratemap{i,ns},...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                colorcode)
-                            
+                            postprocessFigures.spikesonpath(data,round(ns/2),i,'left',colorcode)
+
                             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
                             % SUPERIMPOSED
                             p(3, ns).select();
-                            ax = gca;
-                            postprocessFigures.ratemaps(ax,...
-                                data.linear_track{round(ns/2)}.left{1,i}.maps,...
-                                data.ratemap{i,ns},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
-                            
+                            postprocessFigures.ratemaps(data,ns,i,'left')
+
                             % PHASE BY POSITION
                             p(4, ns).select();
-                            ax = gca;
-                            postprocessFigures.phase_by_pos(ax,...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks,...
-                                data.lfp.ts,...
-                                data.lfp.theta_phase(trodeID,:),...
-                                data.ratemap{i,ns},...
-                                data.linear_track{round(ns/2)}.left{i})
+                            postprocessFigures.phase_by_pos(data,ns,i,'left')
                             
                             % PHASE MAP
                             p(5, ns).select();
-                            ax = gca;
-                            postprocessFigures.phase_map(ax,...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks(data.linear_track{round(ns/2)}.left{1,i}.dataspks(:,6)==0,1),...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks(data.linear_track{round(ns/2)}.left{1,i}.dataspks(:,6)==0,2),...
-                                data.linear_track{round(ns/2)}.left{1,i}.dataspks(data.linear_track{round(ns/2)}.left{1,i}.dataspks(:,6)==1,1),...
-                                data.lfp,...
-                                data.ratemap{i,ns},...
-                                trodeID,data.samplerate)
+                            postprocessFigures.phase_map(data,ns,i,'left') 
                             
                             % PLOT AUTOCORRELATION
                             p(6, ns).select();
-                            postprocessFigures.autocors(data.thetaautocorr{i,ns},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
-                            
+                            postprocessFigures.autocors(data,ns,i)
+
                             % PHASE COLORMAP
                             p(7, ns).select();
                             ax=gca;
@@ -243,34 +187,20 @@ classdef postprocessFigures
                         
                         % PLOT TUNNING CURVE
                         p(1, ns).select();
-                        [data_video_spk,~]=createframes_w_spikebinary(data,ns-1,i);
                         postprocessFigures.plot_HD_tuning(data,ns-1,i)
-                        
                         
                         % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
                         % CODED BY ITS THETA PHASE
                         p(2, ns).select();
-                        ax=gca;
-                        postprocessFigures.spikesonpath_2d(ax,...
-                            data_video_spk,...
-                            data.lfp.ts,...
-                            data.lfp.theta_phase(trodeID,:),...
-                            colorcode)
+                        postprocessFigures.spikesonpath_2d(data,ns-1,i,colorcode)       
                         
                         % PLOT RATEMAP
                         p(3, ns).select();
-                        ax = gca;
-                        postprocessFigures.ratemaps_2d(ax,...
-                            data.ratemap{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
-                        
+                        postprocessFigures.ratemaps_2d(data,ns,i)
+
                         % PHASE BY POSITION
                         p(4, ns).select();
-                        postprocessFigures.phase_by_pos_2d(data.ThPrecess{i,ns},...
-                            data.ratemap{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
+                        postprocessFigures.phase_by_pos_2d(data,ns,i)
                         
                         % plot phase map
                         p(5, ns).select();
@@ -278,41 +208,28 @@ classdef postprocessFigures
                         
                         % PLOT AUTOCORRELATION
                         p(6, ns).select();
-                        postprocessFigures.autocors(data.thetaautocorr{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
+                        postprocessFigures.autocors(data,ns,i)
+
                         
                     elseif contains(data.mazetypes{round(ns/2)},'Cylinder') ||...
                             contains(data.mazetypes{round(ns/2)},'box','IgnoreCase',true)% IF FIRST MAZE IS NOT A TRACK
                         
                         % PLOT TUNNING CURVE
                         p(1, ns).select();
-                        [data_video_spk,~]=createframes_w_spikebinary(data,ns,i);
                         postprocessFigures.plot_HD_tuning(data,ns,i)
                         
                         % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
                         % CODED BY ITS THETA PHASE
                         p(2, ns).select();
-                        ax=gca;
-                        postprocessFigures.spikesonpath_2d(ax,...
-                            data_video_spk,data.lfp.ts,...
-                            data.lfp.theta_phase(trodeID,:),...
-                            colorcode)
+                        postprocessFigures.spikesonpath_2d(data,ns,i,colorcode)
                         
                         % PLOT RATEMAP
                         p(3, ns).select();
-                        ax=gca;
-                        postprocessFigures.ratemaps_2d(ax,...
-                            data.ratemap{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
-                        
+                        postprocessFigures.ratemaps_2d(data,ns,i)
+
                         % PHASE BY POSITION
                         p(4, ns).select();
-                        postprocessFigures.phase_by_pos_2d(data.ThPrecess{i,ns},...
-                            data.ratemap{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
+                        postprocessFigures.phase_by_pos_2d(data,ns,i)
                         
                         % plot phase map
                         p(5, ns).select();
@@ -320,16 +237,12 @@ classdef postprocessFigures
                         
                         % PLOT AUTOCORRELATION
                         p(6, ns).select();
-                        postprocessFigures.autocors(data.thetaautocorr{i,ns},...
-                            data.measures(i,:,ns),...
-                            data.varnames)
+                        postprocessFigures.autocors(data,ns,i)
                         
                         % PLOT AVERAGE WAVEFORMS
                         if ns==1
                             p(7, ns).select();
-                            postprocessFigures.avg_waveforms(data.avgwave{i},...
-                                data.measures(i,:,ns),...
-                                data.varnames)
+                            postprocessFigures.avg_waveforms(data,ns,i)
                         end
                     end
                 end
@@ -456,8 +369,18 @@ classdef postprocessFigures
             end
         end
         
-        function unlinearpath(ax,unlinear,laps,spkframes,mazetypes,...
-                lfp_ts,theta_phase,colorcode)
+        function unlinearpath(data,session,cell,direction,colorcode)
+            % unlinearpath: plot raw pos
+            
+            unlinear = data.linear_track{session}.nonlinearFrames;
+            laps = data.linear_track{session}.(direction){1,cell}.laps;
+            spkframes = data.linear_track{session}.(direction){1,cell}.dataspks;
+            mazetypes = data.mazetypes;
+            
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
             if ~iscell(laps) || isempty(laps)
                 return
             end
@@ -465,7 +388,7 @@ classdef postprocessFigures
             theta=0:.01:2*pi;
             color=hsv(length(theta));
             
-            % unlinearpath: plot raw pos
+            
             for lap=1:length(laps)
                 unlinear_{lap,1}=unlinear(ismember(unlinear(:,1),laps{lap}(:,1)),:);
             end
@@ -487,7 +410,7 @@ classdef postprocessFigures
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
                     interp1(theta',color,...
-                    interp1(lfp_ts,theta_phase,spkts)),'filled');
+                    interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),spkts)),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
@@ -497,9 +420,18 @@ classdef postprocessFigures
             title(['nSpikes: ',num2str(length(spkts))]);
         end
         
-        function spikesonpath(ax,dataspks,ratemap,lfp_ts,theta_phase,colorcode)
+        function spikesonpath(data,session,cell,direction,colorcode)
             % PLOT SPIKES ON LINEARIZED PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
+            
+            dataspks = data.linear_track{session}.(direction){1,cell}.dataspks;
+            
+            ratemap = data.ratemap{cell,session};
+            
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
             % set up colormap
             theta=0:.01:2*pi;
             color=hsv(length(theta));
@@ -517,15 +449,23 @@ classdef postprocessFigures
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),ts(spkbinary),20,...
                     interp1(theta',...
-                    color,interp1(lfp_ts,theta_phase,ts(spkbinary)')),'filled');
+                    color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),ts(spkbinary)')),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),ts(spkbinary),20,'r','filled');
             end
         end
         
-        function spikesonpath_2d(ax,dataspks,lfp_ts,theta_phase,colorcode)
+        function spikesonpath_2d(data,session,cell,colorcode)            
             % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
+            ax=gca;
+            [dataspks,~] = createframes_w_spikebinary(data,session,cell);
+            
+            
             % set up colormap
             theta=0:.01:2*pi;
             color=hsv(length(theta));
@@ -543,44 +483,62 @@ classdef postprocessFigures
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),y(spkbinary),20,...
                     interp1(theta',...
-                    color,interp1(lfp_ts,theta_phase,ts(spkbinary)')),'filled');
+                    color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
+                    ts(spkbinary)')),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),y(spkbinary),20,'r','filled');
             end
             title(['nSpikes: ',num2str(sum(dataspks(:,6)==1))]);
         end
         
-        function ratemaps(ax,lapmaps,ratemap,measures,varnames)
+        function ratemaps(data,session,cell,direction)
             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
             % SUPERIMPOSED
+            
+            ax = gca;
+            lapmaps = data.linear_track{round(session/2)}.(direction){1,cell}.maps;
+            measures = data.measures(cell,:,session);
             if ~iscell(lapmaps) || isempty(lapmaps)
                 return
             end
             laps=reshape([lapmaps{:}],[],length(lapmaps));
             imagesc(flipud(imrotate(laps,90)));hold on;set(gca,'Ydir','Normal')
-            plot(rescale(ratemap,1,size(laps,2)),'LineWidth',2, 'color','w');
+            plot(rescale(data.ratemap{cell,session},1,size(laps,2)),'LineWidth',2, 'color','w');
             set(gca,'XTickLabel',[]);
             axis tight
             hold on;box off;
             colormap(ax,viridis(255))
             title(sprintf('IC: %4.2f  %4.2f hz',...
-                measures(contains(varnames,["InformationContent","PeakRate"]))))
+                measures(contains(data.varnames,["InformationContent","PeakRate"]))))
         end
         
-        function ratemaps_2d(ax,ratemap,measures,varnames)
+        function ratemaps_2d(data,session,cell)
             % ratemaps_2d
+            ax=gca;
+            ratemap = data.ratemap{cell,session};
+            measures = data.measures(cell,:,session);
             imAlpha=ones(size(ratemap));
             imAlpha(isnan(ratemap))=0;
             imagesc(ratemap,'AlphaData',imAlpha);
             axis xy; axis off; hold on; box off; axis image;
             colormap(ax,viridis(255))
-            if ~isempty(varnames)
+            if ~isempty(data.varnames)
                 title(sprintf('IC: %4.2f  %4.2f hz',...
-                    measures(contains(varnames,["InformationContent","PeakRate"]))))
+                    measures(contains(data.varnames,["InformationContent","PeakRate"]))))
             end
         end
         
-        function phase_by_pos(ax,dataspks,lfp_ts,theta_phase,ratemap,trackinfo)
+        function phase_by_pos(data,session,cell,direction)
+
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
+            ax = gca;
+            dataspks = data.linear_track{round(session/2)}.(direction){1,cell}.dataspks;
+            trackinfo = data.linear_track{round(session/2)}.(direction){cell};
+            
+            
             if isempty(dataspks)
                 return
             end
@@ -588,7 +546,8 @@ classdef postprocessFigures
             % PHASE BY POSITION
             x=rescale(dataspks(:,2),0,1);
             
-            phase=interp1(lfp_ts,theta_phase,dataspks(logical(dataspks(:,6)),1)','linear');
+            phase=interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
+                dataspks(logical(dataspks(:,6)),1)','linear');
             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],...
                 [phase';phase'+2*pi]*180/pi,15,'Filled','k');
             
@@ -607,25 +566,39 @@ classdef postprocessFigures
                 hold on
                 % plot correlation lines
                 postprocessFigures.plot_corr_line(x(logical(dataspks(:,6))),...
-                    length(ratemap),trackinfo)
+                    length(data.ratemap{cell,session}),trackinfo)
             end
         end
         
-        function phase_by_pos_2d(ThPrecess,ratemap,measures,varnames)
+        function phase_by_pos_2d(data,session,cell)
             % PHASE BY POSITION
+            ThPrecess = data.ThPrecess{cell,session};
+
             if size(ThPrecess,1)>1
                 scatter([ThPrecess(:,1);ThPrecess(:,1)],...
                     [ThPrecess(:,2);ThPrecess(:,2)+360],10,'Filled','k');
             end
             axis tight;box off;axis off;axis square
             title(sprintf('Corr: %4.2f p: %4.2f',...
-                measures(contains(varnames,["PhcircLinCorr","Phpval"]))))
+                data.measures(cell,contains(data.varnames,["PhcircLinCorr","Phpval"]),session)))
             hold on
-            postprocessFigures.plot_corr_line(ThPrecess(:,1),length(ratemap),...
-                measures(contains(varnames,["slopeCpU","phaseOffset"])))
+            postprocessFigures.plot_corr_line(ThPrecess(:,1),...
+                length(data.ratemap{cell,session}),...
+                data.measures(cell,contains(data.varnames,["slopeCpU","phaseOffset"]),session))
         end
         
-        function phase_map(ax,ts,x,spkts,lfp,ratemap,trodeID,samplerate)
+        function phase_map(data,session,cell,direction)            
+            ax = gca;
+            dataspks = data.linear_track{round(session/2)}.(direction){1,cell}.dataspks;
+
+            ts = dataspks(dataspks(:,6) == 0,1);
+            x = dataspks(dataspks(:,6) == 0,2);
+            spkts = dataspks(dataspks(:,6) == 1,1);
+            
+            tetrode=strsplit(data.spikesID.paths{cell},filesep);
+            tetrode=tetrode{end};
+            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            
             if isempty(x)
                 return
             end
@@ -633,21 +606,21 @@ classdef postprocessFigures
             [~,I]=unique(ts);
             ts=ts(I);
             x=x(I);
-            bins=length(ratemap);
+            bins=length(data.ratemap{cell,session});
             
             xedge=linspace(min(x),max(x),bins+1);
             phaseedge=linspace(0,720,bins+1);
             
             xspk=interp1(ts,x,spkts);
             
-            phase=interp1(lfp.ts,...
-                lfp.theta_phase(trodeID,:),spkts','linear');
+            phase=interp1(data.lfp.ts,...
+                data.lfp.theta_phase(trodeID,:),spkts','linear');
             spkmap=histcounts2([xspk;xspk],[phase';phase'+2*pi]*180/pi,xedge,phaseedge);
             
-            phase=interp1(lfp.ts,...
-                lfp.theta_phase(trodeID,:),ts','linear');
+            phase=interp1(data.lfp.ts,...
+                data.lfp.theta_phase(trodeID,:),ts','linear');
             occ=histcounts2([x;x],[phase';phase'+2*pi]*180/pi,xedge,phaseedge);
-            occ=occ/samplerate;
+            occ=occ/data.samplerate;
             
             phasemap=spkmap./occ;
             
@@ -729,17 +702,22 @@ classdef postprocessFigures
         end
         
         
-        function autocors(thetaautocorr,measures,varnames)
+        function autocors(data,session,cell)
             % PLOT AUTOCORRELATION
-            plot(thetaautocorr,'LineWidth',2, 'color','k');
+            measures = data.measures(cell,:,session);
+            plot(data.thetaautocorr{cell,session},'LineWidth',2, 'color','k');
             axis tight
             hold on;box off; axis off
             title(sprintf('Theta mod: %4.2f',...
-                measures(contains(varnames,'thetaindex'))))
+                measures(contains(data.varnames,'thetaindex'))))
         end
         
-        function avg_waveforms(avgwave,measures,varnames)
+        function avg_waveforms(data,session,cell)
             % PLOT AVERAGE WAVEFORMS
+            
+            avgwave = data.avgwave{cell};
+            measures = data.measures(cell,:,session);
+            
             sam=size(avgwave,2);
             waves=zeros(4,sam);
             waves(1:size(avgwave,1),:)=avgwave;
@@ -752,7 +730,7 @@ classdef postprocessFigures
             axis tight
             hold on;box off; axis off
             title(sprintf('ShortISI: %4.2f :IsoDist %4.2f',...
-                measures(contains(varnames,["IsolationDistance","ShortISI"]))))
+                measures(contains(data.varnames,["IsolationDistance","ShortISI"]))))
         end
         
         function phase_colormap(colorcode)
