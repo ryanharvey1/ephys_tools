@@ -83,8 +83,6 @@ data.spikesID.CellNum=cellnum;
 data.avgwave=avgwave;
 clear varnames S avgwave
 
-data = get_session_idx(data);
-
 % CHECK FOR MANUAL COORDINATE CORRECTIONS
 if exist([path,filesep,'restrictxy.mat'],'file')
     % run the following line if tracker errors from unplugs are present
@@ -160,7 +158,6 @@ clear tetrodes lfpfile
 % FIX TIMESTAMPS (set a zero point and convert microseconds to seconds)
 data=FixTime(data);
 
-sess_idx = 1;
 % START OF EVENT LOOP 1:nSESSIONS
 for event=1:size(data.events,2)
     % SET UP SOME BASIC INFO ABOUT THE SESSION
@@ -563,17 +560,43 @@ for event=1:size(data.events,2)
                 lap_perm_stability,stabilityoverlaps,meanstability,spatialcorrelation,egomod,bordermod,...
                 burstIdx,corrected_r,corrected_dic,corrected_info_content,corrected_sparsity,correction_fit];
             
-
-            data.measures(i,:,data.session_idx(sess_idx))=measures;
-            data.ratemap{i,data.session_idx(sess_idx)}=ratemap;
-            data.thetaautocorr{i,data.session_idx(sess_idx)}=cor;
-            data.ThPrecess{i,data.session_idx(sess_idx)}=ThPrecess.scatteredPH;
-            data.hdTuning{i,data.session_idx(sess_idx)}=hdTuning;
-            data.hdTuning_corrected{i,data.session_idx(sess_idx)}=corrected_d;
+            % compensate for track data which is split into both running directions
+            if iruns > 1
+                add_one = 1;
+            else
+                add_one = 0;
+            end
             
-            sess_idx = sess_idx + 1;
+            % check if there are more columns than expected given the
+            % current event. This would indicate the rats went on the
+            % track at some point in the session. Also, lets make sure we
+            % have the same amount of rows as cell so we don't mess up the
+            % first event by writing to event 2 instead of event 1. Also,
+            % check if previous track event exists.
+            if isfield(data,'ratemap')
+                [r,c]=size(data.ratemap);
+                if event + add_one <= c && length(data.Spikes) == r &&...
+                        any(contains(data.mazetypes(1:event),'track','IgnoreCase',true))
+                    add_one = 1;
+                end
+            end
+            if contains(data.mazetypes(event),'track','IgnoreCase',true) &&...
+                    iruns == 1 && ...
+                    ~any(contains(data.mazetypes(1:event-1),'track','IgnoreCase',true))
+                add_one = 0;
+            end
+            if contains(data.mazetypes(event),'track','IgnoreCase',true) &&...
+                    any(contains(data.mazetypes(1:event-1),'track','IgnoreCase',true))
+                
+            % store data based on the above event + add one reasoning
+            data.measures(i,:,event + add_one)=measures;
+            data.ratemap{i,event + add_one}=ratemap;
+            data.thetaautocorr{i,event + add_one}=cor;
+            data.ThPrecess{i,event + add_one}=ThPrecess.scatteredPH;
+            data.hdTuning{i,event + add_one}=hdTuning;
+            data.hdTuning_corrected{i,event + add_one}=corrected_d;
         end
-        clearvars -except track figures i event data clusterquality prop pixelDist path sess_idx
+        clearvars -except track figures i event data clusterquality prop pixelDist path
     end
 end
 clearvars -except data figures

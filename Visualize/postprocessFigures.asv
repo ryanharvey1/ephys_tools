@@ -138,15 +138,15 @@ classdef postprocessFigures
                             % PLOT EACH LAPS RATEMAP WITH THE OVERALL FIRING RATE
                             % SUPERIMPOSED
                             p(3, ns+(dir_-1)).select();
-                            postprocessFigures.ratemaps(data,true_num_sess,i,direction{dir_})
+                            postprocessFigures.ratemaps(data,ns,i,direction{dir_})
                             
                             % PHASE BY POSITION
                             p(4, ns+(dir_-1)).select();
-                            postprocessFigures.phase_by_pos(data,true_num_sess,i,direction{dir_})
+                            postprocessFigures.phase_by_pos(data,ns,i,direction{dir_})
                             
                             % PHASE MAP
                             p(5, ns+(dir_-1)).select();
-                            postprocessFigures.phase_map(data,true_num_sess,i,direction{dir_})
+                            postprocessFigures.phase_map(data,ns,i,direction{dir_})
                             
                             % PLOT AUTOCORRELATION
                             p(6, ns+(dir_-1)).select();
@@ -451,16 +451,19 @@ classdef postprocessFigures
             
             ax = gca;
             lapmaps = data.linear_track{session}.(direction){1,cell}.maps;
-            if ~iscell(lapmaps) || isempty(lapmaps)
-                return
-            end
             
             dataspk = data.linear_track{session}.(direction){1,cell}.dataspks;
-            [SmoothRateMap,~,~,occ,~] = bindata(dataspk(dataspk(:,6)==0,:),...
+            
+            [ SmoothRateMap,~,~,occ,~] = bindata(dataspk(dataspk(:,6)==0,:),...
                 data.samplerate,dataspk(dataspk(:,6)==1,:),1,data.maze_size_cm(session));
+            
              spatial_information = place_cell_analysis.SpatialInformation(...
                  'ratemap',SmoothRateMap,...
                  'occupancy',occ,'n_spikes',sum(dataspk(:,6)==1));
+             
+            if ~iscell(lapmaps) || isempty(lapmaps)
+                return
+            end
             laps=reshape([lapmaps{:}],[],length(lapmaps));
             imagesc(flipud(imrotate(laps,90)));hold on;set(gca,'Ydir','Normal')
             plot(rescale(nanmean(flipud(imrotate(laps,90))),1,size(laps,2)),...
@@ -503,9 +506,6 @@ classdef postprocessFigures
                 return
             end
             
-            [SmoothRateMap,~,~,~,~] = bindata(dataspks(dataspks(:,6)==0,:),...
-                data.samplerate,dataspks(dataspks(:,6)==1,:),1,data.maze_size_cm(session));
-            
             % PHASE BY POSITION
             x=rescale(dataspks(:,2),0,1);
             
@@ -529,7 +529,7 @@ classdef postprocessFigures
                 hold on
                 % plot correlation lines
                 postprocessFigures.plot_corr_line(x(logical(dataspks(:,6))),...
-                    length(SmoothRateMap),trackinfo)
+                    length(data.ratemap{cell,session}),trackinfo)
             end
         end
         
@@ -554,9 +554,6 @@ classdef postprocessFigures
             ax = gca;
             dataspks = data.linear_track{session}.(direction){1,cell}.dataspks;
             
-            [SmoothRateMap,~,~,~,~] = bindata(dataspks(dataspks(:,6)==0,:),...
-                data.samplerate,dataspks(dataspks(:,6)==1,:),1,data.maze_size_cm(session));
-            
             ts = dataspks(dataspks(:,6) == 0,1);
             x = dataspks(dataspks(:,6) == 0,2);
             spkts = dataspks(dataspks(:,6) == 1,1);
@@ -572,7 +569,7 @@ classdef postprocessFigures
             [~,I]=unique(ts);
             ts=ts(I);
             x=x(I);
-            bins=length(SmoothRateMap);
+            bins=length(data.ratemap{cell,session});
             
             xedge=linspace(min(x),max(x),bins+1);
             phaseedge=linspace(0,720,bins+1);
