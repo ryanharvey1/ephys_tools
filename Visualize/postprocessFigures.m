@@ -50,9 +50,11 @@ classdef postprocessFigures
             p = inputParser;
             p.addParameter('cellid',[]);
             p.addParameter('colorcode','HD');
+            p.addParameter('darkmode',true);
             p.parse(varargin{:});
             cellid = p.Results.cellid;
             colorcode = p.Results.colorcode;
+            darkmode = p.Results.darkmode;
             
             % how many cells, how many sessions?
             ncells=length(data.Spikes);
@@ -66,7 +68,7 @@ classdef postprocessFigures
                     sessions(i) = sessions(i-1)+1;
                 end
             end
-        
+            
             if any(contains(data.mazetypes,'track','IgnoreCase',true))
                 nsessions=sum(contains(data.mazetypes,'track','IgnoreCase',true))*2+...
                     sum(~contains(data.mazetypes,'track','IgnoreCase',true));
@@ -155,7 +157,7 @@ classdef postprocessFigures
                                 p(7, ns+(dir_-1)).select();
                                 postprocessFigures.phase_colormap(colorcode)
                             end
-                        end 
+                        end
                         
                     else % else box or cylinder
                         
@@ -192,6 +194,11 @@ classdef postprocessFigures
                     end
                     true_num_sess = true_num_sess + 1;
                 end
+                
+                if darkmode
+                    darkBackground(gcf,[0.2 0.2 0.2],[0.7 0.7 0.7])
+                end
+                
             end
             
             % summary plot
@@ -449,9 +456,9 @@ classdef postprocessFigures
             dataspk = data.linear_track{session}.(direction){1,cell}.dataspks;
             [SmoothRateMap,~,~,occ,~] = bindata(dataspk(dataspk(:,6)==0,:),...
                 data.samplerate,dataspk(dataspk(:,6)==1,:),1,data.maze_size_cm(session));
-             spatial_information = place_cell_analysis.SpatialInformation(...
-                 'ratemap',SmoothRateMap,...
-                 'occupancy',occ,'n_spikes',sum(dataspk(:,6)==1));
+            spatial_information = place_cell_analysis.SpatialInformation(...
+                'ratemap',SmoothRateMap,...
+                'occupancy',occ,'n_spikes',sum(dataspk(:,6)==1));
             laps=reshape([lapmaps{:}],[],length(lapmaps));
             imagesc(flipud(imrotate(laps,90)));hold on;set(gca,'Ydir','Normal')
             plot(rescale(nanmean(flipud(imrotate(laps,90))),1,size(laps,2)),...
@@ -690,30 +697,46 @@ classdef postprocessFigures
         end
         
         function phase_colormap(colorcode)
-            % input:
-            %   colorcode: just the title of the plot
-            %
-            % Set parameters (these could be arguments to a function)
-            rInner = 250;     % inner radius of the colour ring
-            rOuter = 500;    % outer radius of the colour ring
-            ncols = 255;      % number of colour segments
-            % Get polar coordinates of each point in the domain
-            [x, y] = meshgrid(-rOuter:rOuter);
-            [theta, rho] = cart2pol(x, y);
-            % Set up colour wheel in hsv space
-            hue = (theta + pi) / (2 * pi);     % hue into range (0, 1]
-            hue = ceil(hue * ncols) / ncols;   % quantise hue
-            saturation = ones(size(hue));      % full saturation
-            brightness = double(rho >= rInner & rho <= rOuter);  % black outside ring
-            % Convert to rgb space for display
-            rgb = hsv2rgb(cat(3, hue, saturation, brightness));
-            for i=1:3
-                temp=rgb(:,:,i);
-                temp(~brightness)=1;
-                rgb(:,:,i)=temp;
+            
+            for i = 5:.1:10
+                x = 0;
+                y = 0;
+                r = i;
+                hold on
+                th = 0:pi/1000:2*pi;
+                xunit = r * cos(th) + x;
+                yunit = r * sin(th) + y;
+                scatter(xunit,yunit,10,1:length(xunit),'Filled');
             end
-            imshow(flip(rgb,2));
+            colormap(gca,hsv(255))
             axis image
+            axis off
+            box off
+            
+            %             % input:
+            %             %   colorcode: just the title of the plot
+            %             %
+            %             % Set parameters (these could be arguments to a function)
+            %             rInner = 250;     % inner radius of the colour ring
+            %             rOuter = 500;    % outer radius of the colour ring
+            %             ncols = 255;      % number of colour segments
+            %             % Get polar coordinates of each point in the domain
+            %             [x, y] = meshgrid(-rOuter:rOuter);
+            %             [theta, rho] = cart2pol(x, y);
+            %             % Set up colour wheel in hsv space
+            %             hue = (theta + pi) / (2 * pi);     % hue into range (0, 1]
+            %             hue = ceil(hue * ncols) / ncols;   % quantise hue
+            %             saturation = ones(size(hue));      % full saturation
+            %             brightness = double(rho >= rInner & rho <= rOuter);  % black outside ring
+            %             % Convert to rgb space for display
+            %             rgb = hsv2rgb(cat(3, hue, saturation, brightness));
+            %             for i=1:3
+            %                 temp=rgb(:,:,i);
+            %                 temp(~brightness)=1;
+            %                 rgb(:,:,i)=temp;
+            %             end
+            %             imshow(flip(rgb,2));
+            %             axis image
             if exist('colorcode','var')
                 title(colorcode)
             end
@@ -747,8 +770,17 @@ classdef postprocessFigures
             
             title(sprintf('r: %4.2f DIC: %4.2f' ,[r,Ispk]))
             
+            %             h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
+            %                 'k');
+            %             set(h,'FaceAlpha',.5)
+            
+            % color tuning by smoothed peak direction
+            theta=0:.01:2*pi;
+            color=hsv(length(theta));
+            smoothed_tuning = smoothdata([tuning,tuning,tuning],'gaussian',12);
+            [~,I] = max(smoothed_tuning(61:120));
             h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-                'k');
+                interp1(rad2deg(theta)',color,bin_centers(I)));
             set(h,'FaceAlpha',.5)
             
         end
