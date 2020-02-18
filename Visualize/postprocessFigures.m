@@ -66,19 +66,11 @@ classdef postprocessFigures
                     sessions(i) = sessions(i-1)+1;
                 end
             end
-%             nsessions = max(sessions);
         
-            
-%             if any(any(contains(data.mazetypes,'circ track') |...
-%                     contains(data.mazetypes,'LinearTrack')))
-%                 nsessions=size(data.events,2)+1;
-%             end
-% %             
             if any(contains(data.mazetypes,'track','IgnoreCase',true))
                 nsessions=sum(contains(data.mazetypes,'track','IgnoreCase',true))*2+...
                     sum(~contains(data.mazetypes,'track','IgnoreCase',true));
             end
-            
             
             if ~isempty(cellid)
                 cells_to_find=strcat(cellid{1},num2str(cellid{2}));
@@ -342,7 +334,6 @@ classdef postprocessFigures
             theta=0:.01:2*pi;
             color=hsv(length(theta));
             
-            
             for lap=1:length(laps)
                 unlinear_{lap,1}=unlinear(ismember(unlinear(:,1),laps{lap}(:,1)),:);
             end
@@ -403,7 +394,8 @@ classdef postprocessFigures
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),ts(spkbinary),20,...
                     interp1(theta',...
-                    color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),ts(spkbinary)')),'filled');
+                    color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
+                    ts(spkbinary)')),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),ts(spkbinary),20,'r','filled');
             end
@@ -418,7 +410,6 @@ classdef postprocessFigures
             
             ax=gca;
             [dataspks,~] = createframes_w_spikebinary(data,session,cell);
-            
             
             % set up colormap
             theta=0:.01:2*pi;
@@ -497,7 +488,6 @@ classdef postprocessFigures
             ax = gca;
             dataspks = data.linear_track{session}.(direction){1,cell}.dataspks;
             trackinfo = data.linear_track{session}.(direction){cell};
-            
             
             if isempty(dataspks)
                 return
@@ -612,8 +602,11 @@ classdef postprocessFigures
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
-            binside=mean([range(data_video_nospk(:,2))/length(data.ratemap{cell,session}),...
-                range(data_video_nospk(:,3))/length(data.ratemap{cell,session})]);
+            [SmoothRateMap,~,~,~,~] = bindata(data_video_spk(data_video_spk(:,6)==0,:),...
+                data.samplerate,data_video_spk(data_video_spk(:,6)==1,:),0,data.maze_size_cm(session));
+            
+            binside=mean([range(data_video_nospk(:,2))/length(SmoothRateMap),...
+                range(data_video_nospk(:,3))/length(SmoothRateMap)]);
             
             results=pass_index(data_video_nospk(:,1),data_video_nospk(:,2:3),...
                 data_video_spk(data_video_spk(:,6)==1,1),...
@@ -624,11 +617,9 @@ classdef postprocessFigures
                 'plots',0,'method','place','binside',round(binside),...
                 'sample_along','arc_length');
             
-            
-            bins=length(data.ratemap{cell,session});
+            bins=length(SmoothRateMap);
             xedge=linspace(-1,1,bins+1);
             phaseedge=linspace(0,720,bins*4);
-            
             
             phase_spk = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
                 data_video_spk(data_video_spk(:,6)==1,1));
@@ -638,7 +629,6 @@ classdef postprocessFigures
             
             spkmap=histcounts2([x_spk;x_spk],[phase_spk;phase_spk+2*pi]*180/pi,...
                 xedge,phaseedge);
-            
             
             phase_occ = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
                 data_video_spk(data_video_spk(:,6)==0,1));
