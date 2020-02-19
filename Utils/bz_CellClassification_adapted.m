@@ -4,27 +4,10 @@ function  [CellClass] = bz_CellClassification_adapted (basepath)
 % gui from Shige.
 % 
 %INPUTS
-% baseName - basename of files in the local folder (default: pwd)
-% 'knownE' - UIDs of known E cells, ie from synaptic interactions
-% 'knownI' - UIDs of known I cells, ie from synaptic interactions
-% 'saveMat'- true/false, save basePath/baseName.CellClass.cellinfo.mat
-%            (default:true)
-% 'saveFig'- true/false, save a DetectionFigure for posterity/QC 
-%            (default:true)
+% basepath: path to processed data folder
 %
 %OUTPUTS
-%   CellClass   buzcode structure saved to
-%               basePath/baseName.CellClass.cellinfo.mat
-%       .UID    -UID for each of the cells, matching spikes.cellinfo.mat
-%       .pE 	-index vector, true for putative excitatory (RS) cells
-%       .pI     -index vector, true for putative inhibitory (NS) cells
-%       .label 	-labels for each cell 'pE' or 'pI'
-%       .detectionparms.Waveforms -mean waveforms of each cell at the max channel
-%       .detectionparms.TroughPeakMs
-%       .detectionparms.SpikeWidthMs
-%       .detectionparms.PyrBoundary - x,y of manually drawn line of boundary
-%
-%
+% 
 % Mixture of functions from Shigeyoshi Fujisawa (WaveShapeClassification),
 % Adrien Peyrache (wavelet-based determination of spike width) and Eran Stark (wfeatures, spikestats).
 %
@@ -32,29 +15,30 @@ function  [CellClass] = bz_CellClassification_adapted (basepath)
 % Modified to buzcode format DLevenstein 2017
 % Modified to ephys_tools format by L.Berkowitz 2019
 
-%% input Parsing
+%Done(Berkowitz 2/19/20): 
+%       - Loads ephys_tools data structure and pulls highest amplitude
+%       waveform for classificaiton. 
+%       - calulates peak-trough and trough-peak time (in ms) and
+%       spike-duration using peyrache wavelet. 
+%       - plots prelim classification results. 
 
-p = inputParser;
-addParameter(p,'knownE',[],@isvector);
-addParameter(p,'knownI',[],@isvector);
-addParameter(p,'saveMat',true,@islogical);
-addParameter(p,'saveFig',true,@islogical);
-addParameter(p,'forceReload',false,@islogical);
-
-parse(p,varargin{:})
-
-knownE = p.Results.knownE;
-knownI = p.Results.knownI;
-SAVEMAT = p.Results.saveMat;
-
-
+%To-do (Berkowitz 2/19/20): 
+%       - Add additional features to improve clustering (e.g. Burst idx)
+%       - Decide which classification approach to use. K-means is used now,
+%       but requires tinkering given the current features used. 
+%       - Testing/validation of classificaiton approach. Perhaps use
+%       Buzaski lab waveforms that have already been classified? 
+%       - Create method of saving waveform classification back to data structure (or separately). 
+%       - Create publication quality figure showing classificaiton results
+%       :) 
+%
 
 %%
 sessions = dir([basepath,'*.mat']);
 all_waves = [];
 wave_id = [];
 for s = 1:length(sessions)
-    temp = load(sessions(s).name,'avgwave','spikesID');
+    temp = load(fullfile(sessions(s).folder,sessions(s).name),'avgwave','spikesID');
     wave_id = [wave_id; cellstr(repmat(sessions(s).name,size(temp.avgwave,1),1))...
         temp.spikesID.TetrodeNum num2cell(temp.spikesID.CellNum)];
     all_waves = [all_waves; temp.avgwave]; 
@@ -82,26 +66,26 @@ clear wave
 %% get trough-peak delay times
 for a = 1:size(MaxWaves,1)
     
-    thiswave = MaxWaves(a,:);
+    thiswave = MaxWaves(a,:); keep_wave(a,:) = thiswave; 
     [~,minpos] = min(thiswave); %find the trough
     minpos = minpos(1);
     
     [~,maxpos] = max(thiswave); %find the largest peak 
     maxpos = maxpos(1); 
     
-    if maxpos >= 25 || isempty(maxpos) || isempty(minpos) || minpos >= 31
-        warning('Your Waveform may be erroneous')
-        peak_trough(a,:) = 4;
-        trough_peak(a,:) = 4;
-        continue
-    end
-    
-    if minpos < maxpos
+    if abs(thiswave(maxpos)) > abs(thiswave(minpos))
         thiswave = thiswave*-1; %flip waveform so peak becomes trough - for waveforms that have large trough preceeding peak.
         [~,minpos] = min(thiswave); %recalculate trough
+        [~,maxpos] = max(thiswave); %recalculate peak
         minpos = minpos(1);
     end
-    
+      
+    if maxpos >= 25 || isempty(maxpos) || isempty(minpos) || minpos >= 31 || minpos <= 5
+        warning('Your Waveform may be erroneous')
+        peak_trough(a,:) = NaN;
+        trough_peak(a,:) = NaN;
+        continue
+    end
     % Find time from min to left
     [max_left,~] = max(thiswave(1,1:minpos-1)); %finds peak before trough
     maxpos_left = find(thiswave == max_left(1));
@@ -113,7 +97,16 @@ for a = 1:size(MaxWaves,1)
     maxpos_right = find(thiswave == max_right(1));
     
     trough_peak(a,:) = (maxpos_right(1) -  minpos)/32; % in ms
-    
+%     
+%     figure; 
+%     plot(thiswave); 
+%     hold on; 
+%     plot(minpos,thiswave(minpos),'*b'); hold on;
+%     plot(maxpos,thiswave(maxpos),'*r'); hold on; 
+%     plot(maxpos_right,thiswave(maxpos_right),'*k');
+%     plot(maxpos_left,thiswave(maxpos_left),'*c');
+%     title(['peak2trough =  ', num2str(peak_trough(a,:)),'  trough2peak =  ', num2str(trough_peak(a,:))])
+%     close all
 end
 
 %% get spike width by taking inverse of max frequency in spectrum (based on Adrien's use of Eran's getWavelet)
@@ -123,7 +116,7 @@ for a = 1:size(MaxWaves,1)
     maxpos = maxpos(1);
      if maxpos >= 25 || isempty(maxpos) || isempty(minpos) || minpos >= 31
         warning('Your Waveform may be erroneous')
-        spkW(a,1) = 4;
+        spkW(a,1) = NaN;
         continue
     end
     w = [w(1)*ones(1000,1);w;w(end)*ones(1000,1)];
@@ -156,9 +149,9 @@ title 'Cluster Assignments and Centroids'
 hold off
 
 figure; 
-plot(mean(MaxWaves(idx ==2,:),1),'r')
+plot(mean(keep_wave(idx ==2,:),1),'b')
 hold on;
-plot(mean(MaxWaves(idx ==1,:),1),'b')
+plot(mean(keep_wave(idx ==1,:),1),'r')
 
 x = trough_peak;
 y = spkW;%width in ms of wavelet representing largest feature of spike complex... ie the full trough including to the tip of the peak
