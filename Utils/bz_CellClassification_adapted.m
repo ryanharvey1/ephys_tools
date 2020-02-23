@@ -1,10 +1,10 @@
-function  [CellClass] = bz_CellClassification_adapted(basepath)
+function  [CellClass] = bz_CellClassification_adapted(basepath,varargin)
 % Loads cell spike waveforms from the local folder, characterizes them and
 % separates them into E vs I cells.  Manual verification based on clickable
 % gui from Shige.
 %
 %INPUTS
-% basepath: path to processed data folder
+% basepath: path to project folder
 %
 %OUTPUTS
 %
@@ -37,17 +37,28 @@ function  [CellClass] = bz_CellClassification_adapted(basepath)
 %   getWavelet: ~\ephys_tools\external_packages\buzcode\analysis\spikes\cellTypeClassification\BrendonClassificationFromStark2013
 %   WaveletToolbox: ~\ephys_tools\external_packages\buzcode\externalPackages\WaveletToolbox
 %   CCG: ~\ephys_tools\external_packages\buzcode\analysis\spikes\correlation
+%   cell-explorer https://github.com/petersenpeter/Cell-Explorer
 %%
-% check for cell metrics before compiling features
-if exist(fullfile(extractBefore(basepath,'\ProcessedData\'),'cell_metrics.mat'))
-    load(fullfile(extractBefore(basepath,'\ProcessedData\'),'cell_metrics.mat'),'cell_metrics')
+p = inputParser;
+addParameter(p,'manualAdjustMonoSyn',0);
+addParameter(p,'load_saved_cell_metrics',0);
+parse(p,varargin{:})
+manualAdjustMonoSyn = p.Results.manualAdjustMonoSyn;
+load_saved_cell_metrics = p.Results.load_saved_cell_metrics;
+
+
+if load_saved_cell_metrics
+    check for cell metrics before compiling features
+    if exist(fullfile(basepath,'cell_metrics.mat'),'file')
+        load(fullfile(basepath,'cell_metrics.mat'),'cell_metrics')
+    end
 end
+
 if ~exist('cell_metrics','var')
     
-    sessions = dir([basepath,'*.mat']);
+    sessions = dir([basepath,'\ProcessedData\*.mat']);
     all_waves = {};
     wave_id = {};
-    
     cell_metrics = [];
     
     % get n cells per session
@@ -61,7 +72,8 @@ if ~exist('cell_metrics','var')
     WaitMessage = parfor_wait(length(sessions));
     
     for s = 1:length(sessions)
-        temp = load(fullfile(sessions(s).folder,sessions(s).name),'avgwave','spikesID','Spikes');
+        temp = load(fullfile(sessions(s).folder,sessions(s).name),...
+            'avgwave','spikesID','Spikes','session_path','rat','sessionID');
         
         % autocor metrics
         [acg_metrics] = calc_acg_metrics(temp);
@@ -76,6 +88,9 @@ if ~exist('cell_metrics','var')
         
         % standardize into 32 samples & pull out largest amp channel
         cell_metrics.waveforms(idx{s},:) = get_waveform(temp);
+        
+        % Pytative MonoSynaptic connections
+        [cell_metrics] = mono_synaptic(temp,cell_metrics,s,manualAdjustMonoSyn); 
         
         WaitMessage.Send;
     end
@@ -95,7 +110,7 @@ if ~exist('cell_metrics','var')
     cell_metrics = align_waveforms(cell_metrics);
 
     % save features
-    save(fullfile(extractBefore(basepath,'\ProcessedData\'),'cell_metrics.mat'),'cell_metrics')
+    save(fullfile(basepath,'cell_metrics.mat'),'cell_metrics')
 end
 
 %% Generate separatrix for cells
@@ -408,6 +423,9 @@ cell_metrics.acg_refrac(idx{s},1) = fit_params.acg_refrac;
 cell_metrics.acg_fit_rsquare(idx{s},1) = fit_params.acg_fit_rsquare;
 cell_metrics.acg_tau_burst(idx{s},1) = fit_params.acg_tau_burst;
 cell_metrics.acg_h(idx{s},1) = fit_params.acg_h;
+
+cell_metrics.general.ccg{s} = acg_metrics.ccg;
+cell_metrics.general.ccg_time{s} = acg_metrics.ccg_time;
 end
 
 function waves = get_waveform(temp)
@@ -507,4 +525,104 @@ function cell_metrics = align_waveforms(cell_metrics)
     for i = 1:size(cell_metrics.waveforms_zscore,1)
         cell_metrics.aligned_waves(i,:) = packed_waves(i,trough_idx(i)-7:trough_idx(i)+24);
     end
+end
+
+function [cell_metrics] = mono_synaptic(data,cell_metrics,s,manualAdjustMonoSyn) 
+% mono_synaptic: get monosynaptic connections based on spike times
+% ephys_tools wrapper for ce_MonoSynConvClick bz_PlotMonoSyn
+% dependencies: Cell-Explorer (https://github.com/petersenpeter/Cell-Explorer)
+%
+% Ryan H 2020
+
+cell_metrics.general.cellCount{s} = length(data.Spikes);
+
+[spikestimes,spikeIDs] = get_ce_MonoSynConvClick_input(data);
+
+% set up saving directory
+processedpath=strsplit(data.session_path,filesep);
+processedpath(end-2:end)=[];
+save_dir = fullfile(strjoin(processedpath,filesep),'mono_res');
+
+% check for saved mono results
+if exist(fullfile(save_dir,[data.rat,'_',data.sessionID,'.mono_res.cellinfo.mat']),'file')
+    disp('  Loading previous detected MonoSynaptic connections')
+    load(fullfile(save_dir,[data.rat,'_',data.sessionID,'.mono_res.cellinfo.mat']),'mono_res');
+else
+    mono_res = ce_MonoSynConvClick(spikeIDs,spikestimes);
+end
+spikes.total = mono_res.n;
+
+% manually adjust results
+if manualAdjustMonoSyn
+    mono_res = gui_MonoSyn(mono_res);
+end
+if ~exist(save_dir,'dir')
+    mkdir(save_dir)
+end
+save(fullfile(save_dir,[data.rat,'_',data.sessionID,'.mono_res.cellinfo.mat']),...
+    'mono_res','-v7.3','-nocompression')
+
+if ~isempty(mono_res.sig_con)
+    
+    cell_metrics.putativeConnections.excitatory{s} = mono_res.sig_con; % Vectors with cell pairs
+    
+    cell_metrics.putativeConnections.inhibitory{s} = [];
+    
+    cell_metrics.synapticEffect{s} = repmat({'Unknown'},1,cell_metrics.general.cellCount{s});
+    
+    % cell_synapticeffect ['Inhibitory','Excitatory','Unknown']
+    cell_metrics.synapticEffect{s}(cell_metrics.putativeConnections.excitatory{s}(:,1)) =...
+        repmat({'Excitatory'},1,size(cell_metrics.putativeConnections.excitatory{s},1)); 
+    
+    cell_metrics.synapticConnectionsOut{s} = zeros(1,cell_metrics.general.cellCount{s});
+    
+    cell_metrics.synapticConnectionsIn{s} = zeros(1,cell_metrics.general.cellCount{s});
+    
+    [a,b]=hist(cell_metrics.putativeConnections.excitatory{s}(:,1),...
+        unique(cell_metrics.putativeConnections.excitatory{s}(:,1)));
+    
+    cell_metrics.synapticConnectionsOut{s}(b) = a;
+    
+    cell_metrics.synapticConnectionsOut{s} = ...
+        cell_metrics.synapticConnectionsOut{s}(1:cell_metrics.general.cellCount{s});
+    
+    [a,b]=hist(cell_metrics.putativeConnections.excitatory{s}(:,2),...
+        unique(cell_metrics.putativeConnections.excitatory{s}(:,2)));
+    
+    cell_metrics.synapticConnectionsIn{s}(b) = a;
+    
+    cell_metrics.synapticConnectionsIn{s} = ...
+        cell_metrics.synapticConnectionsIn{s}(1:cell_metrics.general.cellCount{s});
+    
+    % Connection strength
+    disp('  Determining MonoSynaptic connection strengths (transmission probabilities)')
+    for i = 1:size(mono_res.sig_con,1)
+        rawCCG = round(cell_metrics.general.ccg{s}(:,mono_res.sig_con(i,1),...
+            mono_res.sig_con(i,2))*spikes.total(mono_res.sig_con(i,1))*0.001);
+        
+        [trans,prob,prob_uncor,pred] = ...
+            ce_GetTransProb(rawCCG,spikes.total(mono_res.sig_con(i,1)),0.001,0.020);
+        
+        cell_metrics.putativeConnections.excitatoryTransProb{s}(i) = trans;
+    end
+else
+    cell_metrics.putativeConnections.excitatory{s} = [];
+    cell_metrics.putativeConnections.inhibitory{s} = [];
+    cell_metrics.synapticConnectionsOut{s} = zeros(1,cell_metrics.general.cellCount{s});
+    cell_metrics.synapticConnectionsIn{s} = zeros(1,cell_metrics.general.cellCount{s});
+end
+end
+
+function[spikestimes,spikeIDs] = get_ce_MonoSynConvClick_input(data)
+spikestimes = vertcat(data.Spikes{:});
+i = 0;
+for s = 1:length(data.Spikes)
+    idx = i+1:length(data.Spikes{s})+i;
+    i = i+length(data.Spikes{s});
+    spikeIDs(idx,1) =...
+        repmat(str2double(extractBetween(data.spikesID.TetrodeNum(s),'TT','.mat')),...
+        length(data.Spikes{s}),1);
+    spikeIDs(idx,2) = repmat(data.spikesID.CellNum(s),length(data.Spikes{s}),1);
+    spikeIDs(idx,3) = repmat(s,length(data.Spikes{s}),1);
+end
 end
