@@ -46,8 +46,8 @@ x0=origin(:,1);%%origin
 y0=origin(:,2);%%origin
 r=diameter/2;%%radius
 n=numQuad; %number of quadrants
-tempX=(cos(linspace(-pi,pi,1000))+x0)*r;
-tempY=(sin(linspace(-pi,pi,1000))+y0)*r;
+tempX=(cos(linspace(-pi,pi,1000))*r)+x0;
+tempY=(sin(linspace(-pi,pi,1000))*r)+y0;
 
 if strcmp(type,'pie')
     
