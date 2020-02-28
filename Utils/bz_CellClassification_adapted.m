@@ -48,7 +48,7 @@ load_saved_cell_metrics = p.Results.load_saved_cell_metrics;
 
 
 if load_saved_cell_metrics
-    check for cell metrics before compiling features
+    %check for cell metrics before compiling features
     if exist(fullfile(basepath,'cell_metrics.mat'),'file')
         load(fullfile(basepath,'cell_metrics.mat'),'cell_metrics')
     end
@@ -114,7 +114,7 @@ if ~exist('cell_metrics','var')
 end
 
 %% Generate separatrix for cells
-X = [cell_metrics.thetaModulationIndex,...
+ X = [cell_metrics.thetaModulationIndex,...
     cell_metrics.burstIndex_Royer2012,...
     cell_metrics.burstIndex_Doublets,...
     cell_metrics.acg_tau_decay,...
@@ -182,7 +182,7 @@ end
 
 
 % below 0.25 ms
-idx = trough_peak <= 0.25;
+idx = cell_metrics.troughToPeak <= 0.25;
 figure;
 subplot(2,2,1)
 scatter(X(idx,1),X(idx,2),12,'r','Filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2)
@@ -190,30 +190,30 @@ hold on
 scatter(X(~idx,1),X(~idx,2),12,'b','Filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2)
 
 subplot(2,2,3)
-p1 = plot(1:32,aligned_waves(idx,:),'Color',[0,0,1,0.1]);
+p1 = plot(1:32,cell_metrics.aligned_waves(idx,:),'Color',[0,0,1,0.1]);
 hold on;
-plot(nanmean(aligned_waves(idx,:),1),'k','Linewidth',3)
+plot(nanmean(cell_metrics.aligned_waves(idx,:),1),'k','Linewidth',3)
 ylabel('zscore')
 xlabel('ms')
 title(cell_type{1})
 subplot(2,2,4)
-p2 = plot(1:32,aligned_waves(~idx,:),'Color',[1,0,0,0.1]);
+p2 = plot(1:32,cell_metrics.aligned_waves(~idx,:),'Color',[1,0,0,0.1]);
 hold on;
-plot(nanmean(aligned_waves(~idx,:),1),'k','Linewidth',3)
+plot(nanmean(cell_metrics.aligned_waves(~idx,:),1),'k','Linewidth',3)
 title(cell_type{2})
 
 
 
-filled_waves = fillmissing(aligned_waves,'previous',2);
-[pc,score,latent,tsquare] = pca(filled_waves);
+cell_metrics.filled_waves = fillmissing(cell_metrics.aligned_waves,'previous',2,'EndValues','nearest');
+[pc,score,latent,tsquare] = pca(cell_metrics.filled_waves);
 
 eva = evalclusters(score(:,1:3),'kmeans','CalinskiHarabasz','KList',[1:6]);
 
 % K-mean clustering
 opts = statset('Display','final');
 klusters = eva.OptimalK;
-colors = {'r','b','g'};
-colors2 = [1,0,0,0.1;0,1,0,0.1;0,0,1,0.1]';
+colors = {'r','b','g','k'};
+colors2 = [1,0,0,0.1;0,1,0,0.1;0,0,1,0.1;0,0,1,0.1]';
 [idx,C] = kmeans(score(:,1:3),klusters,'Distance','cityblock',...
     'Replicates',5,'Options',opts);
 % waveform_metrics.klusters = idx';
@@ -221,7 +221,7 @@ colors2 = [1,0,0,0.1;0,1,0,0.1;0,0,1,0.1]';
 figure
 subplot(2,2,1:2)
 for i = 1:klusters
-    plot(filled_waves(idx==i,:)','Color',colors2(:,i),'linewidth',2), hold on
+    plot(cell_metrics.filled_waves(idx==i,:)','Color',colors2(:,i),'linewidth',2), hold on
 end
 xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
 
@@ -234,49 +234,108 @@ xlabel('PC1'),ylabel('PC2'),zlabel('PC3'),axis tight
 
 for i = 1:klusters
     figure
-    plot(filled_waves(idx==i,:)','Color',colors2(:,i),'linewidth',2);
+    plot(cell_metrics.filled_waves(idx==i,:)','Color',colors2(:,i),'linewidth',2);
     xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
 end
 
-
-% subplot(2,2,4)
-% for i = 1:klusters
-%     scatter3(t_after(idx==i),t_after_diff(idx==i),abs(peakA(idx==i)./trough(idx==i)),20,colors{i}), hold on
-% end
-title 'Waveform feature space', xlabel('t_{after}'),ylabel('t_{after diff}'),zlabel('peak/trough'),axis tight
 
 
 
 % cell_classification_putativeCellType
 cell_metrics.general.cellCount = length(cell_metrics.thetaModulationIndex);
 
-if ~isfield(cell_metrics,'putativeCellType')
-    dispLog('Performing Cell-type classification');
-    % All cells assigned as Pyramidal cells at first
-    cell_metrics.putativeCellType = repmat({'Pyramidal Cell'},1,cell_metrics.general.cellCount);
-    
-    % Interneuron classification
-    % Cells are reassigned as interneurons by below criteria
-    % acg_tau_decay > 30ms
-    cell_metrics.putativeCellType(cell_metrics.acg_tau_decay>30) = ...
-        repmat({'Interneuron'},sum(cell_metrics.acg_tau_decay>30),1);
-    % acg_tau_rise > 3ms
-    cell_metrics.putativeCellType(cell_metrics.acg_tau_rise>3) = ...
-        repmat({'Interneuron'},sum(cell_metrics.acg_tau_rise>3),1);
-    % troughToPeak <= 0.425ms
-    cell_metrics.putativeCellType(cell_metrics.troughToPeak<=0.425) = ...
-        repmat({'Interneuron'},sum(cell_metrics.troughToPeak<=0.425),1);
-    % Narrow interneuron assigned if troughToPeak <= 0.425ms
-    cell_metrics.putativeCellType(cell_metrics.troughToPeak<=0.425 & ...
-        ismember(cell_metrics.putativeCellType, 'Interneuron')) = ...
-        repmat({'Narrow Interneuron'},sum(cell_metrics.troughToPeak<=0.425 &...
-        (ismember(cell_metrics.putativeCellType, 'Interneuron'))),1);
-    % Wide interneuron assigned if troughToPeak > 0.425ms
-    cell_metrics.putativeCellType(cell_metrics.troughToPeak>0.425 &...
-        ismember(cell_metrics.putativeCellType, 'Interneuron')) = ...
-        repmat({'Wide Interneuron'},sum(cell_metrics.troughToPeak>0.425 &...
-        (ismember(cell_metrics.putativeCellType, 'Interneuron'))),1);
+
+%     dispLog('Performing Cell-type classification');
+% All cells assigned as Pyramidal cells at first
+cell_metrics.putativeCellType = repmat({'Pyramidal Cell'},1,cell_metrics.general.cellCount);
+
+% Interneuron classification
+% Cells are reassigned as interneurons by below criteria
+% acg_tau_decay > 30ms
+cell_metrics.putativeCellType(cell_metrics.acg_tau_decay>30) = ...
+    repmat({'Interneuron'},sum(cell_metrics.acg_tau_decay>30),1);
+% acg_tau_rise > 3ms
+cell_metrics.putativeCellType(cell_metrics.acg_tau_rise>3) = ...
+    repmat({'Interneuron'},sum(cell_metrics.acg_tau_rise>3),1);
+% troughToPeak <= 0.25ms
+cell_metrics.putativeCellType(cell_metrics.troughToPeak<=0.25) = ...
+    repmat({'Interneuron'},sum(cell_metrics.troughToPeak<=0.25),1);
+% Narrow interneuron assigned if troughToPeak <= 0.25ms
+cell_metrics.putativeCellType([cell_metrics.troughToPeak<=0.25]' & ...
+    ismember(cell_metrics.putativeCellType, 'Interneuron')) = ...
+    repmat({'Narrow Interneuron'},sum([cell_metrics.troughToPeak<=0.25]' &...
+    (ismember(cell_metrics.putativeCellType, 'Interneuron'))),1);
+% Wide interneuron assigned if troughToPeak > 0.25ms
+cell_metrics.putativeCellType([cell_metrics.troughToPeak>0.25]' &...
+    ismember(cell_metrics.putativeCellType, 'Interneuron')) = ...
+    repmat({'Wide Interneuron'},sum([cell_metrics.troughToPeak>0.25]' &...
+    (ismember(cell_metrics.putativeCellType, 'Interneuron'))),1);
+
+figure
+colors = {'r','b','g'};
+colors2 = [1,0,0,0.1;0,1,0,0.1;0,0,1,0.1]';
+
+subplot(1,4,1)
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Pyramidal Cell",:)','Color',colors2(:,1),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+hold on
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Wide Interneuron",:)','Color',colors2(:,2),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Narrow Interneuron",:)','Color',colors2(:,3),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+
+
+subplot(1,4,2)
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Pyramidal Cell",:)','Color',colors2(:,1),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+title('Pyramidal Cell')
+
+subplot(1,4,3)
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Wide Interneuron",:)','Color',colors2(:,2),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+title('Wide Interneuron')
+
+subplot(1,4,4)
+plot(cell_metrics.filled_waves(cell_metrics.putativeCellType == "Narrow Interneuron",:)','Color',colors2(:,3),'linewidth',2);
+xlabel('Time (ms)'),ylabel('Z-scored amplitude'),title 'Average Waveforms', axis tight
+title('Narrow Interneuron')
+
+figure;
+
+subplot(1,3,1)
+imagesc(zscore(cell_metrics.acg.narrow(:,cell_metrics.putativeCellType == "Pyramidal Cell")',[],2))
+title('Pyramidal Cell')
+ax = gca;
+mag_range(1,:) = ax.CLim;
+set(ax,'XTick',linspace(1,201,5),'XTickLabel',linspace(-100,100,5))
+xlabel('lag (ms)')
+ylabel('Unit')
+
+subplot(1,3,2)
+imagesc(zscore(cell_metrics.acg.narrow(:,cell_metrics.putativeCellType == "Wide Interneuron")',[],2))
+title('Wide Interneuron')
+ax = gca;
+mag_range(2,:) = ax.CLim;
+set(ax,'XTickLabel',[])
+
+subplot(1,3,3)
+imagesc(zscore(cell_metrics.acg.narrow(:,cell_metrics.putativeCellType == "Narrow Interneuron")',[],2))
+title('Narrow Interneuron')
+ax = gca;
+mag_range(3,:) = ax.CLim;
+set(ax,'XTickLabel',[])
+
+
+sgtitle('Narrow acg') 
+
+for i = 1:3
+subplot(1,3,i)
+ax = gca;
+ax.CLim = [min(mag_range(:)), max(mag_range(:))];
 end
+colormap(viridis(255))
+
 end
 
 function [acg_metrics] = calc_acg_metrics(temp)
@@ -458,6 +517,12 @@ for a = 1:size(cell_metrics.waveforms,1)
         
         % save flipped waveform
         cell_metrics.waveforms(a,:) = thiswave;
+        
+        % save flipped indicator
+        cell_metrics.flipped(a,1) = true;
+    else
+        % save flipped indicator
+        cell_metrics.flipped(a,1) = false;
     end
     
     
