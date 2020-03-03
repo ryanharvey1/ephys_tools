@@ -89,7 +89,7 @@ if max(V_aligned)<360
 end
 if figures==1
     subplot(4,2,[5,6])
-    plot(V,W)
+    plot(V,W,'.k')
     axis image
     title('unwrapped')
 end
@@ -98,7 +98,7 @@ end
 W = detrend_y(V,W);
 if figures==1
     subplot(4,2,[7,8])
-    plot(V,W)
+    plot(V,W,'.k')
     axis image
     title('detrend')
 end
@@ -106,7 +106,9 @@ end
 
 %% local functions below
 
-function temp_w = detrend_y(V,W)
+function W = detrend_y(V,W)
+warning off
+
 XY = [V, W];
 XY(any(isnan(XY),2),:) = []; % remove NaNs
 
@@ -115,11 +117,12 @@ p = polyfit(XY(:,1),XY(:,2),8);
 x1 = linspace(min(XY(:,1)),max(XY(:,1)),1000);
 y1 = polyval(p,x1);
 
-temp_w = W;
+
 detrend_vec = (y1 - mean(y1));
 for i = 1:1000-1
-    temp_w(V > x1(i) & V < x1(i+1)) = temp_w(V > x1(i) & V < x1(i+1)) - detrend_vec(i);
+    W(V > x1(i) & V < x1(i+1)) = W(V > x1(i) & V < x1(i+1)) - detrend_vec(i);
 end
+warning on
 end
 
 function  [xc,yc,R,a] = circfit(x,y)
