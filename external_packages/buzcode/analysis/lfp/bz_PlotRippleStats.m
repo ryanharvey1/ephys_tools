@@ -106,6 +106,7 @@ for electrode = 1:nElectrodes
 
 	subplot(2,2,1);a = gca;hold on;
 	plot(((1:nBins)'-ceil(nBins/2))/nBins*diff(durations),maps{electrode}.ripples','b');
+	plot(((1:nBins)'-ceil(nBins/2))/nBins*diff(durations),nanmean(maps{electrode}.ripples),'k');
 
 	subplot(2,2,2);
 	b = bar(stats{electrode}.acg.t,stats{electrode}.acg.data);set(b,'FaceColor',[0 0 0]);xlabel('Autocorrelogram');
