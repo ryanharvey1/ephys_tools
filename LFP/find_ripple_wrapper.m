@@ -98,14 +98,15 @@ elseif ischar(data) % can loop through all sessions in basedir
     % get all sessions
     sessions = dir(fullfile(basepath,'ProcessedData','*.mat'));
     
-    if overwrite
-        sess_list = 1:length(sessions.name);
-    end
     % check sessions that have already run
     finished_sess = dir(fullfile(basepath,'SWR','*.mat'));
     
     sess_list = find(~contains(extractBefore({sessions.name},'.mat'),...
         extractBefore({finished_sess.name},'_swr')));
+    
+    if overwrite
+        sess_list = 1:length(sessions);
+    end
 end
 
 if all_sessions
@@ -124,7 +125,8 @@ for s = sess_list
         p.addParameter('speed',data.frames(:,5));
         p.addParameter('mov_ts',data.frames(:,1));
         p.addParameter('ripple_fs',[130 200]);
-
+        p.addParameter('save',1);
+        p.addParameter('overwrite',0);
         
         p.parse(varargin{:});
         figs = p.Results.figs;
@@ -134,6 +136,8 @@ for s = sess_list
         speed = p.Results.speed;
         mov_ts = p.Results.mov_ts;
         passband = p.Results.ripple_fs;
+        save_results = p.Results.save;
+        overwrite = p.Results.overwrite;
 
     end
     
@@ -144,10 +148,14 @@ for s = sess_list
     
     % find good and bad channels based on signal to noise ratio
     for ch = 1:size(lfp,1)
+        signal_filtered(ch,:) = BandpassFilter(lfp(ch,:), frequency, passband);
+        
+        r_ripple(ch) = snr(lfp_ts,signal_filtered(ch,:));
+
         r(ch) = snr(lfp_ts,lfp(ch,:));
     end
     r(isinf(r)) = NaN;
-    
+        
     % check if max SNR is < 1
     if nanmax(r) < 1
         ripple_info = NaN;
@@ -162,21 +170,30 @@ for s = sess_list
     end
         
     [~,good_channel] = nanmax(r);
-    [~,noise_channel] = nanmin(r);
+    if nanmin(r) < 1
+        [~,noise_channel] = nanmin(r);
+        noise = lfp(noise_channel,:)';
+    else
+        noise_channel = NaN;
+        noise = zeros(size(lfp,2),1);
+    end
     
     signal = lfp(good_channel,:);
     
     % detect ripples
     [ripples] = bz_FindRipples_ephys_tools(signal',lfp_ts',...
         'EMGfilename',emg_file,...
-        'EMGThresh',.9,...
-        'noise',lfp(noise_channel,:)',...
+        'EMGThresh',0.9,...
+        'noise',noise,...
         'passband',passband,...
         'frequency',frequency);
     
+    % store channel used, noise channel, and snr
     ripples.detectorinfo.detectionparms.channel_used = good_channel;
     ripples.detectorinfo.detectionparms.noise_channel = noise_channel;
-    
+    ripples.detectorinfo.detectionparms.snr = r;
+    ripples.detectorinfo.detectionparms.snr_ripple_fs = r_ripple;
+
     % exclude movement
     temp_speed = interp1(mov_ts,speed,ripples.timestamps);
     above_speed_thres = ~any(temp_speed < 5 | isnan(temp_speed),2);
@@ -200,100 +217,36 @@ for s = sess_list
         end
     end
     
-    % filter signal to ripple range [150 250 hz]
-    signal_filtered = BandpassFilter(signal, frequency, passband);
+    [maps,ripple_data,stats] = bz_RippleStats(signal_filtered(good_channel,:)',...
+        lfp_ts',ripples,'frequency',frequency);
     
-    [maps,ripple_data,stats] = bz_RippleStats(signal_filtered',lfp_ts',...
-        ripples,'frequency',frequency);
+    [unfiltered,~,~] = bz_RippleStats(signal',lfp_ts',ripples,'frequency',frequency);
+    maps.unfiltered_ripples = unfiltered.ripples;
     
-    if figs
-        bz_PlotRippleStats(maps,ripple_data,stats,'frequency',frequency);
-    end
     
     % pull out unfiltered and filtered ripples from lfp
     for r = 1:size(ripples.timestamps,1)
         idx = lfp_ts >= ripples.timestamps(r,1) & lfp_ts <= ripples.timestamps(r,2);
         ripples.unfiltered_ripple{r} = signal(idx);
-        ripples.filtered_ripple{r} = signal_filtered(idx);
-    end
-    
-    
-    if figs
-        for ch = 1:length(ripples)
-            figure;
-            p = ceil(sqrt(size(ripples.unfiltered_ripple,2)));
-            colors = viridis(length(unique(ripples.peakNormedPower)));
-            for r = 1:size(ripples.filtered_ripple,2)
-                subplot(p,p,r)
-                plot(ripples.unfiltered_ripple{r},...
-                    'color',interp1(unique(ripples.peakNormedPower),...
-                    colors,ripples.peakNormedPower(r)))
-                hold on
-                box off
-                axis off
-            end
-            sgtitle([num2str(r),' Ripples on Channel ',...
-                num2str(ch),', Color code: power'],'Color','w')
-            darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
-        end
-    end
-    
-    if figs
-        duration = 1;
-        figure
-        for r = 1:size(ripples.timestamps,1)
-            idx = lfp_ts >= ripples.timestamps(r,1) &...
-                lfp_ts <= ripples.timestamps(r,2);
-            plot(duration:duration+sum(idx)-1,...
-                zscore(lfp(:,idx),[],2)+[[1:size(lfp,1)]*3]',...
-                'Color',[rand(1),rand(1),rand(1)])
-            box off
-            hold on
-            duration = sum(idx) + duration;
-        end
-        title('Unfiltered ripples')
-        darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
-    end
-    
-    if figs
-        for i =1:size(lfp,1)
-            signal_filtered(i,:) = BandpassFilter(lfp(i,:), 1000, passband);
-        end
-        duration = 1;
-        figure
-        for r = 1:size(ripples.timestamps,1)
-            idx = lfp_ts >= ripples.timestamps(r,1) &...
-                lfp_ts <= ripples.timestamps(r,2);
-            plot(duration:duration+sum(idx)-1,...
-                zscore(signal_filtered(:,idx),[],2)+[[1:size(signal_filtered,1)]*3]',...
-                'Color',[rand(1),rand(1),rand(1)])
-            box off
-            hold on
-            duration = sum(idx) + duration;
-        end
-        title('Filtered ripples')
-        darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
-    end
-    
-    if figs
-        if isfield(data,'linear_track')
-            frames = data.linear_track{1}.nonlinearFrames;
-            figure
-            plot(frames(:,2),frames(:,3),'Color',[.7 .7 .7])
-            hold on
-            ripple_frames = interp1(frames(:,1),frames,ripples.peaks);
-            scatter(ripple_frames(:,2),ripple_frames(:,3),10,'r','Filled')
-            axis image
-            title('Red dot = SWR')
-            darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
-        end
+        ripples.filtered_ripple{r} = signal_filtered(good_channel,idx);
     end
     
     ripple_info.ripples = ripples;
     ripple_info.maps = maps;
     ripple_info.ripple_data = ripple_data;
     ripple_info.stats = stats;
+    ripple_info.ripples.detectorinfo.ProcessedDatafile =...
+        fullfile(sessions(s).folder,sessions(s).name);
     
+    if figs
+        bz_PlotRippleStats(ripple_info.maps,ripple_info.ripple_data,...
+            ripple_info.stats,'frequency',frequency);
+        ripple_figs.lfp_viewer(ripple_info,data)
+        ripple_figs.ripple_grid(ripple_info)
+        ripple_figs.ripple_per_channel(ripple_info,data)
+        ripple_figs.ripple_location(ripple_info,data)
+    end
+
     if all_sessions || save_results && overwrite
         % save mat file to processed data folder
         processedpath=strsplit(data.session_path,filesep);
