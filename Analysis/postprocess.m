@@ -8,10 +8,12 @@ function data=postprocess(varargin)
 p = inputParser;
 p.addParameter('path',pwd);
 p.addParameter('figures',1);
+p.addParameter('manual_xy_cleanup',0);
 p.parse(varargin{:});
 
 path = p.Results.path;
 figures = p.Results.figures;
+manual_xy_cleanup = p.Results.manual_xy_cleanup;
 
 
 % load spike data
@@ -88,7 +90,9 @@ data = get_session_idx(data);
 % CHECK FOR MANUAL COORDINATE CORRECTIONS
 if exist([path,filesep,'restrictxy.mat'],'file')
     % run the following line if tracker errors from unplugs are present
-    %     manual_trackerjumps(ts,x,y,StartofRec,EndofRec,path);
+    if manual_xy_cleanup
+        manual_trackerjumps(ts,x,y,StartofRec,EndofRec,path);
+    end
     load([path,filesep,'restrictxy.mat'],'in')
     x(in==0)=NaN;
     y(in==0)=NaN;
