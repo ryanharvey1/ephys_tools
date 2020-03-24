@@ -34,7 +34,7 @@ TTnum=max(str2double(extractBetween(lfpfile,'CSC','.ncs')));
 signal = zeros(TTnum,(length(ts)*512)*Fnew/Fold);
 theta=signal;
 theta_phase=signal;
-theta_amp=signal;
+% theta_amp=signal;
 
 % resample time stamps & convert to sec for fma below
 ts = interp1(linspace(1,length(signal),length(ts)), ts, 1:length(signal));
@@ -65,9 +65,9 @@ for ii=1:length(lfpfile)
     theta(ch,:)=filtfilt(btheta,atheta,signal(ch,:));
     
     % FMA for phase & amp
-    [phase,amplitude,~]=Phase([ts_sec',theta(ch,:)']);
+    [phase,~,~]=Phase([ts_sec',theta(ch,:)']);
     theta_phase(ch,:)=phase(:,2)';
-    theta_amp(ch,:)=amplitude(:,2)';
+%     theta_amp(ch,:)=amplitude(:,2)';
 end
 fprintf('lfp loaded\n');
 
@@ -75,6 +75,6 @@ data.lfp.ts=ts;
 data.lfp.signal=signal;
 data.lfp.theta=theta;
 data.lfp.theta_phase=theta_phase;
-data.lfp.theta_amp=theta_amp;
+% data.lfp.theta_amp=theta_amp;
 data.lfp.lfpsamplerate=Fnew;
 end
