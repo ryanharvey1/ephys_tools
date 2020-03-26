@@ -15,13 +15,12 @@ function [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path)
 %
 % Ryan Harvey
 
-
 % sets path to snap folder & looks within for mat files
 if ~exist([path,filesep,'Sorted'],'dir')
     error('Make sure to run after_spikesort_cleanup.m and cd to session dir')
 end
-cd([path,filesep,'Sorted']);
-file=struct2table(dir( '**/*.mat'));
+sortedpath = [path,filesep,'Sorted'];
+file=struct2table(dir('Sorted/*.mat'));
 t=table2cell(file(:,1));
 file=t(~contains(t,'_info.mat'),1);
 info=strcat(erase(file,'.mat'),repmat('_info.mat',length(file),1));
@@ -29,7 +28,8 @@ info=strcat(erase(file,'.mat'),repmat('_info.mat',length(file),1));
 % EXTRACT SPIKE TIMES,ID, AND AVERAGE WAVEFORMS FROM SNAPSORT .MAT FILES
 ns=1;clusterquality=[];
 for m=1:length(file)
-    load(file{m});load(info{m})
+    load(fullfile(sortedpath,file{m}));
+    load(fullfile(sortedpath,info{m}));
     clusterquality=[clusterquality;grades(:,[1,3,5])];
     cells=unique(output(:,2));
     idxmeans=1;
