@@ -1,6 +1,16 @@
-function postprocessbatch(dataset)
+function postprocessbatch(dataset,varargin)
 tic
 
+p = inputParser;
+p.addParameter('overwrite_lfp',0); % raw sample rate
+p.parse(varargin{:});
+overwrite_lfp = p.Results.overwrite_lfp;
+
+if overwrite_lfp
+    disp('WARNING. You are about to overwrite all neuroscope .xml and .lfp files')
+    disp('Hit enter if this is okay')
+    pause
+end
 % check to see if the temp file exist...if not make it
 cd (dataset)
 cd ..
@@ -39,7 +49,7 @@ parfor iratID=1:length(ratID)
                     exist([path,filesep,'Sorted'],'dir')==7
                 
                 % CALL POSTPROCESS FUNCTION
-                postprocess('path',path,'figures',0); 
+                postprocess('path',path,'figures',0,'overwrite_lfp',overwrite_lfp); 
                 
                 % update wait 
                 WaitMessage.Send;
