@@ -9,11 +9,13 @@ p = inputParser;
 p.addParameter('path',pwd);
 p.addParameter('figures',1);
 p.addParameter('manual_xy_cleanup',0);
+p.addParameter('overwrite_lfp',0);
 p.parse(varargin{:});
 
 path = p.Results.path;
 figures = p.Results.figures;
 manual_xy_cleanup = p.Results.manual_xy_cleanup;
+overwrite_lfp = p.Results.overwrite_lfp;
 
 
 % load spike data
@@ -32,6 +34,8 @@ prop=waveformprop(avgwave);
 % READ VIDEO DATA
 [ts,x,y,angles] = Nlx2MatVT([path,filesep,'VT1.nvt'],[1,1,1,1,0,0],0,1);
 
+data.offset = ts(1);
+
 % calculate sample rate from ts
 data.samplerate=get_framerate(ts);
 
@@ -46,6 +50,7 @@ data.rat=ratID{end-1};
 data.sessionID=['S',strjoin(regexp(ratID{end},'\d*','Match'),'')];
 data.date_processed=date;
 data.session_path=path;
+data.basename = ratID{end};
 
 % SPLIT UP SESSIONS BY EVENT FILES
 [~,StartofRec,EndofRec]=EventSplit(path);
@@ -88,7 +93,7 @@ clear varnames S avgwave
 data = get_session_idx(data);
 
 % CHECK FOR MANUAL COORDINATE CORRECTIONS
-if exist([path,filesep,'restrictxy.mat'],'file')
+if exist([path,filesep,'restrictxy.mat'],'file') || manual_xy_cleanup
     % run the following line if tracker errors from unplugs are present
     if manual_xy_cleanup
         manual_trackerjumps(ts,x,y,StartofRec,EndofRec,path);
@@ -141,25 +146,9 @@ mazesize=max(data.maze_size_cm);
 data_video=[data_video,[vel_cmPerSec(1);vel_cmPerSec]];
 
 data.frames=data_video;
-clear data_video X Y vel_cmPerSec templinear XY x y ts angle table
+clear data_video X Y vel_cmPerSec templinear XY x y ts angle StartofRec EndofRec
 
-
-clear StartofRec EndofRec
-
-% EXTRACT LFP FROM ALL TETRODES FOR LATER USE
-disp('Have patience...Loading LFP')
-channels=table2cell(struct2table(dir([path,filesep,'*.ncs'])));
-lfpfile=[strcat(channels(:,2),filesep,channels(:,1))];
-
-if length(dir(fullfile(path,'*.ncs'))) ~= length(dir(fullfile(path,'*.ntt')))
-    clear lfpfile
-    for ch=1:length(dir(fullfile(path,'*.ntt')))
-        lfpfile{ch,1}=fullfile(path,['CSC',num2str(ch),'.ncs']);
-    end
-end
-
-data = get_lfp(lfpfile,data);
-clear tetrodes lfpfile
+data = get_lfp(data,'overwrite_lfp',overwrite_lfp);
 
 % FIX TIMESTAMPS (set a zero point and convert microseconds to seconds)
 data=FixTime(data);
@@ -186,10 +175,10 @@ for event=1:size(data.events,2)
     % DURATION OF SESSION (MIN)
     data.session_duration(event)=(length(data_video)/data.samplerate)/60;
     disp(['SESSION_',num2str(event),' WAS ',num2str(data.session_duration(event)),' MIN'])
-    if data.session_duration(event)<3
-        disp('SESSION TOO SHORT...SKIPPING');
-        continue;
-    end
+%     if data.session_duration(event)<3
+%         disp('SESSION TOO SHORT...SKIPPING');
+%         continue;
+%     end
     
     % GET VELOCITY
     vel_cmPerSec=data_video(:,5);
@@ -364,8 +353,7 @@ for event=1:size(data.events,2)
                 end
                 
                 % format data in a open field for phase precession
-                [~, filename] = fileparts(data.spikesID.paths{i});
-                trodeID = str2double(extractAfter(filename,'TT'));
+                trodeID = get_channel_from_tetrode(data,data.spikesID.paths{i});
                 
                 % Implementation of the pass index technique for examination of open-field phase precession
                 binside=mean([range(data_video_nospk(:,2))/length(ratemap),...
@@ -418,9 +406,8 @@ for event=1:size(data.events,2)
             
             % LFP ANALYSIS
             % Create name of CSC file from cell and path name
-            [~, filename] = fileparts(data.spikesID.paths{i});
-            trodeID = str2double(extractAfter(filename,'TT'));
-            
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{i});
+
             if size(data.events,2)>1
                 theta_phase=data.lfp.theta_phase(trodeID,...
                     data.lfp.ts>=data.events(1,event) &...
@@ -428,13 +415,9 @@ for event=1:size(data.events,2)
                 ts=data.lfp.ts(1,...
                     data.lfp.ts>=data.events(1,event) &...
                     data.lfp.ts<=data.events(2,event));
-                theta=data.lfp.theta(trodeID,...
-                    data.lfp.ts>=data.events(1,event) &...
-                    data.lfp.ts<=data.events(2,event));
             else
                 theta_phase=data.lfp.theta_phase(trodeID,:);
                 ts=data.lfp.ts;
-                theta=data.lfp.theta(trodeID,:);
             end
             
             % calc phase precession stats
@@ -457,8 +440,11 @@ for event=1:size(data.events,2)
                 [ThPrecess]=place_cell_analysis.PHprecession([ts',theta_phase'],spks_VEL4LFP,occ4Ph,fieldbound);
             end
             
+            
             % theta power and freq
-            [MeanThetaFreq,MeanOverallPow]=meanfreq(theta,1000);
+            [MeanThetaFreq,MeanOverallPow]=...
+                meanfreq(data.lfp.signal(trodeID,data.lfp.ts>=data.events(1,event) &...
+                data.lfp.ts<=data.events(2,event)),data.lfp.lfpsamplerate,[4,12]);
             
             clear tetrode eegfile theta_phase ts fieldbound
             
