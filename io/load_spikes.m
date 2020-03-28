@@ -20,7 +20,7 @@ if ~exist([path,filesep,'Sorted'],'dir')
     error('Make sure to run after_spikesort_cleanup.m and cd to session dir')
 end
 sortedpath = [path,filesep,'Sorted'];
-file=struct2table(dir('Sorted/*.mat'));
+file=struct2table(dir(fullfile(sortedpath,'*.mat')));
 t=table2cell(file(:,1));
 file=t(~contains(t,'_info.mat'),1);
 info=strcat(erase(file,'.mat'),repmat('_info.mat',length(file),1));
