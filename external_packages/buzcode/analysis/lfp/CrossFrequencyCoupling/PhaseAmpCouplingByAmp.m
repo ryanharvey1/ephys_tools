@@ -88,3 +88,4 @@ subplot(2,2,3)
     axis xy
     xlabel('Signal 1 Power');ylabel('Signal 2 Power')
 end
+

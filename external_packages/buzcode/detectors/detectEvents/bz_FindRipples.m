@@ -64,7 +64,7 @@ function [ripples] = bz_FindRipples(varargin)
 %
 %    See also bz_Filter, bz_RippleStats, bz_SaveRippleEvents, bz_PlotRippleStats.
 
-% Copyright (C) 2004-2011 by Michaël Zugaro, initial algorithm by Hajime Hirase
+% Copyright (C) 2004-2011 by MichaÃ«l Zugaro, initial algorithm by Hajime Hirase
 % edited by David Tingley, 2017
 %
 % This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,6 @@ addParameter(p,'EMGThresh',.9,@isnumeric);
 addParameter(p,'saveMat',false,@islogical);
 addParameter(p,'minDuration',20,@isnumeric)
 addParameter(p,'plotType',2,@isnumeric)
-
 
 if isstr(varargin{1})  % if first arg is basepath
     addRequired(p,'basepath',@isstr)
@@ -264,7 +263,7 @@ if EMGThresh
     if exist(EMGfilename)
         load(EMGfilename)   %should use a bz_load script here
     else
-        [EMGFromLFP] = bz_EMGFromLFP(basepath,'samplingFrequency',10,'savemat',false);
+        [EMGFromLFP] = bz_EMGFromLFP(basepath,'samplingFrequency',10,'savemat',false,'noPrompts',true);
     end
     excluded = logical(zeros(size(ripples,1),1));
     for i = 1:size(ripples,1)
@@ -372,7 +371,7 @@ end
 
 %The detectorinto substructure
 detectorinfo.detectorname = 'bz_FindRipples';
-detectorinfo.detectiondate = date;
+detectorinfo.detectiondate = today;
 detectorinfo.detectionintervals = restrict;
 detectorinfo.detectionparms = p.Results;
 detectorinfo.detectionparms = rmfield(detectorinfo.detectionparms,'noise');
@@ -418,3 +417,4 @@ if ~isempty(sd),
 end
 
 U = (A - meanA)/stdA;
+

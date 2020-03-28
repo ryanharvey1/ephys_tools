@@ -62,7 +62,7 @@ function [data,stats] = PhasePrecession(positions,spikes,phases,varargin)
 %    stats.all             cell array containing all phases for each subfield
 %                          (useful for population analyses)
 %
-%    stats.lap.slope       phase precession slope (via circular regression)
+%    stats.lap.slope       phase precopenession slope (via circular regression)
 %    stats.lap.intercept   phase precession intercept (via circular regression)
 %    stats.lap.r2          coefficient of determination for circular regression
 %    stats.lap.p           p-value for circular regression
@@ -258,12 +258,12 @@ if isdvector(boundaries,'#2') && ~isempty(positions),
 			traversals = [startT stopT];
 
 			% Show laps (debugging)
-% 			figure;hold on;
-% 			nn = positions(:,1);
-% 			plot(nn,x1);
-% 			PlotHVLines([fieldStart fieldStop],'h',':k');
-% 			PlotHVLines(startT,'v','g');
-% 			PlotHVLines(stopT,'v','r');
+			%figure;hold on;
+			%nn = positions(:,1);
+			%plot(nn,x1);
+			%PlotHVLines([fieldStart fieldStop],'h',':k');
+			%PlotHVLines(startT,'v','g');
+			%PlotHVLines(stopT,'v','r');
 
 			% Determine lap number
 			[~,lap] = InIntervals(data.position.t,traversals);
@@ -321,9 +321,7 @@ if ~isempty(positions) && nargout >= 2,
 	end
 	% Circular regression for average data
 	ok = ~isnan(x);
-% 	[beta,r2,p] =
-% 	CircularRegression(x(ok),data.position.phase(ok),'slope',slope); (Ryan H, too many inputs...see next line)
-	[beta,r2,p,~] = CircularRegression(x(ok),data.position.phase(ok),slope);    
+	[beta,r2,p,~] = CircularRegression(x(ok),data.position.phase(ok),slope);
 	stats.slope = beta(1);
 	stats.intercept = beta(2) + stats.slope*dx; % Correction for circular/circular regression (see above)
 	stats.r2 = r2;
@@ -331,17 +329,11 @@ if ~isempty(positions) && nargout >= 2,
 	% Circular regression for each lap separately
 	for lap = 1:max(data.rate.lap),
 		thisLap = data.position.lap == lap;
-        if sum(thisLap)<1 % ryan h, for laps that were dropped
-            continue
-        end
-% 		[beta,r2,p] = CircularRegression(x(thisLap&ok),data.position.phase(thisLap&ok),'slope',stats.slope); (Ryan H, too many inputs...see next line)
 		[beta,r2,p,~] = CircularRegression(x(thisLap&ok),data.position.phase(thisLap&ok),stats.slope);
 		stats.lap.slope(lap,1) = beta(1);
 		stats.lap.intercept(lap,1) = beta(2) + stats.lap.slope(lap,1)*dx;
 		stats.lap.r2(lap,1) = r2;
-% 		stats.lap.p(lap,1) = p; % ryan h, not real p value anyway... use first value
 		stats.lap.p(lap,1) = p(1);
-
 	end
 	% Mean phase for each subfield
 	x0 = min(data.position.x);

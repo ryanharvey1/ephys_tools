@@ -153,7 +153,7 @@ for i = 1:2:length(varargin),
 		case 'type',
 			type = lower(varargin{i+1});
 			if (isempty(y) && ~isstring_FMAT(type,'cc','cl','lc','ll')) || (~isempty(y) && ~isstring_FMAT(type,'ccl','cll','lcl','lll','ccc','clc','lcc','llc')),
-% 				error('Incorrect value for property ''type'' (type ''help <a href="matlab:help Map">Map</a>'' for details).');
+				error('Incorrect value for property ''type'' (type ''help <a href="matlab:help Map">Map</a>'' for details).');
 			end
 
 		otherwise,
@@ -165,12 +165,12 @@ end
 % Make sure x and y are normalized
 if max(x) > 1 || min(x) < 0,
 	x = ZeroToOne(x);
-	warning('Parameter ''x'' should contain values in [0 1]. The data will now be transformed accordingly.');
+	%warning('Parameter ''x'' should contain values in [0 1]. The data will now be transformed accordingly.');
 end
 if ~isempty(y),
 	if max(y) > 1 || min(y) < 0,
 		y = ZeroToOne(y);
-		warning('Parameter ''y'' should contain values in [0 1]. The data will now be transformed accordingly.');
+		%warning('Parameter ''y'' should contain values in [0 1]. The data will now be transformed accordingly.');
 	end
 end
 

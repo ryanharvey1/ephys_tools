@@ -31,7 +31,7 @@ numrecs = length(directoryList);
 functionpath = which([analysisToRun '.m']);
 functionpath = fileparts(functionpath);
 
- 
+
 display(['Running Analysis: ' analysisToRun ', on ' num2str(numrecs) ' Recordings..'])
 for rr = 1:numrecs
     display(['Recording: ',num2str(rr),' of ',num2str(numrecs),' - ',directoryList{rr}])

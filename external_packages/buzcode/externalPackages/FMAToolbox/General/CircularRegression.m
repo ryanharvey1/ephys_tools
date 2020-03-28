@@ -57,7 +57,13 @@ phi = angles(:);
 
 beta = [];
 R2 = [];
-if isempty(angles) || isempty(x), return; end
+if isempty(angles) || isempty(x) 
+    beta = [NaN NaN];
+    R2 = NaN;
+    beta_ts = [NaN NaN];
+    R2_ts = NaN;
+    return
+end
 
 % Store data in global variables (necessary for minimization)
 global CircularRegression_x CircularRegression_phi;
@@ -68,13 +74,15 @@ CircularRegression_phi = phi;
 [beta,RSE] = fminsearch(@ResidualSquaredError,[slope 0]);
 
 % Compute coefficient of determination
-TSE = norm(phi-CircularMean(phi))^2;
+TSE = norm(phi-circ_mean(phi))^2;
 R2 = 1-RSE/TSE;
 
 % ------------------------------------------------------------------------------------------------
 % Compute Theil–Sen estimator
 
-if nargout <= 2, return; end
+if nargout <= 2
+    return;
+end
 beta_ts = [nan nan];
 R2_ts = nan;
 
@@ -85,7 +93,9 @@ phi = phi+rd*2*pi;
 
 % Keep at most 500 random samples
 n = length(x);
-if n == 1, return; end
+if n == 1
+    return
+end
 p = randperm(n);
 n = min([n 500]);
 x0 = x(p(1:n));
@@ -107,7 +117,7 @@ beta_ts(2) = median(phi-beta_ts(1)*x);
 % Compute coefficient of determination
 RSE_ts = sum((phi-(beta_ts(1)*x+beta_ts(2))).^2);
 R2_ts = 1-RSE_ts/TSE;
-% 
+
 %  figure;hold on;plot([x;x],[phi;phi+2*pi],'.');
 %  xm = mean([min(x);max(x)]);
 %  ym = beta(1)*xm+beta(2);

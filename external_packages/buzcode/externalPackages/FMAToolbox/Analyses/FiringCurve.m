@@ -85,7 +85,7 @@ if nargin < 2,
 end
 
 if size(samples,2) ~= 2,
-%   error('Parameter ''samples'' is not a Nx2 matrix (type ''help <a href="matlab:help FiringCurve">FiringCurve</a>'' for details).');
+  error('Parameter ''samples'' is not a Nx2 matrix (type ''help <a href="matlab:help FiringCurve">FiringCurve</a>'' for details).');
 end
 
 im = 1;argsm = {};

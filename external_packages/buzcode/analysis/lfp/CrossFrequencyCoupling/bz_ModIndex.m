@@ -11,7 +11,7 @@ function [comod] = bz_ModIndex(lfp,phaserange,amprange,flagPlot)
 %                                                   lfp.samplingRate
 %    phaserange     [min:steps:max] array of frequencies to filter for the
 %                   phase signal
-%    amprange       [min:steps:max] array of frequencies range for wavelets
+%    amprange       [min:stepsmax] array of frequencies range for wavelets
 %                   for the power signal
 %    <options>      optional list of property-value pairs (see table below)
 %
@@ -90,3 +90,4 @@ if flagPlot
     axis xy
     
 end
+

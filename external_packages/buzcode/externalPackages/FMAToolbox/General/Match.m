@@ -54,96 +54,6 @@ function [matched,only1,only2] = Match(list1,list2,varargin)
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation; either version 3 of the License, or
 % (at your option) any later version.
-try
-    % Default values
-    match = 'down';
-    err = inf;
-    
-    % Check parameters
-    if nargin < 2 | mod(length(varargin),2) ~= 0,
-        error('Incorrect number of parameters (type ''help <a href="matlab:help Match">Match</a>'' for details).');
-    end
-    if ~isdvector(list1) | ~isdvector(list2),
-        error('Incorrect sizes: ''list1'' and ''list2'' must be vectors (type ''help <a href="matlab:help Match">Match</a>'' for details).');
-    end
-    
-    % Parse parameter list
-    for i = 1:2:length(varargin),
-        if ~isa(varargin{i},'char'),
-            error(['Parameter ' num2str(i+2) ' is not a property (type ''help <a href="matlab:help Match">Match</a>'' for details).']);
-        end
-        switch(lower(varargin{i})),
-            
-            case 'match',
-                match = lower(varargin{i+1});
-                if ~isstring_FMAT(match,'up','down','closest'),
-                    error('Incorrect value for property ''match'' (type ''help <a href="matlab:help Match">Match</a>'' for details).');
-                end
-                
-            case 'error',
-                err = varargin{i+1};
-                if ~isdscalar(err,'>=0'),
-                    error('Incorrect value for property ''error'' (type ''help <a href="matlab:help Match">Match</a>'' for details).');
-                end
-                
-            otherwise,
-                error(['Unknown property ''' num2str(varargin{i}) ''' (type ''help <a href="matlab:help Match">Match</a>'' for details).']);
-                
-        end
-    end
-    
-    % Sort elements in both list so that list1 = [a1 a2 a3 ... an] and list2 = [b1 b2 b3 ... bm]
-    [list1,idx1] = sort(list1(:));
-    [list2,idx2] = sort(list2(:));
-    
-    % Find 'up' and 'down' matching indices
-    % (We need both, because this will allow us to compare matches if the criterion is 'closest')
-    n = length(list2);
-    up = MatchUpIndices(list1,list2);
-    down = up-1;
-    
-    % List corresponding values in list2
-    % Special cases: when matching down (resp. up), values in list1 lesser (resp. greater)
-    % than all values in list2 cannot be matched; set them to NaN
-    goodUp = up>0 & up<=n;
-    matchedUp = nan(size(up));
-    matchedUp(goodUp) = list2(up(goodUp));
-    goodDown = down>0 & down<=n;
-    matchedDown = nan(size(down));
-    matchedDown(goodDown) = list2(down(goodDown));
-    
-    % Use match criterion
-    switch(match),
-        case 'up',
-            matched = matchedUp;
-        case 'down',
-            matched = matchedDown;
-        case 'closest',
-            [unused,idx] = min(abs([matchedUp matchedDown]-[list1 list1]),[],2);
-            matched = matchedUp;
-            matched(idx==2) = matchedDown(idx==2);
-    end
-    
-    % Check error threshold
-    bad = abs(matched-list1) > err+eps; % eps is to compensate for inevitable numerical rounding errors such as 1.1-1.0>0.1
-    matched(bad) = nan;
-    
-    % Output
-    only1 = isnan(matched);
-    matched = matched(~only1);
-    only1(idx1) = only1;
-    only2 = logical(zeros(size(list2)));
-    m = unique(matched);
-    [unused,i] = setdiff(list2,m);
-    only2(i) = 1;
-    only2(idx2) = only2;
-catch
-    [matched,only1,only2] = Match2(list1,list2,'match','closest','error',err);
-    return
-end
-end
-
-function [matched,only1,only2] = Match2(list1,list2,varargin)
 
 % Default values
 match = 'down';
@@ -151,58 +61,68 @@ err = inf;
 
 % Check parameters
 if nargin < 2 | mod(length(varargin),2) ~= 0,
-    error('Incorrect number of parameters (type ''help <a href="matlab:help Match">Match</a>'' for details).');
+  error('Incorrect number of parameters (type ''help <a href="matlab:help Match">Match</a>'' for details).');
 end
 if ~isdvector(list1) | ~isdvector(list2),
-    error('Incorrect sizes: ''list1'' and ''list2'' must be vectors (type ''help <a href="matlab:help Match">Match</a>'' for details).');
+	error('Incorrect sizes: ''list1'' and ''list2'' must be vectors (type ''help <a href="matlab:help Match">Match</a>'' for details).');
 end
-list1 = list1(:);
-list2 = list2(:);
 
 % Parse parameter list
 for i = 1:2:length(varargin),
+  if ~isa(varargin{i},'char'),
+    error(['Parameter ' num2str(i+2) ' is not a property (type ''help <a href="matlab:help Match">Match</a>'' for details).']);
+  end
+  switch(lower(varargin{i})),
 
-    switch(lower(varargin{i})),
-        
-        case 'match',
-            match = lower(varargin{i+1});
-          
-            
-        case 'error',
-            err = varargin{i+1};
-           
-        otherwise,
-            error(['Unknown property ''' num2str(varargin{i}) ''' (type ''help <a href="matlab:help Match">Match</a>'' for details).']);
-            
-    end
+    case 'match',
+		match = lower(varargin{i+1});
+		if ~isstring_FMAT(match,'up','down','closest'),
+			error('Incorrect value for property ''match'' (type ''help <a href="matlab:help Match">Match</a>'' for details).');
+      end
+
+	case 'error',
+		err = varargin{i+1};
+		if ~isdscalar(err,'>=0'),
+			error('Incorrect value for property ''error'' (type ''help <a href="matlab:help Match">Match</a>'' for details).');
+		end
+
+    otherwise,
+      error(['Unknown property ''' num2str(varargin{i}) ''' (type ''help <a href="matlab:help Match">Match</a>'' for details).']);
+
+  end
 end
 
-% Now compare [t1 t1 ... t1;t2 t2 ... t2;...;tn tn ... tn] with [l1 l2 ... lm;l1 l2 ... lm;...;l1 l2 ... lm]
-where = repmat(list2,1,length(list1)) <= repmat(list1',length(list2),1);
+% Sort elements in both list so that list1 = [a1 a2 a3 ... an] and list2 = [b1 b2 b3 ... bm]
+[list1,idx1] = sort(list1(:));
+[list2,idx2] = sort(list2(:));
 
-% This yielded something like [1 1 1;1 1 1;...;0 1 1;...;0 0 1;...;0 0 0;...;0 0 0]
-% where the transition from 1 to 0 in each column indicates the index of the last element
-% in 'list1' inferior to the corresponding element in 'list2'. Now, find these transitions.
-% (we append ones before and zeros after 'where' to handle the special cases where the first
-% element in 'list1' inferior to the element of 'list2' is the last element of 'list1'
-% or does not exist).
-where = -diff([ones(1,size(where,2));where;zeros(1,size(where,2))]);
-
-% Convert the resulting logical matrix into a list of subscript indices
-n = size(where,1);
-where = mod(find(where),n);
-where(where==0) = n;
-if strcmp(match,'down'),
-    where = where-1;
-end
-
-% Special cases: when matching down (resp. up), values in list1 lesser (resp. greater) than all values in list2
-% cannot be matched; set them to NaN
-good = where>0 & where<n;
-matched = nan(size(where));
+% Find 'up' and 'down' matching indices
+% (We need both, because this will allow us to compare matches if the criterion is 'closest')
+n = length(list2);
+up = MatchUpIndices(list1,list2);
+down = up-1;
 
 % List corresponding values in list2
-matched(good) = list2(where(good));
+% Special cases: when matching down (resp. up), values in list1 lesser (resp. greater)
+% than all values in list2 cannot be matched; set them to NaN
+goodUp = up>0 & up<=n;
+matchedUp = nan(size(up));
+matchedUp(goodUp) = list2(up(goodUp));
+goodDown = down>0 & down<=n;
+matchedDown = nan(size(down));
+matchedDown(goodDown) = list2(down(goodDown));
+
+% Use match criterion
+switch(match),
+	case 'up',
+		matched = matchedUp;
+	case 'down',
+		matched = matchedDown;
+	case 'closest',
+		[unused,idx] = min(abs([matchedUp matchedDown]-[list1 list1]),[],2);
+		matched = matchedUp;
+		matched(idx==2) = matchedDown(idx==2);
+end
 
 % Check error threshold
 bad = abs(matched-list1) > err+eps; % eps is to compensate for inevitable numerical rounding errors such as 1.1-1.0>0.1
@@ -211,7 +131,10 @@ matched(bad) = nan;
 % Output
 only1 = isnan(matched);
 matched = matched(~only1);
-only2 = logical(ones(size(list2)));
-only2(where) = 0;
-end
+only1(idx1) = only1;
+only2 = logical(zeros(size(list2)));
+m = unique(matched);
+[unused,i] = setdiff(list2,m);
+only2(i) = 1;
+only2(idx2) = only2;
 

@@ -36,3 +36,4 @@ wavelet = wavelet./norm(wavelet);
 %((pi*FB)^(-0.5))*exp(2*i*pi*FC*X)*exp(-X^2/FB) 
 
 end
+

@@ -1,21 +1,24 @@
 function [EMGFromLFP] = bz_EMGFromLFP(basePath,varargin)
 % USAGE
-% [EMGCorr] = bz_EMGCorrFromLFP(basePath,restrict,specialChannels,rejectChannels,saveMat)
+% [EMGCorr] = bz_EMGCorrFromLFP(basePath)
 %
 % INPUTS
-%       basePath      - string combination of basepath and basename of recording
-%                           example: '/animal/recording/recording01'
+%       basePath            - string combination of basepath and basename of recording
+%                             example: '/animal/recording/recording01'
 %
 %   (Optional)
-%       'restrict'         - interval of time (relative to recording) to sleep score
+%       'restrict'          - interval of time (relative to recording) to sleep score
 %                            default = [0 inf]
 %       'specialChannels'   - vector of 'special' channels that you DO want to use for EMGCorr calc (will be added to those auto-selected by spike group)
 %       'rejectChannels'    - vector of 'bad' channels that you DO NOT want to use for EMGCorr calc
 %       'restrictChannels'  - use only these channels (Neuroscope numbers)
-%       'saveMat'         true/false - default:true
-%       'saveLocation'      default: basePath
-%       'overwrite'         true/false - overwrite saved EMGFromLFP.LFP.mat
-%                           default: false
+%       'saveMat'           - true/false - default:true
+%       'saveLocation'      - default: basePath
+%       'overwrite'         - true/false - overwrite saved EMGFromLFP.LFP.mat
+%                             default: false
+%       'samplingFrequency' - desired sampling rate for EMG output
+%       'noPrompts'     (default: false) prevents prompts about saving/adding metadata
+%       'fromDat'           -uses the .dat file instead of .lfp (default:false)
 %       
 %
 % OUTPUTS
@@ -54,11 +57,12 @@ addParameter(p,'restrict',[0 inf],@isnumeric)
 addParameter(p,'specialChannels',[],@isnumeric)
 addParameter(p,'rejectChannels',[],@isnumeric)
 addParameter(p,'restrictChannels',[],@isnumeric)
-addParameter(p,'saveMat',1,@isnumeric)
+addParameter(p,'saveMat',true,@islogical)
 addParameter(p,'saveLocation','',@isstr)
-addParameter(p,'overwrite',true,@islogical)
+addParameter(p,'overwrite',false,@islogical)
 addParameter(p,'samplingFrequency',2,@isnumeric)
-
+addParameter(p,'noPrompts',false,@islogical);
+addParameter(p,'fromDat',false,@islogical);
 parse(p,varargin{:})
     
 restrict = p.Results.restrict;
@@ -68,6 +72,8 @@ restrictChannels = p.Results.restrictChannels;
 saveMat = p.Results.saveMat;
 overwrite = p.Results.overwrite;
 samplingFrequency = p.Results.samplingFrequency;
+noPrompts = p.Results.noPrompts;
+fromDat = p.Results.fromDat;
 
 if ~isempty(p.Results.saveLocation)
     matfilename = fullfile(p.Results.saveLocation,[recordingname,'.EMGFromLFP.LFP.mat']);
@@ -78,7 +84,9 @@ end
 if exist(matfilename,'file') && ~overwrite
     display('EMGFromLFP Correlation already calculated - loading from EMGFromLFP.LFP.mat')
     load(matfilename)
-    if exist('EMGCorr','var'); EMGFromLFP = EMGCorr; end %for backcompadibility
+    if exist('EMGCorr','var')%for backcompatability
+        EMGFromLFP = EMGCorr; 
+    end 
     if ~exist('EMGFromLFP','var')
         display([matfilename,' does not contain a variable called EMGFromLFP'])
     end
@@ -89,29 +97,43 @@ display('Calculating EMGFromLFP from High Frequency LFP Correlation')
 
 %% get basics about.lfp/lfp file
 
-xml = bz_getSessionInfo(basePath); % now using the updated version
-if exist([basePath '/' xml.FileName '.lfp'])
-    lfpFile = [basePath '/' xml.FileName '.lfp'];
-elseif exist([basePath '/' xml.FileName '.eeg'])
-    lfpFile = [basePath '/' xml.FileName '.eeg'];
-else
-    error('could not find an LFP or EEG file...')    
+sessionInfo = bz_getSessionInfo(basePath,'noPrompts',noPrompts); % now using the updated version
+switch fromDat
+    case false
+        if exist([basePath filesep sessionInfo.FileName '.lfp'])
+            lfpFile = [basePath filesep sessionInfo.FileName '.lfp'];
+        elseif exist([basePath filesep sessionInfo.FileName '.eeg'])
+            lfpFile = [basePath filesep sessionInfo.FileName '.eeg'];
+        else
+            error('could not find an LFP or EEG file...')    
+        end
+        
+        Fs = sessionInfo.lfpSampleRate; % Hz, LFP sampling rate
+
+
+    case true
+        if exist([basePath filesep sessionInfo.FileName '.dat'])
+            datFile = [basePath filesep sessionInfo.FileName '.dat'];
+        else
+            error('could not find a dat file...')    
+        end
+        
+        datFs = sessionInfo.rates.wideband;
+        Fs = sessionInfo.lfpSampleRate; % Hz, LFP sampling rate
 end
+nChannels = sessionInfo.nChannels;
 
-Fs = xml.lfpSampleRate; % Hz, LFP sampling rate
-nChannels = xml.nChannels;
-
-if isfield(xml,'SpkGrps')
-    SpkGrps = xml.SpkGrps;
-elseif isfield(xml,'AnatGrps')
-    SpkGrps = xml.AnatGrps;
+if isfield(sessionInfo,'SpkGrps')
+    SpkGrps = sessionInfo.SpkGrps;
+elseif isfield(sessionInfo,'AnatGrps')
+    SpkGrps = sessionInfo.AnatGrps;
     display('No SpikeGroups, Using AnatomyGroups')
 else
     error('No SpikeGroups...')
 end
     
 binScootS = 1 ./ samplingFrequency;
-binScootSamps = Fs*binScootS;
+binScootSamps = round(Fs*binScootS); % must be integer, or error on line 190
 corrChunkSz = 20; %for batch-processed correlations
 
 
@@ -126,23 +148,31 @@ corrChunkSz = 20; %for batch-processed correlations
 % spkgrpstouse is a list of spike groups to find channels from 
 
 % get list of spike groups (aka shanks) that should be used
+usablechannels = [];
+spkgrpstouse = [];
+for gidx = 1:length(SpkGrps)
+    usableshankchannels{gidx} = setdiff(SpkGrps(gidx).Channels,rejectChannels);
+    usablechannels = cat(2,usablechannels,usableshankchannels{gidx});
+    if ~isempty(usableshankchannels{gidx})
+        spkgrpstouse = cat(2,spkgrpstouse,gidx);
+    end
+end
 
-spkgrpstouse = 1:length(SpkGrps);
 % check for good/bad shanks and update here
 % spkgrpstouse = unique(cat(1,spkgrpstouse,specialshanks)); % this is redundant with taking all shanks.
 
 % get list of channels (1 from each good spike group)
 xcorr_chs = [];
-for i=1:length(spkgrpstouse)
-    
+for gidx=1:length(usableshankchannels)
     %Remove rejectChannels
-    usableshankchannels = setdiff(SpkGrps(spkgrpstouse(i)).Channels,rejectChannels);
+%     usableshankchannels = setdiff(SpkGrps(spkgrpstouse(i)).Channels,rejectChannels);
         
    %add first channel from shank (superficial) and last channel from shank (deepest)
-   if ~isempty(usableshankchannels)
-      xcorr_chs = [xcorr_chs, usableshankchannels(1)]; % fast mode? 
-      if spkgrpstouse == 1 % if only one shank, then use top and bottom channels
-          xcorr_chs = [xcorr_chs, usableshankchannels(end)]; 
+   if ~isempty(usableshankchannels{gidx})
+      xcorr_chs = [xcorr_chs, usableshankchannels{gidx}(1)]; % fast mode? 
+      if length(spkgrpstouse) == 1 % if only one shank, then use top, bottom, middle channels
+          xcorr_chs = [xcorr_chs, usableshankchannels{gidx}(round(end.*0.33)),...
+              usableshankchannels{gidx}(round(end.*0.66)), usableshankchannels{gidx}(end)]; 
       end
    end
 end
@@ -150,20 +180,29 @@ xcorr_chs = unique([xcorr_chs,specialChannels]);
 
 % If restrict channel case:
 if ~isempty(restrictChannels)
-xcorr_chs = restrictChannels;
-end;
+    xcorr_chs = restrictChannels;
+end
 
 %% Read and filter channel
 % read channels
  % bz_sessionInfo is 0 indexed (neuroscope) channels, 
                            % but Loadbinary.m takes 1-indexed channel #'s
-lfp = bz_LoadBinary(lfpFile ,'nChannels',nChannels,'channels',xcorr_chs+1,...
-    'start',restrict(1),'duration',diff(restrict)); %read and convert to mV    
+switch fromDat
+    case false
+        lfp = bz_LoadBinary(lfpFile ,'nChannels',nChannels,'channels',xcorr_chs+1,...
+            'start',restrict(1),'duration',diff(restrict),'frequency',Fs); %read and convert to mV    
+    case true
+        lfp = bz_LoadBinary(datFile ,'nChannels',nChannels,'channels',xcorr_chs+1,...
+            'start',restrict(1),'duration',diff(restrict),'frequency',datFs,...
+            'downsample',datFs./Fs); %read and convert to mV  
+end
 
 % Filter first in high frequency band to remove low-freq physiologically
 % correlated LFPs (e.g., theta, delta, SPWs, etc.)
 
-xcorr_freqband = [275 300 600 625]; % Hz
+maxfreqband = floor(max([625 Fs/2]));
+% xcorr_freqband = [275 300 600 625]; % Hz
+xcorr_freqband = [275 300 maxfreqband-25 maxfreqband]; % Hz
 lfp = filtsig_in(lfp, Fs, xcorr_freqband);
 
 %% xcorr 'strength' is the summed correlation coefficients between channel
@@ -179,7 +218,8 @@ EMGCorr = zeros(numbins, 1);
 counter = 1;
 for j=1:(length(xcorr_chs))
     for k=(j+1):length(xcorr_chs)
-        disp([num2str(counter*2 ./ (length(xcorr_chs)*length(xcorr_chs)*length(timestamps)))])
+        %disp([num2str(counter*2 ./ (length(xcorr_chs)*length(xcorr_chs)*length(timestamps)))])
+        bz_Counter(counter,(length(xcorr_chs)*(length(xcorr_chs)-1))./2,'Channel Pair')
         c1 = [];
         c2 = [];
         binind = 0;
@@ -198,9 +238,9 @@ for j=1:(length(xcorr_chs))
                 c1 = [];
                 c2 = [];
                 binindstart = binind+1;
-            end
-            counter = counter+1;
+            end 
         end
+        counter = counter+1;
     end
 end
 % toc

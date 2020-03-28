@@ -26,6 +26,7 @@ function waveforms = LoadSpikeWaveforms(filename,nChannels,nSamples,list)
 % the Free Software Foundation; either version 3 of the License, or
 % (at your option) any later version.
 
+warning('This function is now deprecated, use bz_GetSpikes with the ''getwaveforms'' input argument instead.')
 if nargin < 3,
   error('Incorrect number of parameters (type ''help <a href="matlab:help LoadSpikeWaveforms">LoadSpikeWaveforms</a>'' for details).');
 end
@@ -43,9 +44,9 @@ if ~exist(filename),
 	error(['File ''' filename ''' not found.']);
 end
 if nargin < 4,
- 	waveforms = LoadBinary(filename,'nChannels',nChannels);
+ 	waveforms = bz_LoadBinary(filename,'nChannels',nChannels);
 else
-	waveforms = LoadBinary(filename,'nChannels',nChannels,'samples',...
+	waveforms = bz_LoadBinary(filename,'nChannels',nChannels,'samples',...
         nSamples*ones(size(list)),'offset',nSamples*(list-1));	
 end
 waveforms = reshape(waveforms',nChannels,nSamples,[]);
