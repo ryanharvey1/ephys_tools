@@ -17,6 +17,9 @@ figures = p.Results.figures;
 manual_xy_cleanup = p.Results.manual_xy_cleanup;
 overwrite_lfp = p.Results.overwrite_lfp;
 
+if overwrite_lfp
+    warning('You are about to overwrite all neuroscope .xml and .lfp files')
+end
 
 % load spike data
 [S,avgwave,ID,cellnum,tetrode,clusterquality]=load_spikes(path);
