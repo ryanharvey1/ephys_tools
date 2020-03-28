@@ -1,7 +1,7 @@
-function data = get_lfp(lfpfile,data,varargin)
-% get_lfp: loads Nlx csc lfp data, resamples it, and gets a few extra theta features  
+function data = get_lfp(data,varargin)
+% get_lfp: loads Nlx csc lfp data, resamples it, and gets a few extra theta features
 %
-% resample applies an antialiasing FIR lowpass filter to the signal and 
+% resample applies an antialiasing FIR lowpass filter to the signal and
 % compensates for the delay introduced by the filter
 %
 %   Input:
@@ -11,40 +11,44 @@ function data = get_lfp(lfpfile,data,varargin)
 %               Fold: lfp sample rate (32000)
 %               Fnew: resampled lfp sample rate (1000)
 %   Output:
-%           data: 
+%           data:
+%               data.lfp.theta_phase
 %               data.lfp.ts
 %               data.lfp.signal
-%               data.lfp.theta
-%               data.lfp.theta_phase
-%               data.lfp.theta_amp
 %               data.lfp.lfpsamplerate
+%               data.lfp.load_date
+%               data.lfp.creation_date
+%               data.lfp.csc_channel_list
 %
 % ryan h 2020
 
 p = inputParser;
-p.addParameter('Fold',32000);
-p.addParameter('Fnew',1000);
+p.addParameter('Fold',32000); % raw sample rate
+p.addParameter('Fnew',1000); % downsampled sample rate for .lfp file
+p.addParameter('overwrite_lfp',0); % reload wide band and overwrite .lfp 
+p.addParameter('fs_for_datastruct',200); % downsampled sample rate for data struct
 p.parse(varargin{:});
 Fold = p.Results.Fold;
 Fnew = p.Results.Fnew;
+overwrite_lfp = p.Results.overwrite_lfp;
+fs_for_datastruct = p.Results.fs_for_datastruct;
+
+warning off
+% load lfp from .lfp file
+if exist(fullfile(data.session_path,[data.basename,'.lfp']),'file') && overwrite_lfp == 0
+    data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct);
+    return
+end
+
+lfpfile = locate_ncs(data.session_path);
 
 % preallocate & get time stamps
-TTnum=max(str2double(extractBetween(lfpfile,'CSC','.ncs')));
 [ts] = Nlx2MatCSC(lfpfile{1},[1 0 0 0 0], 0, 1, [] );
-signal = zeros(TTnum,(length(ts)*512)*Fnew/Fold);
-theta=signal;
-theta_phase=signal;
-% theta_amp=signal;
+signal = zeros(length(lfpfile),(length(ts)*512)*Fnew/Fold);
 
-% resample time stamps & convert to sec for fma below
-ts = interp1(linspace(1,length(signal),length(ts)), ts, 1:length(signal));
-ts_sec=ts/10^6;
-ts_sec=ts_sec-(ts_sec(1));
-        
 %account for non-integer fs
 % get new fs exact
-[fold, fnew] = rat(Fold./Fnew); 
-Fnew = Fold.*(fnew./fold); 
+[fold, fnew] = rat(Fold./Fnew);
 
 % loop though each channel and resample lfp
 fprintf('channel...');
@@ -53,28 +57,113 @@ for ii=1:length(lfpfile)
     
     [~, filename] = fileparts(lfpfile{ii});
     ch = str2double(extractAfter(filename,'CSC'));
-
+    
     [Samples]= Nlx2MatCSC(lfpfile{ii}, [0 0 0 0 1], 0, 1);
     
     signal(ch,1:length(Samples(:))*fnew/fold) = resample(Samples(:), fnew, fold);
-        
-    % filter for theta
-    % normalized by the nyquist frequency
-    Wn_theta=[4/(Fnew/2) 12/(Fnew/2)]; 
-    [btheta,atheta]=butter(3,Wn_theta);
-    theta(ch,:)=filtfilt(btheta,atheta,signal(ch,:));
-    
-    % FMA for phase & amp
-    [phase,~,~]=Phase([ts_sec',theta(ch,:)']);
-    theta_phase(ch,:)=phase(:,2)';
-%     theta_amp(ch,:)=amplitude(:,2)';
 end
 fprintf('lfp loaded\n');
 
-data.lfp.ts=ts;
-data.lfp.signal=signal;
-data.lfp.theta=theta;
-data.lfp.theta_phase=theta_phase;
-% data.lfp.theta_amp=theta_amp;
-data.lfp.lfpsamplerate=Fnew;
+% save to folder for quick reading
+disp('saving .lfp file');
+fidout = fopen(fullfile(data.session_path,[data.basename ,'.lfp']), 'w');
+fwrite(fidout,signal,'int16');
+fclose(fidout);
+
+disp('loading downsampled lfp')
+data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct);
+
+end
+
+function lfpfile = locate_ncs(session_path)
+channels=table2cell(struct2table(dir([session_path,filesep,'*.ncs'])));
+lfpfile=strcat(channels(:,2),filesep,channels(:,1));
+[~,idx]=sort(str2double(extractBetween(lfpfile,'CSC','.ncs')));
+lfpfile = lfpfile(idx);
+end
+
+function [probe_map,csc_list]=get_channel_list(lfpfile,data)
+
+% many session may only have one continuous 'lfp' channel per tetrode
+if length(dir(fullfile(data.session_path,'*.ncs'))) ==...
+        length(dir(fullfile(data.session_path,'*.ntt')))
+    probe_map = {[num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))),...
+        'tt_without_all_channels.xlsx']};
+    csc_list.channel_num(:,1) = 1:4:max(str2double(extractBetween(lfpfile,'CSC','.ncs'))) * 4 - 3;
+    csc_list.tetrode_num(:,1) = 1:max(str2double(extractBetween(lfpfile,'CSC','.ncs')));
+else
+    probe_map = {[num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))/4),...
+        'tt.xlsx']};
+    csc_list.channel_num(:,1) = str2double(extractBetween(lfpfile,'CSC','.ncs'));
+    csc_list.tetrode_num(:,1) = reshape(repmat(1:length(lfpfile)/4, 4, 1),length(lfpfile)/4*4,1);
+end
+end
+
+function session_info = make_load_xml(data,probe_map,overwrite_lfp)
+if ~exist(probe_map{1},'file')
+    msg = [probe_map{1},' does not exist'];
+    error(msg)
+end
+if ~exist([fullfile(data.session_path,data.basename),'.xml'],'file') || overwrite_lfp
+    % write xml
+    defaults.NumberOfChannels = 1;
+    defaults.SampleRate = 32000;
+    defaults.BitsPerSample = 16;
+    defaults.VoltageRange = 20;
+    defaults.Amplification = 1000;
+    defaults.LfpSampleRate = 1000;
+    defaults.PointsPerWaveform = 32;
+    defaults.PeakPointInWaveform = 8;
+    defaults.FeaturesPerWave = 4;
+    [~,basename] = fileparts(data.session_path);
+    bz_MakeXMLFromProbeMaps(probe_map,data.session_path,basename,1,defaults)
+end
+session_info = LoadParameters(data.session_path);
+end
+
+function data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct)
+    % get channel info
+    lfpfile = locate_ncs(data.session_path);
+    [probe_map,csc_list]=get_channel_list(lfpfile,data);
+    session_info = make_load_xml(data,probe_map,overwrite_lfp);
+    info = dir(fullfile(data.session_path,[data.basename,'.lfp']));
+    
+    lfp = bz_GetLFP('all','basepath',data.session_path,...
+        'basename',data.basename,...
+        'noPrompts',true,...
+        'downsample',1);
+
+    % resample to 200 hz or other sampling rate 
+    [fold, fnew] = rat(lfp.samplingRate./fs_for_datastruct);
+    lfp.data = resample(double(lfp.data), fnew, fold);
+    lfp.samplingRate = fs_for_datastruct;
+
+    % mark good channels
+    good = zeros(1,length(lfpfile));
+    % check spike group from xml file
+    good([session_info.spikeGroups.groups{:}] + 1) = 1;
+    % check if a channel is all zeros
+    csc_list.good_channels(sum(lfp.data) ~= 0 & good,1) = 1;
+    
+    % get aligned ts
+     if ~isfield(data,'offset')
+        [vts] = Nlx2MatVT(fullfile(data.session_path,'VT1.nvt'),[1,0,0,0,0,0],0,1);
+        data.offset = vts(1);
+    end
+    ts = Nlx2MatCSC(lfpfile{1},[1 0 0 0 0], 0, 1, [] );
+    ts = interp1(linspace(1,length(lfp.data),length(ts)), ts, 1:length(lfp.data));
+    ts = (ts-data.offset) / 10^6;
+            
+    % get phase
+    [theta_phase,~,~]=Phase([ts',BandpassFilter(double(lfp.data),lfp.samplingRate, [4 12])]);
+    
+    data.lfp.theta_phase = theta_phase(:,2:end)';        
+    data.lfp.ts = ts;
+    data.lfp.signal=double(lfp.data)';
+    data.lfp.lfpsamplerate=lfp.samplingRate;
+    data.lfp.load_date = date;
+    data.lfp.creation_date = info.date;
+    data.lfp.channel_list = csc_list;
+    
+    warning on
 end
