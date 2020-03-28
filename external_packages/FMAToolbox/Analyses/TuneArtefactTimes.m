@@ -111,7 +111,7 @@ if strcmp(source,'lfp'),
 	% Process LFP all at once
 	% Time intervals where the artefacts should be sought
 	intervals = [times+durations(1) times+durations(2)];
-	tuned = process(lfp,times,intervals,verbose);
+	tuned = process(lfp,times,intervals,method,verbose);
 else
 	% Split data in chunks
 	start = times(1) + durations(1);
@@ -139,7 +139,7 @@ if strcmp(method,'slope'),
 end
 
 % Select the samples within these intervals
-[in,i,j] = InIntervals(signal(:,1),intervals,'verbose',verbose);
+[in,i,j] = InIntervals(signal(:,1),intervals);
 % Transform this into a matrix where each line contains the data for one artefact, and find minima
 m = full(sparse(i(i~=0),j(j~=0),signal(in,2)));
 infs = ~logical(full(sparse(i(i~=0),j(j~=0),1)));
