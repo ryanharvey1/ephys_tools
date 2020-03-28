@@ -261,12 +261,12 @@ classdef postprocessFigures
             [~,b,c]=unique(data.spikesID.TetrodeNum);
             idx=str2double(regexp(data.spikesID.TetrodeNum{b(mode(c))},'\d*','Match'));
             % power spectrum
-            pspectrum(data.lfp.signal(idx,:),1000,'spectrogram','FrequencyLimits',...
+            pspectrum(data.lfp.signal(idx,:),data.lfp.lfpsamplerate,'spectrogram','FrequencyLimits',...
                 [0, 100],'TimeResolution', 10);
             
             subplot(3,2,6)
             % power by freq
-            pspectrum((data.lfp.signal(idx,:)),1000,'power','FrequencyLimits',[0, 100]);
+            pspectrum((data.lfp.signal(idx,:)),data.lfp.lfpsamplerate,'power','FrequencyLimits',[0, 99]);
             
             colormap(viridis(255))
             darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
@@ -329,10 +329,8 @@ classdef postprocessFigures
             laps = data.linear_track{session}.(direction){1,cell}.laps;
             spkframes = data.linear_track{session}.(direction){1,cell}.dataspks;
             mazetypes = data.mazetypes;
-            
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+           
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             if ~iscell(laps) || isempty(laps)
                 return
@@ -380,9 +378,7 @@ classdef postprocessFigures
             
             ratemap = data.ratemap{cell,session};
             
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             % set up colormap
             theta=0:.01:2*pi;
@@ -411,9 +407,7 @@ classdef postprocessFigures
         function spikesonpath_2d(data,session,cell,colorcode)
             % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             ax=gca;
             [dataspks,~] = createframes_w_spikebinary(data,session,cell);
@@ -488,10 +482,8 @@ classdef postprocessFigures
         
         function phase_by_pos(data,session,cell,direction)
             
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
-            
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+
             ax = gca;
             dataspks = data.linear_track{session}.(direction){1,cell}.dataspks;
             trackinfo = data.linear_track{session}.(direction){cell};
@@ -506,8 +498,14 @@ classdef postprocessFigures
             % PHASE BY POSITION
             x=rescale(dataspks(:,2),0,1);
             
+%             theta = BandpassFilter(data.lfp.signal(trodeID,:),...
+%                 data.lfp.lfpsamplerate, [4 12]);
+%             
+%             [theta_phase,~,~]=Phase([data.lfp.ts',theta']);
+            
             phase=interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
                 dataspks(logical(dataspks(:,6)),1)','linear');
+            
             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],...
                 [phase';phase'+2*pi]*180/pi,15,'Filled','k');
             
@@ -558,9 +556,7 @@ classdef postprocessFigures
             x = dataspks(dataspks(:,6) == 0,2);
             spkts = dataspks(dataspks(:,6) == 1,1);
             
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             if isempty(x)
                 return
@@ -603,9 +599,7 @@ classdef postprocessFigures
         
         function phasemap_2d(data,session,cell)
             
-            tetrode=strsplit(data.spikesID.paths{cell},filesep);
-            tetrode=tetrode{end};
-            trodeID=str2double(extractBetween(tetrode,'TT','.'));
+            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
