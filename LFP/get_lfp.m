@@ -5,11 +5,17 @@ function data = get_lfp(data,varargin)
 % compensates for the delay introduced by the filter
 %
 %   Input:
-%           lfpfile: cell array containing file names of lfp files
 %           data: ephys_tool's data structure
 %           varargin:
 %               Fold: lfp sample rate (32000)
 %               Fnew: resampled lfp sample rate (1000)
+%               overwrite_lfp: overwrite the .lfp and xml (0)
+%               fs_for_datastruct: resampled lfp sample rate to be saved in
+%               the postprocessed data structure (200)
+%
+% You can also call get_lfp without the 'data' input. Just make sure to cd to your
+% raw data folder beforehand.
+%
 %   Output:
 %           data:
 %               data.lfp.theta_phase
@@ -32,6 +38,12 @@ Fold = p.Results.Fold;
 Fnew = p.Results.Fnew;
 overwrite_lfp = p.Results.overwrite_lfp;
 fs_for_datastruct = p.Results.fs_for_datastruct;
+
+% if no inputs, we can still save the xml and .lfp files 
+if ~exist('data','var')
+    data.session_path = pwd;
+    [~,data.basename] = fileparts(data.session_path);
+end
 
 warning off
 % load lfp from .lfp file
