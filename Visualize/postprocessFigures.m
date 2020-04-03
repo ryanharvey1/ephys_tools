@@ -603,6 +603,10 @@ classdef postprocessFigures
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
+            if isempty(data_video_spk(data_video_spk(:,6)==1,1))
+                return
+            end
+            
             [SmoothRateMap,~,~,~,~] = bindata(data_video_spk(data_video_spk(:,6)==0,:),...
                 data.samplerate,data_video_spk(data_video_spk(:,6)==1,:),0,data.maze_size_cm(session));
             
