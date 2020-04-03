@@ -224,7 +224,13 @@ classdef after_spikesort_cleanup
             tic
             
             myKsDir=pwd;
+            basedir = pwd;
             
+            % check to see if there is a specific kilosort folder
+            ks_folder = dir('Kilosort*');
+            if ~isempty(ks_folder)
+                myKsDir = fullfile(ks_folder.folder,ks_folder.name);
+            end
             disp(myKsDir)
             
             mkdir(fullfile(pwd,'Sorted'))
@@ -267,7 +273,8 @@ classdef after_spikesort_cleanup
             
             % set params to extract average waveforms
             datfile='filtered.dat';
-            gwfparams.dataDir = [myKsDir,filesep];    % KiloSort/Phy output folder
+            gwfparams.dataDir = [basedir,filesep];    % KiloSort/Phy output folder
+            gwfparams.myKsDir = [myKsDir,filesep];
             gwfparams.fileName = datfile;         % .dat file containing the raw
             gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
             gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
@@ -286,7 +293,7 @@ classdef after_spikesort_cleanup
             % subtract the video sample rate from the spike times to
             % account for the difference in sample rate between spikes (~32000hz)
             % and video (~30hz)
-            [ts] = Nlx2MatVT([myKsDir,filesep,'VT1.nvt'],[1,0,0,0,0,0],0,1);
+            [ts] = Nlx2MatVT(fullfile(basedir,'VT1.nvt'),[1,0,0,0,0,0],0,1);
 
             % split data into respective tetrodes
             for i=0:4:sp.n_channels_dat-4
@@ -303,11 +310,9 @@ classdef after_spikesort_cleanup
                 % and then subtract video sample rate
                 output(:,1)=(output(:,1)*10^6+ts(1))-mean(diff(ts));
 
-                
                 disp([num2str(length(unique(output(:,2)))),' Clusters'])
                 disp(['Saving ','TT',num2str(i/4+1),'.mat'])
                 save(fullfile('Sorted',['TT',num2str(i/4+1),'.mat']),'output')
-                
                 
                 % average waveforms
                 gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
@@ -327,7 +332,7 @@ classdef after_spikesort_cleanup
                     end
                 end
                 
-                orig_filename=fullfile(myKsDir,['TT',num2str(i/4+1),'.ntt']);
+                orig_filename=fullfile(basedir,['TT',num2str(i/4+1),'.ntt']);
                 
                 confidence=NaN(1,length(means));
                 
@@ -349,7 +354,7 @@ classdef after_spikesort_cleanup
                 grades(:,5)=unitQuality(ismember(clusterIDs-1,unique(output(:,2))));
                 grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
                 
-                save(fullfile(myKsDir,'Sorted',['TT',num2str(i/4+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
+                save(fullfile(basedir,'Sorted',['TT',num2str(i/4+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
                 
                 clear means grades ISI_store
                 
