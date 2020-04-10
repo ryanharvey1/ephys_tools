@@ -1,12 +1,12 @@
 function mergeSessionData(sessions_to_combine,varargin)
 % mergeSessionData: merges two neuralynx sessions together
-% 
+%
 % Input: cell array of session ids
 %        each row should contain a different session pair
 %
-% optional: 
+% optional:
 %       'view_xy': 1 to view xy coordinates from both sessions before merging. (default 0)
-%  
+%
 % Example:
 % sessions_to_combine={'D:\Projects\PAE_PlaceCell\data\RH11\2016-05-16_09-46-39',...
 %     'D:\Projects\PAE_PlaceCell\data\RH11\2016-05-16_18-45-45'};
@@ -21,16 +21,20 @@ p.parse(varargin{:});
 
 view_xy = p.Results.view_xy;
 
+if ~exist('sessions_to_combine','var')
+    sessions_to_combine = find_sessions_to_merge;
+end
+
 for i=1:size(sessions_to_combine,1)
     
     disp([sessions_to_combine{i,1},'  &&  ',sessions_to_combine{i,2}])
     
-    % compare xy from each session pair 
+    % compare xy from each session pair
     if view_xy
         cd(sessions_to_combine{i,1})
         fn=dir('*.nvt');
         fn={fn.name}';
-                
+        
         [Timestamps,X,Y,Angles,Targets,Points,Header]=Nlx2MatVT(fullfile(sessions_to_combine{i,1},fn{:}),...
             [1 1 1 1 1 1], 1, 1, [] );
         
@@ -64,18 +68,19 @@ for i=1:size(sessions_to_combine,1)
     
     % copy over cheeta log
     copyfile(fullfile(sessions_to_combine{i,1},'CheetahLogFile.txt'),...
-        fullfile([sessions_to_combine{i,1},'_combined'],'CheetahLogFile.txt')); 
+        fullfile([sessions_to_combine{i,1},'_combined'],'CheetahLogFile.txt'));
     
     % copy over cheetah lost ad record
     copyfile(fullfile(sessions_to_combine{i,1},'CheetahLostADRecords.txt'),...
-        fullfile([sessions_to_combine{i,1},'_combined'],'CheetahLostADRecords.txt'));    
-
+        fullfile([sessions_to_combine{i,1},'_combined'],'CheetahLostADRecords.txt'));
+    
     cd(sessions_to_combine{i,1})
     
     % combine video files
     fn=dir('*.nvt');
     fn={fn.name}';
     for ntt=1:length(fn)
+
         [Timestamps,X,Y,Angles,Targets,Points,Header]=Nlx2MatVT(fullfile(sessions_to_combine{i,1},fn{ntt}),...
             [1 1 1 1 1 1], 1, 1, [] );
         
@@ -86,7 +91,7 @@ for i=1:size(sessions_to_combine,1)
         ts_gap=mean(diff(Timestamps));
         
         % range of time between sessions
-        ts_range=[Timestamps(end),Timestamps2(1)]; 
+        ts_range=[Timestamps(end),Timestamps2(1)];
         
         % alter second session time stamps to fit after first session
         tempts=((Timestamps2-ts_range(2))+ts_range(1))+ts_gap;
@@ -106,6 +111,10 @@ for i=1:size(sessions_to_combine,1)
     fn=dir('*.ntt');
     fn={fn.name}';
     for ntt=1:length(fn)
+        if exist(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),'file')
+            continue
+        end
+        
         [Timestamps, ScNumbers, CellNumbers, Features, Samples, Header] =...
             Nlx2MatSpike(fullfile(sessions_to_combine{i,1},fn{ntt}), [1 1 1 1 1], 1, 1, [] );
         
@@ -122,6 +131,14 @@ for i=1:size(sessions_to_combine,1)
         Features2(:,to_remove)=[];
         Samples2(:,:,to_remove)=[];
         
+        if Timestamps == 0
+            Samples = zeros(32,4,0);
+        end
+        
+        if Timestamps2 == 0
+            Samples2 = zeros(32,4,0);
+        end
+        
         Mat2NlxSpike(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}), 0, 1, [], [1 1 1 1 1],...
             [Timestamps,tempts],...
             [ScNumbers,ScNumbers2],...
@@ -137,6 +154,9 @@ for i=1:size(sessions_to_combine,1)
     fn=dir('*.ncs');
     fn={fn.name}';
     for ntt=1:length(fn)
+        if exist(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),'file')
+            continue
+        end
         [Timestamps, ChannelNumbers, SampleFrequencies, NumberOfValidSamples,...
             Samples, Header] = Nlx2MatCSC(fullfile(sessions_to_combine{i,1},fn{ntt}),[1 1 1 1 1], 1, 1, [] );
         
@@ -165,28 +185,63 @@ for i=1:size(sessions_to_combine,1)
         disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
     end
     
-
+    
     % combine event files
     fn=dir('*.nev');
     fn={fn.name}';
     for ntt=1:length(fn)
+        if exist(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),'file')
+            continue
+        end
         [Timestamps,EventIDs,TTLs,Extras,EventStrings,Header]=...
             Nlx2MatEV(fullfile(sessions_to_combine{i,1},fn{ntt}), [1 1 1 1 1], 1, 1, [] );
         
         [Timestamps2,EventIDs2,TTLs2,Extras2,EventStrings2,Header2]=...
-            Nlx2MatEV(fullfile(sessions_to_combine{i,1},fn{ntt}), [1 1 1 1 1], 1, 1, [] );
+            Nlx2MatEV(fullfile(sessions_to_combine{i,2},fn{ntt}), [1 1 1 1 1], 1, 1, [] );
+        
+        tempts=(Timestamps2-ts_range(2));
+        tempts=tempts+ts_range(1)+ts_gap;
+        
         
         Mat2NlxEV(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}),...
             0, 1, [], [1 1 1 1 1],...
-            [Timestamps(1),lastts],...
-            [EventIDs(1),EventIDs2(2)],...
-            TTLs,...
-            Extras,...
-            [EventStrings(1);EventStrings(2)],...
+            [Timestamps,tempts],...
+            [EventIDs,EventIDs2],...
+            [TTLs,TTLs2],...
+            [Extras,Extras2],...
+            [EventStrings;EventStrings],...
             Header);
         
         disp(fullfile([sessions_to_combine{i,1},'_combined'],fn{ntt}))
     end
 end
 warning on
+end
+
+function sessions_to_combine = find_sessions_to_merge
+    disp(['looking in  ',pwd,'  for sessions to merge'])
+    sessions = dir;
+    
+    idx = {sessions.name} == "." | {sessions.name} == ".." | {sessions.name} == "...";
+    
+    sessions(idx) = [];
+    
+    sessions = {sessions.name}';
+    
+    dates = cellfun(@(x) x(1:10), sessions, 'un', 0);
+    ii = 1;
+    for i = 1:length(dates)
+        idx = find(contains(dates,dates{i}));
+        if length(idx) > 1
+            sessions_to_combine(ii,1:length(idx)) = fullfile(pwd,sessions(idx));
+            ii = ii + 1;
+        end
+        clear idx
+    end
+    [~,b,~] = unique(sessions_to_combine(:,1));
+    sessions_to_combine = sessions_to_combine(b,:);
+    disp(sessions_to_combine)
+    disp('check if these sessions are okay to merge')
+    disp('type dbcont to continue')
+    keyboard
 end
