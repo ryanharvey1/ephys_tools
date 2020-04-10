@@ -74,6 +74,10 @@ classdef postprocessFigures
                     sum(~contains(data.mazetypes,'track','IgnoreCase',true));
             end
             
+            if sum(contains(data.mazetypes,'track','IgnoreCase',true)) == length(data.mazetypes)
+                sessions = 1:2:nsessions;
+            end
+            
             if ~isempty(cellid)
                 cells_to_find=strcat(cellid{1},num2str(cellid{2}));
                 
@@ -266,8 +270,9 @@ classdef postprocessFigures
             
             subplot(3,2,6)
             % power by freq
-            pspectrum((data.lfp.signal(idx,:)),data.lfp.lfpsamplerate,'power','FrequencyLimits',[0, 99]);
-            
+            pspectrum((data.lfp.signal(idx,:)),data.lfp.lfpsamplerate,'power',...
+                'FrequencyLimits',[0, 99],'FrequencyResolution',1);
+            title(['channel: ',num2str(idx)])
             colormap(viridis(255))
             darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
         end
@@ -602,6 +607,10 @@ classdef postprocessFigures
             trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
+            
+            if sum(data_video_spk(:,6)) == 0
+                return
+            end
             
             [SmoothRateMap,~,~,~,~] = bindata(data_video_spk(data_video_spk(:,6)==0,:),...
                 data.samplerate,data_video_spk(data_video_spk(:,6)==1,:),0,data.maze_size_cm(session));
