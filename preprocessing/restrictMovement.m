@@ -24,11 +24,12 @@ if nargin<3
 end
 
 % set up figure
-fig=figure; fig.Color=[1 1 1];plot(x,y,'k-');hold on
+fig=figure;plot(x,y,'Color',[1,1,1,0.2]);hold on
 title('Click around the points you want to keep')
 xlabel('X')
 ylabel('Y')
 axis equal
+darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
 disp('PRESS "ENTER" TO EXIT')
 i=1;
 
