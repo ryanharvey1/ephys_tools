@@ -124,8 +124,8 @@ if ~exist([fullfile(data.session_path,data.basename),'.xml'],'file') || overwrit
     defaults.VoltageRange = 20;
     defaults.Amplification = 1000;
     defaults.LfpSampleRate = 1000;
-    defaults.PointsPerWaveform = 32;
-    defaults.PeakPointInWaveform = 8;
+    defaults.PointsPerWaveform = 64;
+    defaults.PeakPointInWaveform = 32;
     defaults.FeaturesPerWave = 4;
     [~,basename] = fileparts(data.session_path);
     bz_MakeXMLFromProbeMaps(probe_map,data.session_path,basename,1,defaults)
