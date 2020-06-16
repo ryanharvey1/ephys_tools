@@ -3,7 +3,7 @@
 figs=0;
 
 %Initialize path to DLC output
-path_to_files='d:\Users\BClarkLab\Desktop\Videos\lgOF_dlc';
+path_to_files='F:\Projects\PAE_OF\Tracked';
 files = dir([path_to_files,'\**\*.csv']);
 
 %Initialize data table and variables
@@ -21,7 +21,7 @@ dia=202 ; %diameter of maze in cm
 %% Compile environment Max/Min for transformation into cm and cue Coords for
 %computing cue related measures in OF_postprocess
 
-load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\PAE_OF\Data\maxmin.mat');
+% load('D:\Users\BClarkLab\Google Drive (lberkowitz@unm.edu)\Manuscripts\In Progress\PAE_OF\Data\maxmin.mat');
 
 for i=1:length(files)
     params.subID{i}=vidfile(i).name;
@@ -54,7 +54,7 @@ for i=1:length(files)
     % convert ts into seconds
     tsxy(:,1)=0:1/30:tsxy(end,1)/30;
     
-    %Create outer limit to remove points outside the maze. 
+    Create outer limit to remove points outside the maze. 
     xunit=sin(0:pi/360:2*pi)*((maxmin.xmax{i}-maxmin.xmin{i})/2)*1.1+median([maxmin.xmax{i},maxmin.xmin{i}]);
     yunit=cos(0:pi/360:2*pi)*((maxmin.ymax{i}-maxmin.ymin{i})/2)*1.1+median([maxmin.ymax{i},maxmin.ymin{i}]);
 
