@@ -1,4 +1,4 @@
-function [ PathLength, pathIV, pathDist] = compute_OFpathCalc(x,y)
+function [ PathLength, IV, pathDist] = compute_OFpathCalc(x,y)
 %compute_pathCalc calulates features of paths. 
 % Input: 
 %   x: x coordinates in cm 
