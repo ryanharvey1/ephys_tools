@@ -2,8 +2,8 @@
 addpath('D:\Users\BClarkLab\ephys_tools\external_packages\mvmdist-master')
 data=compileResults('F:\ClarkP30_Recordings\ProcessedData');
 
-control={'LB01','LB03','LB05','ATN04','ATN05','ATN08','ATN14','ATN16','ATN10','ATN17','ATN16','ATN18'};
-transgenic={'LB04','LB06','LB07','ATN07','ATN09','ATN15'}; 
+control={'LB03','LB05','ATN04','ATN05','ATN08','ATN14','ATN16','ATN10','ATN17','ATN16','ATN18'};
+transgenic={'LB04','LB06','LB07','LB10','ATN07','ATN09','ATN15'}; 
 
 rats={'LB03','LB04','LB05','LB06','LB07','ATN04','ATN05','ATN07','ATN08','ATN09','ATN10','ATN14','ATN15','ATN17','ATN16','ATN18'};
 
