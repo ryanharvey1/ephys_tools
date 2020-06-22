@@ -197,51 +197,14 @@ for s = sess_list
         end
     end
     
-    frequency_ = [];
-    phase_ = [];
-    amplitude = [];
-    unfiltered_ripples = [];
-    peakFrequency = [];
-    peakAmplitude = [];
-    duration_ = [];
-    
-    for ch = 1:size(lfp,1)
-        idx = ripples.ch_map == ch;
-        if ~any(idx)
-            continue
-        end
-        temp_ripples = ripples;
-        temp_ripples.peaks(~idx) = [];
-        temp_ripples.timestamps(~idx,:) = [];
-        temp_ripples.peakNormedPower(~idx) = [];
-
-        [maps_,ripple_data_,stats_] = bz_RippleStats(signal_filtered(ch,:)',...
-            lfp_ts',temp_ripples,'frequency',frequency);
-        
-        [unfiltered,~,~] = bz_RippleStats(lfp(ch,:)',lfp_ts',temp_ripples,'frequency',frequency);
-        maps_.unfiltered_ripples = unfiltered.ripples;
-        
-        frequency_ = [frequency_;maps_.frequency];
-        phase_ = [phase_;maps_.phase];
-        amplitude = [amplitude;maps_.amplitude];
-        unfiltered_ripples = [unfiltered_ripples;maps_.unfiltered_ripples];
-        
-        peakFrequency = [peakFrequency;ripple_data_.peakFrequency];
-        peakAmplitude = [peakAmplitude;ripple_data_.peakAmplitude];
-        duration_ = [duration_;ripple_data_.duration];
-
-    end
-    
-    [stats.acg.data,stats.acg.t] = CCG(ripples.peaks,ones(length(ripples.peaks),1),'binSize',corrBinSize);
-	[stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
-	[stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
-	[stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
+    [maps,ripple_data,stats] = get_ripple_stats(lfp,signal_filtered,...
+        ripples,frequency,lfp_ts);
     
     % pull out unfiltered and filtered ripples from lfp
     for r = 1:size(ripples.timestamps,1)
         idx = lfp_ts >= ripples.timestamps(r,1) & lfp_ts <= ripples.timestamps(r,2);
-        ripples.unfiltered_ripple{r} = signal(idx);
-        ripples.filtered_ripple{r} = signal_filtered(good_channel,idx);
+        ripples.unfiltered_ripple{r} = lfp(ripples.ch_map(r),idx);
+        ripples.filtered_ripple{r} = signal_filtered(ripples.ch_map(r),idx);
     end
     
     ripple_info.ripples = ripples;
@@ -277,6 +240,62 @@ end
 if all_sessions
     WaitMessage.Destroy;
 end
+end
+
+function [maps,ripple_data,stats] = get_ripple_stats(lfp,signal_filtered,ripples,frequency,lfp_ts)
+ripples_ = [];
+frequency_ = [];
+phase_ = [];
+amplitude = [];
+unfiltered_ripples = [];
+peakFrequency = [];
+peakAmplitude = [];
+duration_ = [];
+
+for ch = 1:size(lfp,1)
+    idx = ripples.ch_map == ch;
+    if ~any(idx)
+        continue
+    end
+    temp_ripples = ripples;
+    temp_ripples.peaks(~idx) = [];
+    temp_ripples.timestamps(~idx,:) = [];
+    temp_ripples.peakNormedPower(~idx) = [];
+    
+    [maps_,ripple_data_,~] = bz_RippleStats(signal_filtered(ch,:)',...
+        lfp_ts',temp_ripples,'frequency',frequency);
+    
+    [unfiltered,~,~] = bz_RippleStats(lfp(ch,:)',lfp_ts',temp_ripples,'frequency',frequency);
+    maps_.unfiltered_ripples = unfiltered.ripples;
+    
+    ripples_ = [ripples_;maps_.ripples];
+    frequency_ = [frequency_;maps_.frequency];
+    phase_ = [phase_;maps_.phase];
+    amplitude = [amplitude;maps_.amplitude];
+    unfiltered_ripples = [unfiltered_ripples;maps_.unfiltered_ripples];
+    
+    peakFrequency = [peakFrequency;ripple_data_.peakFrequency];
+    peakAmplitude = [peakAmplitude;ripple_data_.peakAmplitude];
+    duration_ = [duration_;ripple_data_.duration];
+    
+end
+
+corrBinSize = 0.01;
+[stats.acg.data,stats.acg.t] = CCG(ripples.peaks,ones(length(ripples.peaks),1),'binSize',corrBinSize);
+[stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(peakAmplitude,peakFrequency);
+[stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(duration_,peakFrequency);
+[stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(duration_,peakAmplitude);
+
+maps.ripples = ripples_;
+maps.frequency = frequency_;
+maps.phase = phase_;
+maps.amplitude = amplitude;
+maps.unfiltered_ripples = unfiltered_ripples;
+
+ripple_data.peakFrequency = peakFrequency;
+ripple_data.peakAmplitude = peakAmplitude;
+ripple_data.duration = duration_;
+
 end
 
 function ripples = combine_and_exclude_close_events(ripples)
@@ -343,9 +362,9 @@ end
 function ripples = remove_ch_with_few_ripples(ripples)
 % remove channels with < 2 events
 idx = zeros(length(ripples.ch_map),1);
-for ch = unique(ripples.ch_map)
-    if sum(ch_map == ch) < 2
-        idx(ch_map == ch) = 1;
+for ch = unique(ripples.ch_map)'
+    if sum(ripples.ch_map == ch) < 2
+        idx(ripples.ch_map == ch) = 1;
     end
 end
 ripples.peaks(logical(idx)) = [];
