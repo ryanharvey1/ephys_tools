@@ -267,8 +267,14 @@ if EMGThresh
         parts = strsplit(EMGfilename,filesep);
         parts{end-1} = 'ProcessedData';
         parts{end} = erase(parts{end},'_emg');
-        data = load(fullfile(parts{:}),'session_path','lfp','rat','sessionID');
-        EMGFromLFP = getEMGfromLFP(data.lfp.signal','fs',data.lfp.lfpsamplerate,'graphics',false);
+        data = load(fullfile(parts{:}),'session_path','rat','sessionID','basename');
+        
+        lfp = bz_GetLFP('all','basepath',data.session_path,...
+            'basename',data.basename,...
+            'noPrompts',true,...
+            'downsample',1)';
+
+        EMGFromLFP = getEMGfromLFP(double(lfp.data),'fs',lfp.samplingRate,'graphics',false);
         save(EMGfilename,'-struct','EMGFromLFP','-v7.3')
 %        [EMGFromLFP] = EMGFromLFP(basepath,'samplingFrequency',10,'savemat',false,'noPrompts',true);
     end
