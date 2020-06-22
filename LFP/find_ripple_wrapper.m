@@ -35,13 +35,16 @@ function ripple_info = find_ripple_wrapper(data,varargin)
 sess_list = 1;
 all_sessions = 0;
 
-if isstruct(data)
+if isstruct(data) % if the user supplied the ephys_tools data structure
+
+    lfp = bz_GetLFP('all','basepath',data.session_path,...
+        'basename',data.basename,...
+        'noPrompts',true,...
+        'downsample',1);
+    
     % unpack input
     p = inputParser;
     p.addParameter('figs',0);
-    p.addParameter('lfp',data.lfp.signal);
-    p.addParameter('lfp_ts',data.lfp.ts);
-    p.addParameter('frequency',data.lfp.lfpsamplerate);
     p.addParameter('speed',data.frames(:,5));
     p.addParameter('mov_ts',data.frames(:,1));
     p.addParameter('ripple_fs',[130 200]);
@@ -50,16 +53,16 @@ if isstruct(data)
 
     p.parse(varargin{:});
     figs = p.Results.figs;
-    lfp = p.Results.lfp;
-    lfp_ts = p.Results.lfp_ts;
-    frequency = p.Results.frequency;
+    lfp_ts = lfp.timestamps';
+    frequency = lfp.samplingRate;
+    lfp = double(lfp.data');
     speed = p.Results.speed;
     mov_ts = p.Results.mov_ts;
     passband = p.Results.ripple_fs;
     save_results = p.Results.save;
     overwrite = p.Results.overwrite;
 
-elseif isempty(data)
+elseif isempty(data) % if the user supplied each variable individually
     p = inputParser;
     p.addParameter('figs',0);
     p.addParameter('lfp',[]);
@@ -113,15 +116,17 @@ if all_sessions
     WaitMessage = parfor_wait(length(sess_list),'Waitbar',true);
 end
 for s = sess_list
-    
-    if all_sessions
-        data = load(fullfile(sessions(s).folder,sessions(s).name));
-        
+    if all_sessions % to loop through a data set
+        data = load(fullfile(sessions(s).folder,sessions(s).name),...
+            'frames','session_path','basename','sessionID','rat',...
+            'mazetypes','linear_track','events');
+        lfp = bz_GetLFP('all','basepath',data.session_path,...
+            'basename',data.basename,...
+            'noPrompts',true,...
+            'downsample',1);
+
         p = inputParser;
         p.addParameter('figs',0);
-        p.addParameter('lfp',data.lfp.signal);
-        p.addParameter('lfp_ts',data.lfp.ts);
-        p.addParameter('frequency',data.lfp.lfpsamplerate);
         p.addParameter('speed',data.frames(:,5));
         p.addParameter('mov_ts',data.frames(:,1));
         p.addParameter('ripple_fs',[130 200]);
@@ -130,15 +135,14 @@ for s = sess_list
         
         p.parse(varargin{:});
         figs = p.Results.figs;
-        lfp = p.Results.lfp;
-        lfp_ts = p.Results.lfp_ts;
-        frequency = p.Results.frequency;
+        lfp_ts = lfp.timestamps';
+        frequency = lfp.samplingRate;
+        lfp = double(lfp.data');
         speed = p.Results.speed;
         mov_ts = p.Results.mov_ts;
         passband = p.Results.ripple_fs;
         save_results = p.Results.save;
         overwrite = p.Results.overwrite;
-
     end
     
     processedpath=strsplit(data.session_path,filesep);
@@ -147,46 +151,20 @@ for s = sess_list
         [data.rat,'_',data.sessionID,'_emg.mat']);
     
     % find good and bad channels based on signal to noise ratio
-    for ch = 1:size(lfp,1)
-        signal_filtered(ch,:) = BandpassFilter(lfp(ch,:), frequency, passband);
-        
-        r_ripple(ch) = snr(lfp_ts,signal_filtered(ch,:));
+    [signal_filtered,r_ripple,r] = get_signal_to_noise(lfp,lfp_ts,frequency,passband);
+    
+    [good_channel,signal,noise,noise_channel] = find_good_bad_channel(data,lfp,r);
 
-        r(ch) = snr(lfp_ts,lfp(ch,:));
-    end
-    r(isinf(r)) = NaN;
-        
-    % check if max SNR is < 1
-    if nanmax(r) < 1
-        ripple_info = NaN;
-        disp('Recording was too noisy')
-        if all_sessions
-            clearvars -except varargin all_sessions sessions s sess_list ...
-                save overwrite WaitMessage
-            continue
-        else
-            return
-        end
-    end
-        
-    [~,good_channel] = nanmax(r);
-    if nanmin(r) < 1
-        [~,noise_channel] = nanmin(r);
-        noise = lfp(noise_channel,:)';
-    else
-        noise_channel = NaN;
-        noise = zeros(size(lfp,2),1);
+    for ch = 1:size(lfp,1)
+        [ripples{ch}] = bz_FindRipples_ephys_tools(lfp(ch,:)',lfp_ts',...
+            'EMGfilename',emg_file,...
+            'EMGThresh',0.9,...
+            'noise',noise,...
+            'passband',passband,...
+            'frequency',frequency);
     end
     
-    signal = lfp(good_channel,:);
-    
-    % detect ripples
-    [ripples] = bz_FindRipples_ephys_tools(signal',lfp_ts',...
-        'EMGfilename',emg_file,...
-        'EMGThresh',0.9,...
-        'noise',noise,...
-        'passband',passband,...
-        'frequency',frequency);
+    [ripples] = combine_and_exclude_close_events(ripples);
     
     % store channel used, noise channel, and snr
     ripples.detectorinfo.detectionparms.channel_used = good_channel;
@@ -196,13 +174,15 @@ for s = sess_list
 
     % exclude movement
     temp_speed = interp1(mov_ts,speed,ripples.timestamps);
-    above_speed_thres = ~any(temp_speed < 5 | isnan(temp_speed),2);
-    
+    above_speed_thres = ~any(temp_speed < 3 | isnan(temp_speed),2);
     ripples.timestamps(above_speed_thres,:) = [];
     ripples.peaks(above_speed_thres) = [];
     ripples.peakNormedPower(above_speed_thres,:) = [];
-    
+    ripples.ch_map(above_speed_thres,:) = [];
     disp(['After speed thresholding: ' num2str(length(ripples.peaks)) ' events.']);
+    
+    % remove channels with < 2 ripples
+    ripples = remove_ch_with_few_ripples(ripples);
     
     % if less than 2 ripples are found
     if size(ripples.timestamps,1) < 2
@@ -217,12 +197,45 @@ for s = sess_list
         end
     end
     
-    [maps,ripple_data,stats] = bz_RippleStats(signal_filtered(good_channel,:)',...
-        lfp_ts',ripples,'frequency',frequency);
+    frequency_ = [];
+    phase_ = [];
+    amplitude = [];
+    unfiltered_ripples = [];
+    peakFrequency = [];
+    peakAmplitude = [];
+    duration_ = [];
     
-    [unfiltered,~,~] = bz_RippleStats(signal',lfp_ts',ripples,'frequency',frequency);
-    maps.unfiltered_ripples = unfiltered.ripples;
+    for ch = 1:size(lfp,1)
+        idx = ripples.ch_map == ch;
+        if ~any(idx)
+            continue
+        end
+        temp_ripples = ripples;
+        temp_ripples.peaks(~idx) = [];
+        temp_ripples.timestamps(~idx,:) = [];
+        temp_ripples.peakNormedPower(~idx) = [];
+
+        [maps_,ripple_data_,stats_] = bz_RippleStats(signal_filtered(ch,:)',...
+            lfp_ts',temp_ripples,'frequency',frequency);
+        
+        [unfiltered,~,~] = bz_RippleStats(lfp(ch,:)',lfp_ts',temp_ripples,'frequency',frequency);
+        maps_.unfiltered_ripples = unfiltered.ripples;
+        
+        frequency_ = [frequency_;maps_.frequency];
+        phase_ = [phase_;maps_.phase];
+        amplitude = [amplitude;maps_.amplitude];
+        unfiltered_ripples = [unfiltered_ripples;maps_.unfiltered_ripples];
+        
+        peakFrequency = [peakFrequency;ripple_data_.peakFrequency];
+        peakAmplitude = [peakAmplitude;ripple_data_.peakAmplitude];
+        duration_ = [duration_;ripple_data_.duration];
+
+    end
     
+    [stats.acg.data,stats.acg.t] = CCG(ripples.peaks,ones(length(ripples.peaks),1),'binSize',corrBinSize);
+	[stats.amplitudeFrequency.rho,stats.amplitudeFrequency.p] = corrcoef(data.peakAmplitude,data.peakFrequency);
+	[stats.durationFrequency.rho,stats.durationFrequency.p] = corrcoef(data.duration,data.peakFrequency);
+	[stats.durationAmplitude.rho,stats.durationAmplitude.p] = corrcoef(data.duration,data.peakAmplitude);
     
     % pull out unfiltered and filtered ripples from lfp
     for r = 1:size(ripples.timestamps,1)
@@ -235,8 +248,10 @@ for s = sess_list
     ripple_info.maps = maps;
     ripple_info.ripple_data = ripple_data;
     ripple_info.stats = stats;
-    ripple_info.ripples.detectorinfo.ProcessedDatafile =...
-        fullfile(sessions(s).folder,sessions(s).name);
+    if exist('sessions','var')
+        ripple_info.ripples.detectorinfo.ProcessedDatafile =...
+            fullfile(sessions(s).folder,sessions(s).name);
+    end
     
     if figs
         bz_PlotRippleStats(ripple_info.maps,ripple_info.ripple_data,...
@@ -261,5 +276,124 @@ for s = sess_list
 end
 if all_sessions
     WaitMessage.Destroy;
+end
+end
+
+function ripples = combine_and_exclude_close_events(ripples)
+% unpack ripple events on each channel & exclude successive events
+% that occur within a `close_event_threshold` of a previously occuring event.
+
+% pull out data across channels
+peak_ = [];
+ch_map = [];
+timestamps = [];
+peakNormedPower = [];
+for ch = 1:size(ripples,2)
+    peak_ = [peak_;ripples{ch}.peaks];
+    timestamps = [timestamps;ripples{ch}.timestamps];
+    peakNormedPower = [peakNormedPower;ripples{ch}.peakNormedPower];
+    ch_map = [ch_map;repmat(ch,length(ripples{ch}.peaks),1)];
+    stdev(ch) = ripples{ch}.stdev;
+end
+detectionparms = ripples{ch}.detectorinfo.detectionparms;
+detectionparms.lfp = [];
+
+% sort
+[peak_,idx] = sort(peak_);
+candidate_event_times = timestamps(idx,:);
+ch_map = ch_map(idx,:);
+peakNormedPower = peakNormedPower(idx,:);
+
+% find close ripples across channels and remove them
+close_event_threshold = 0.00;
+n_events = size(candidate_event_times,1);
+new_event_index = [1:n_events]';
+new_event_times = candidate_event_times;
+for ind = 1:n_events
+    is_too_close = candidate_event_times(ind,2) + close_event_threshold >...
+        new_event_times(:,1) & new_event_index > ind;
+    new_event_index = new_event_index(~is_too_close);
+    new_event_times = new_event_times(~is_too_close,:);
+end
+peak_ = peak_(new_event_index);
+peakNormedPower = peakNormedPower(new_event_index);
+ch_map = ch_map(new_event_index);
+
+% pull out some metadata
+detectorname = ripples{1}.detectorinfo.detectorname;
+detectiondate = ripples{1}.detectorinfo.detectiondate;
+detectionintervals = ripples{1}.detectorinfo.detectionintervals;
+
+% recreate ripples struct
+ripples = [];
+ripples.peaks = peak_;
+ripples.timestamps = new_event_times;
+ripples.peakNormedPower = peakNormedPower;
+ripples.ch_map = ch_map;
+ripples.stdev = stdev;
+ripples.detectorinfo.detectionparms = detectionparms;
+ripples.detectorinfo.detectorname = detectorname;
+ripples.detectorinfo.detectiondate = detectiondate;
+ripples.detectorinfo.detectionintervals = detectionintervals;
+
+% remove channels with < 2 ripples
+ripples = remove_ch_with_few_ripples(ripples);
+end
+
+function ripples = remove_ch_with_few_ripples(ripples)
+% remove channels with < 2 events
+idx = zeros(length(ripples.ch_map),1);
+for ch = unique(ripples.ch_map)
+    if sum(ch_map == ch) < 2
+        idx(ch_map == ch) = 1;
+    end
+end
+ripples.peaks(logical(idx)) = [];
+ripples.timestamps(logical(idx),:) = [];
+ripples.peakNormedPower(logical(idx)) = [];
+ripples.ch_map(logical(idx)) = [];
+end
+
+function [signal_filtered,r_ripple,r] = get_signal_to_noise(lfp,lfp_ts,frequency,passband)
+
+for ch = 1:size(lfp,1)
+    signal_filtered(ch,:) = BandpassFilter(lfp(ch,:), frequency, passband);
+    
+    r_ripple(ch) = snr(lfp_ts,signal_filtered(ch,:));
+    
+    r(ch) = snr(lfp_ts,lfp(ch,:));
+end
+r(isinf(r)) = NaN;
+r_ripple(isinf(r_ripple)) = NaN;
+end
+
+function [good_channel,signal,noise,noise_channel] = find_good_bad_channel(data,lfp,r)
+
+% find disconnected channels
+session_info = LoadParameters(data.session_path);
+% mark good channels
+good = zeros(1,size(lfp,1));
+% check spike group from xml file
+good([session_info.spikeGroups.groups{:}] + 1) = 1;
+% check if a channel is all zeros
+connected_channels(sum(lfp') ~= 0 & good,1) = 1;
+
+% pick channel to use
+good = find(connected_channels);
+[~,I] = nanmax(r(good));
+good_channel = good(I);
+
+signal = lfp(good_channel,:);
+
+% pick noise channel based on xml or base on the most noisy snr
+if any(connected_channels == 0)
+    noise_channel = find(connected_channels == 0,1,'first');
+    noise = lfp(noise_channel,:)';
+elseif nanmin(r) < 1 && nanmax(r) > 1
+    [~,noise_channel] = nanmin(r);
+    noise = lfp(noise_channel,:)';
+else
+    noise_channel = NaN;
+    noise = zeros(size(lfp,2),1);
 end
 end
