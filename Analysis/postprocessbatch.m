@@ -3,14 +3,17 @@ tic
 
 p = inputParser;
 p.addParameter('overwrite_lfp',0); % raw sample rate
+p.addParameter('after_spike_sort_cleanup',0); % raw sample rate
 p.parse(varargin{:});
 overwrite_lfp = p.Results.overwrite_lfp;
+after_spike_sort_cleanup = p.Results.after_spike_sort_cleanup;
 
 if overwrite_lfp
     disp('WARNING. You are about to overwrite all neuroscope .xml and .lfp files')
     disp('Hit enter if this is okay')
     pause
 end
+
 % check to see if the temp file exist...if not make it
 cd (dataset)
 cd ..
@@ -44,12 +47,18 @@ parfor iratID=1:length(ratID)
     structdir=dir(parent);
     for I=1:length(structdir) % 1 TO # OF FILES IN DIR
         if structdir(I).isdir && structdir(I).name(1) ~= '.'  % IF NOT '.'
-            path=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
+            basepath=[parent filesep structdir(I).name]; % SET PATH TO DATA THAT HAS BEEN THROUGH MCLUST
             if sum(ismember(sessions,['S',strjoin(regexp(structdir(I).name,'\d*','Match'),'')]))<1 &&...
-                    exist([path,filesep,'Sorted'],'dir')==7
+                    exist([basepath,filesep,'Sorted'],'dir')==7
+                
+                % CALL after_spikesort_cleanup
+                if after_spike_sort_cleanup
+                    disp('running after_spikesort_cleanup')
+                    after_spikesort_cleanup.main('path_name',basepath)
+                end
                 
                 % CALL POSTPROCESS FUNCTION
-                postprocess('path',path,'figures',0,'overwrite_lfp',overwrite_lfp); 
+                postprocess('path',basepath,'figures',0,'overwrite_lfp',overwrite_lfp); 
                 
                 % update wait 
                 WaitMessage.Send;
