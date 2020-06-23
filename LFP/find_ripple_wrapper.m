@@ -156,6 +156,9 @@ for s = sess_list
     [good_channel,signal,noise,noise_channel] = find_good_bad_channel(data,lfp,r);
 
     for ch = 1:size(lfp,1)
+        if ~any(lfp(ch,:))
+            continue
+        end
         [ripples{ch}] = bz_FindRipples_ephys_tools(lfp(ch,:)',lfp_ts',...
             'EMGfilename',emg_file,...
             'EMGThresh',0.9,...
@@ -173,7 +176,8 @@ for s = sess_list
     ripples.detectorinfo.detectionparms.snr_ripple_fs = r_ripple;
 
     % exclude movement
-    temp_speed = interp1(mov_ts,speed,ripples.timestamps);
+    [mov_ts,idx] = unique(mov_ts);
+    temp_speed = interp1(mov_ts,speed(idx),ripples.timestamps);
     above_speed_thres = ~any(temp_speed < 3 | isnan(temp_speed),2);
     ripples.timestamps(above_speed_thres,:) = [];
     ripples.peaks(above_speed_thres) = [];
@@ -268,6 +272,10 @@ for ch = 1:size(lfp,1)
     [unfiltered,~,~] = bz_RippleStats(lfp(ch,:)',lfp_ts',temp_ripples,'frequency',frequency);
     maps_.unfiltered_ripples = unfiltered.ripples;
     
+    if size(maps_.ripples,2) ~= size(ripples_,2) && ~isempty(ripples_)
+        maps_ = sync_to_size(maps_,size(ripples_,2));
+    end
+        
     ripples_ = [ripples_;maps_.ripples];
     frequency_ = [frequency_;maps_.frequency];
     phase_ = [phase_;maps_.phase];
@@ -298,6 +306,31 @@ ripple_data.duration = duration_;
 
 end
 
+function maps = sync_to_size(maps,bins)
+for i = 1:size(maps.ripples,1)
+    
+    ripples(i,:) = interp1(linspace(1,bins,size(maps.ripples,2)),...
+        maps.ripples(i,:),1:bins);
+    
+    frequency(i,:) = interp1(linspace(1,bins,size(maps.frequency,2)),...
+        maps.frequency(i,:),1:bins);
+    
+    phase(i,:) = interp1(linspace(1,bins,size(maps.phase,2)),...
+        maps.phase(i,:),1:bins);
+    
+    amplitude(i,:) = interp1(linspace(1,bins,size(maps.amplitude,2)),...
+        maps.amplitude(i,:),1:bins);
+    
+    unfiltered_ripples(i,:) = interp1(linspace(1,bins,size(maps.unfiltered_ripples,2)),...
+        maps.unfiltered_ripples(i,:),1:bins);
+end
+maps.ripples = ripples;
+maps.frequency = frequency;
+maps.phase = phase;
+maps.amplitude = amplitude;
+maps.unfiltered_ripples = unfiltered_ripples;
+end
+
 function ripples = combine_and_exclude_close_events(ripples)
 % unpack ripple events on each channel & exclude successive events
 % that occur within a `close_event_threshold` of a previously occuring event.
@@ -308,6 +341,9 @@ ch_map = [];
 timestamps = [];
 peakNormedPower = [];
 for ch = 1:size(ripples,2)
+    if isempty(ripples{ch})
+        continue
+    end
     peak_ = [peak_;ripples{ch}.peaks];
     timestamps = [timestamps;ripples{ch}.timestamps];
     peakNormedPower = [peakNormedPower;ripples{ch}.peakNormedPower];
