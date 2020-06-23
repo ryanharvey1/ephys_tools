@@ -28,8 +28,8 @@ classdef after_spikesort_cleanup
             p.parse(varargin{:});
             path_name = p.Results.path_name;
             
-            if exist('path_name','var')
-            cd(path_name)
+            if exist('path_name','var') && ~isnumeric(path_name)
+                cd(path_name)
             end
             
             % MClust
