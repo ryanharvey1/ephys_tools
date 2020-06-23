@@ -1,4 +1,4 @@
-function y = morlet(f,t,width)
+function y = morlet_(f,t,width)
 % function y = morlet(f,t,width)
 %
 % Morlet's wavelet for frequency f and time t.
