@@ -7,7 +7,7 @@ classdef after_spikesort_cleanup
     
     methods(Static)
         
-        function main
+        function main(varargin)
             % after_spikesort_cleanup compiles cluster data from spike sort 3d,
             % mclust 4.4, & kilosort2/phy and exports .mat files that contain 
             % spikes times, avg waveforms, and quality metrics to be loaded 
@@ -23,6 +23,14 @@ classdef after_spikesort_cleanup
             %
             % Ryan Harvey
             
+            p = inputParser;
+            p.addParameter('path_name',0); % working directory
+            p.parse(varargin{:});
+            path_name = p.Results.path_name;
+            
+            if exist('path_name','var')
+            cd(path_name)
+            end
             
             % MClust
             if exist(fullfile(pwd,'FD'),'file')
@@ -30,7 +38,7 @@ classdef after_spikesort_cleanup
                 after_spikesort_cleanup.handle_tfiles
                 
             % Spikesort3D    
-            elseif contains(pwd,'Sorted')
+            elseif ~isempty(dir(['*',filesep,'*_clust.ntt*']))
                 
                 after_spikesort_cleanup.handle_ntt
                 
@@ -39,12 +47,16 @@ classdef after_spikesort_cleanup
                 
                 after_spikesort_cleanup.handle_phy
                 
+            elseif ~isempty(dir('*Kilosort2_*'))
+  
+                after_spikesort_cleanup.handle_phy
             end
         end
         
         
         function handle_ntt
-            fn=dir('*.ntt');
+            
+            fn=dir(['Sorted',filesep,'*.ntt']);
             fn=strcat(fn(1).folder,filesep,{fn.name}');
             disp(fn)
             
@@ -217,6 +229,7 @@ classdef after_spikesort_cleanup
         function handle_phy
             % handle_phy: compliles phy output into currently used .mat format
             
+            % for multiple kilosort runs, will use most recent folder
             % load phy output (spike times, cluster id, & waveforms)
             % calcuate cluster quality metrics
             % save all to .mat files in currently used format
@@ -229,7 +242,10 @@ classdef after_spikesort_cleanup
             % check to see if there is a specific kilosort folder
             ks_folder = dir('Kilosort*');
             if ~isempty(ks_folder)
-                myKsDir = fullfile(ks_folder.folder,ks_folder.name);
+                if size(ks_folder,1) > 1 % Multiple Kilosort runs if greater than 1
+                    [~,newest] = max([ks_folder.datenum]); % Use the most recent
+                end
+                myKsDir = fullfile(ks_folder(newest).folder,ks_folder(newest).name);
             end
             disp(myKsDir)
             
@@ -254,6 +270,12 @@ classdef after_spikesort_cleanup
             opts.EmptyLineRule = "read";
             clusterinfo = readtable(fullfile(myKsDir,'cluster_info.tsv'), opts);
             clear opts
+            
+            % Remove duplicate spikes from kilosort 
+            [overlap_matrix , sp] = rm_spk(sp);
+         
+            % Update spike count 
+            clusterinfo.n_spikes = clusterinfo.n_spikes - overlap_matrix(ismember(overlap_matrix(:,1),clusterinfo.id),2); 
             
             % locate cells to keep (1=MUA, 2=Good, 3=Unsorted)
             % (Spikes from clusters labeled "noise" have already been omitted)
@@ -284,8 +306,9 @@ classdef after_spikesort_cleanup
             if ~isfile(datfile)
                 filter_raw_dat
             end
+            
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
-            [clusterIDs, unitQuality, contaminationRate] = sqKilosort.maskedClusterQuality(myKsDir);
+            [clusterIDs, unitQuality, ~] = sqKilosort.maskedClusterQuality(myKsDir);
             
             % Load ts from video to get first frame
             % kilosort assumes first frame is ts zero, so we need to align 
@@ -367,4 +390,39 @@ classdef after_spikesort_cleanup
 end
 
 
+function [overlap_matrix , sp] = rm_spk(sp)
+% Removes double counted spikes from kilosort output
+% Adapted from Allen Institute / ecephys_spike_sorting / postprocessing.py
+% LB 06/2020
+
+% Input: 
+%   sp: structure of kilosort data from loadKSdir fuction
+
+% Output: 
+%  sp: with spike times, spike templates, cluster identity, and amplitude sans removed values
+%  overlap_matrix: n x 1 array of number of spikes removed from each
+%  cluster. 
+
+    overlap_matrix = zeros(max(sp.clu)+1,1);
+
+    rm_idx = []; % to keep track of removed spikes
+    
+        for idx1 = 0:max(sp.clu) 
+
+            for_unit1 = find(sp.clu == idx1); % get index from original array
+            
+            spikes_to_remove = diff(sp.st(for_unit1)) < .00016; % difference is less than .16 ms i.e. overlapping waveforms
+
+            overlap_matrix(idx1+1,2) = sum(spikes_to_remove); % keep track of removed spike total
+            overlap_matrix(idx1+1,1) = idx1; % keep track of cell id
+            rm_idx = [rm_idx; for_unit1(spikes_to_remove)]; % index of removed spikes
+            
+        end
+        
+        % Apply remove index to sp
+        sp.st(rm_idx) = [];
+        sp.spikeTemplates(rm_idx) = [];
+        sp.clu(rm_idx) = [];
+        sp.tempScalingAmps(rm_idx) = [];
+end
 
