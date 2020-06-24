@@ -244,8 +244,10 @@ classdef after_spikesort_cleanup
             if ~isempty(ks_folder)
                 if size(ks_folder,1) > 1 % Multiple Kilosort runs if greater than 1
                     [~,newest] = max([ks_folder.datenum]); % Use the most recent
+                    myKsDir = fullfile(ks_folder(newest).folder,ks_folder(newest).name);
+                else
+                    myKsDir = fullfile(ks_folder.folder,ks_folder.name);
                 end
-                myKsDir = fullfile(ks_folder(newest).folder,ks_folder(newest).name);
             end
             disp(myKsDir)
             
@@ -407,7 +409,7 @@ function [overlap_matrix , sp] = rm_spk(sp)
 
     rm_idx = []; % to keep track of removed spikes
     
-        for idx1 = 0:max(sp.clu) 
+        for idx1 = 0:max(sp.clu)+1 
 
             for_unit1 = find(sp.clu == idx1); % get index from original array
             
