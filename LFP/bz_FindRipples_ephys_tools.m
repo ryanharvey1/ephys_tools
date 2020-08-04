@@ -258,11 +258,9 @@ if ~isempty(noise)
     disp(['After ripple-band noise removal: ' num2str(size(ripples,1)) ' events.']);
 end
 %% lets try to also remove EMG artifact?
-if EMGThresh
-    %     sessionInfo = bz_getSessionInfo(basepath,'noprompts',true);
-    %     EMGfilename = fullfile(basepath,[sessionInfo.FileName '.EMGFromLFP.LFP.mat']);
-    if exist(EMGfilename)
-        EMGFromLFP = load(EMGfilename);   %should use a bz_load script here
+if EMGThresh && ~isempty(EMGfilename)
+    if exist('EMGfilename','var')
+        EMGFromLFP = load(EMGfilename);
     else
         parts = strsplit(EMGfilename,filesep);
         parts{end-1} = 'ProcessedData';
@@ -280,7 +278,7 @@ if EMGThresh
     end
     excluded = logical(zeros(size(ripples,1),1));
     for i = 1:size(ripples,1)
-        [a ts] = min(abs(ripples(i,1)-EMGFromLFP.timestamps)); % get closest sample
+        [a, ts] = min(abs(ripples(i,1)-EMGFromLFP.timestamps)); % get closest sample
         if EMGFromLFP.data(ts) > EMGThresh
             excluded(i) = 1;
         end
