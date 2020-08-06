@@ -120,7 +120,7 @@ for s = sess_list
     if all_sessions % to loop through a data set
         data = load(fullfile(sessions(s).folder,sessions(s).name),...
             'frames','session_path','basename','sessionID','rat',...
-            'mazetypes','linear_track','events','lfp');
+            'mazetypes','linear_track','events','lfp','Spikes');
         lfp = bz_GetLFP('all','basepath',data.session_path,...
             'basename',data.basename,...
             'noPrompts',true,...
@@ -177,6 +177,8 @@ for s = sess_list
     
     [ripples] = combine_and_exclude_close_events(ripples);
     
+%     ripples = exclude_by_unit_activity(ripples,data,lfp_ts);
+%     ripples = exclude_by_multi_unit_activity(ripples,data,lfp_ts);
     
     % store channel used, noise channel, and snr
     ripples.detectorinfo.detectionparms.channel_used = good_channel;
@@ -340,6 +342,72 @@ maps.amplitude = amplitude;
 maps.unfiltered_ripples = unfiltered_ripples;
 end
 
+function ripples = exclude_by_unit_activity(ripples,data,lfp_ts)
+dt = (lfp_ts(2) - lfp_ts(1));
+bin_edges = [lfp_ts - dt/2, lfp_ts(end) + dt/2];
+for i = 1:length(data.Spikes)
+    binned_spikes(i,:) = histcounts(data.Spikes{i},bin_edges);
+end
+% conver to binary matrix
+binned_spikes = binned_spikes > 0;
+
+for r = 1:size(ripples.timestamps,1)
+    idx = lfp_ts >= ripples.timestamps(r,1) & lfp_ts <= ripples.timestamps(r,2);
+    sum_spikes(:,r) = sum(binned_spikes(:,idx),2);
+end
+% convert to binary
+sum_spikes = sum_spikes > 0;
+idx = sum(sum_spikes) < 1;
+
+ripples.peaks(logical(idx)) = [];
+ripples.timestamps(logical(idx),:) = [];
+ripples.peakNormedPower(logical(idx)) = [];
+ripples.ch_map(logical(idx)) = [];
+
+% idx = lfp_ts >= ripples.timestamps(116,1) & lfp_ts <= ripples.timestamps(116,2);
+% 
+% data.lfp.signal(:,idx)
+end
+
+function ripples = exclude_by_multi_unit_activity(ripples,data,lfp_ts)
+minimum_duration = 0.015;
+zscore_thres = 0;
+bin_size = 0.05;
+
+ts_ifr = 0:bin_size:lfp_ts(end);
+for k = 1:length(data.Spikes)
+    [ifr(:,k),~]=instantfr(data.Spikes{k},ts_ifr);
+end
+
+% zscore and mean
+zscored_data = mean(zscore(ifr),2);
+% threshold
+is_above_mean = zscored_data >= zscore_thres;
+% find epochs above threshold
+indexout=contiguousframes(is_above_mean,floor(bin_size/minimum_duration));
+[start,ends,ngroups]=findgroups(indexout);
+
+% get all timestamps in range
+times = [];
+for i = 1:ngroups
+    times = [times;ts_ifr(start(i):ends(i))'];
+end
+
+% compare ripple peak time against mua activity
+for r = 1:size(ripples.timestamps,1)
+    if min(abs(ripples.peaks(r) - times)) <= minimum_duration * 2
+        idx(r) = 1;
+    else
+        idx(r) = 0;
+    end
+end
+
+ripples.peaks(logical(idx)) = [];
+ripples.timestamps(logical(idx),:) = [];
+ripples.peakNormedPower(logical(idx)) = [];
+ripples.ch_map(logical(idx)) = [];
+end
+
 function ripples = combine_and_exclude_close_events(ripples)
 % unpack ripple events on each channel & exclude successive events
 % that occur within a `close_event_threshold` of a previously occuring event.
@@ -449,13 +517,13 @@ good_channel = good(I);
 
 signal = lfp(good_channel,:);
 
-% pick noise channel based on xml or base on the most noisy snr
+% pick noise channel based on xml 
 if any(connected_channels == 0)
     noise_channel = find(connected_channels == 0,1,'first');
     noise = lfp(noise_channel,:)';
-elseif nanmin(r) < 1 && nanmax(r) > 1
-    [~,noise_channel] = nanmin(r);
-    noise = lfp(noise_channel,:)';
+% elseif nanmin(r) < 1 && nanmax(r) > 1
+%     [~,noise_channel] = nanmin(r);
+%     noise = lfp(noise_channel,:)';
 else
     noise_channel = NaN;
     noise = zeros(size(lfp,2),1);
