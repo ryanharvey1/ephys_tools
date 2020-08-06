@@ -2,16 +2,11 @@ function ripple_info = find_ripple_wrapper(data,varargin)
 %find_ripple_wrapper: wrapper for findRipples from TSToolbox_Utils
 %
 %   Input:
-%           data: ephys_tools data structure. (if you don't have this, you
-%                                               can use [] for the first input,
-%                                               also this can be your projects
-%                                               base dir to run through all sessions)
+%           data: base dir to project ('F:\Projects\PAE_PlaceCell')
+%
 %           varargin:
 %               figs: debugging figs, 0 or 1
-%               lfp: channels x time
-%               lfp_ts: time stamps from lfp in seconds
-%               speed: speed of animal (cm/sec)
-%               mov_ts: time stamps from movement in seconds
+%               ripple_fs: ripple passband, default 130-200
 %               save: 0 or 1, default = 1, if using ephys_tools
 %               overwrite: 0 or 1, default = 0, if using ephys_tools
 %
@@ -32,120 +27,60 @@ function ripple_info = find_ripple_wrapper(data,varargin)
 %
 % Ryan Harvey 2019
 
-sess_list = 1;
-all_sessions = 0;
+all_sessions = 1;
 
-if isstruct(data) % if the user supplied the ephys_tools data structure
+p = inputParser;
+p.addParameter('figs',0);
+p.addParameter('ripple_fs',[130 200]);
+p.addParameter('save',1);
+p.addParameter('overwrite',0);
 
+p.parse(varargin{:});
+figs = p.Results.figs;
+passband = p.Results.ripple_fs;
+save_results = p.Results.save;
+overwrite = p.Results.overwrite;
+
+
+basepath = data;
+
+% set up folder for data
+if ~exist(fullfile(basepath,'SWR'),'dir')
+    mkdir(fullfile(basepath,'SWR'))
+end
+
+% get all sessions
+sessions = dir(fullfile(basepath,'ProcessedData','*.mat'));
+
+% check sessions that have already run
+finished_sess = dir(fullfile(basepath,'SWR','*.mat'));
+
+sess_list = find(~contains(extractBefore({sessions.name},'.mat'),...
+    extractBefore({finished_sess.name},'_swr')));
+
+if overwrite
+    sess_list = 1:length(sessions);
+end
+
+WaitMessage = parfor_wait(length(sess_list),'Waitbar',true);
+
+for s = sess_list
+    % load movement data
+    data = load(fullfile(sessions(s).folder,sessions(s).name),...
+        'frames','session_path','basename','sessionID','rat',...
+        'mazetypes','linear_track','events','lfp','Spikes');
+    speed = data.frames(:,5);
+    mov_ts = data.frames(:,1);
+
+    % load lfp
     lfp = bz_GetLFP('all','basepath',data.session_path,...
         'basename',data.basename,...
         'noPrompts',true,...
         'downsample',1);
-    
-    % unpack input
-    p = inputParser;
-    p.addParameter('figs',0);
-    p.addParameter('speed',data.frames(:,5));
-    p.addParameter('mov_ts',data.frames(:,1));
-    p.addParameter('ripple_fs',[130 200]);
-    p.addParameter('save',1);
-    p.addParameter('overwrite',0);
-
-    p.parse(varargin{:});
-    figs = p.Results.figs;
     lfp_ts = lfp.timestamps';
     frequency = lfp.samplingRate;
     lfp = double(lfp.data');
-    speed = p.Results.speed;
-    mov_ts = p.Results.mov_ts;
-    passband = p.Results.ripple_fs;
-    save_results = p.Results.save;
-    overwrite = p.Results.overwrite;
 
-elseif isempty(data) % if the user supplied each variable individually
-    p = inputParser;
-    p.addParameter('figs',0);
-    p.addParameter('lfp',[]);
-    p.addParameter('lfp_ts',[]);
-    p.addParameter('frequency',[]);
-    p.addParameter('speed',[]);
-    p.addParameter('mov_ts',[]);
-    p.addParameter('ripple_fs',[130 200]);
-    
-    p.parse(varargin{:});
-    figs = p.Results.figs;
-    lfp = p.Results.lfp;
-    lfp_ts = p.Results.lfp_ts;
-    frequency = p.Results.frequency;
-    speed = p.Results.speed;
-    mov_ts = p.Results.mov_ts;
-    passband = p.Results.ripple_fs;
-    
-elseif ischar(data) % can loop through all sessions in basedir
-    p = inputParser;
-    p.addParameter('save',1);
-    p.addParameter('overwrite',0);
-    p.parse(varargin{:});
-    save_results = p.Results.save;
-    overwrite = p.Results.overwrite;
-    
-    all_sessions = 1;
-    
-    basepath = data;
-    
-    % set up folder for data
-    if ~exist(fullfile(basepath,'SWR'),'dir')
-        mkdir(fullfile(basepath,'SWR'))
-    end
-    
-    % get all sessions
-    sessions = dir(fullfile(basepath,'ProcessedData','*.mat'));
-    
-    % check sessions that have already run
-    finished_sess = dir(fullfile(basepath,'SWR','*.mat'));
-    
-    sess_list = find(~contains(extractBefore({sessions.name},'.mat'),...
-        extractBefore({finished_sess.name},'_swr')));
-    
-    if overwrite
-        sess_list = 1:length(sessions);
-    end
-end
-
-if all_sessions
-    WaitMessage = parfor_wait(length(sess_list),'Waitbar',true);
-end
-
-for s = sess_list
-    if all_sessions % to loop through a data set
-        data = load(fullfile(sessions(s).folder,sessions(s).name),...
-            'frames','session_path','basename','sessionID','rat',...
-            'mazetypes','linear_track','events','lfp','Spikes');
-        lfp = bz_GetLFP('all','basepath',data.session_path,...
-            'basename',data.basename,...
-            'noPrompts',true,...
-            'downsample',1);
-
-        p = inputParser;
-        p.addParameter('figs',0);
-        p.addParameter('speed',data.frames(:,5));
-        p.addParameter('mov_ts',data.frames(:,1));
-        p.addParameter('ripple_fs',[130 200]);
-        p.addParameter('save',1);
-        p.addParameter('overwrite',0);
-        
-        p.parse(varargin{:});
-        figs = p.Results.figs;
-        lfp_ts = lfp.timestamps';
-        frequency = lfp.samplingRate;
-        lfp = double(lfp.data');
-        speed = p.Results.speed;
-        mov_ts = p.Results.mov_ts;
-        passband = p.Results.ripple_fs;
-        save_results = p.Results.save;
-        overwrite = p.Results.overwrite;
-    end
-    
     processedpath=strsplit(data.session_path,filesep);
     processedpath(end-2:end)=[];
     emg_file = fullfile(strjoin(processedpath,filesep),'EMG_from_LFP',...
@@ -177,6 +112,7 @@ for s = sess_list
     
     [ripples] = combine_and_exclude_close_events(ripples);
     
+    
 %     ripples = exclude_by_unit_activity(ripples,data,lfp_ts);
 %     ripples = exclude_by_multi_unit_activity(ripples,data,lfp_ts);
     
@@ -203,13 +139,11 @@ for s = sess_list
     if size(ripples.timestamps,1) < 2
         ripple_info = NaN;
         disp('No ripples')
-        if all_sessions
-            clearvars -except varargin all_sessions sessions s sess_list ...
-                save overwrite WaitMessage
-            continue
-        else
-            return
-        end
+        
+        clearvars -except varargin all_sessions sessions s sess_list ...
+            save overwrite WaitMessage passband figs
+        continue
+       
     end
     
     [maps,ripple_data,stats] = get_ripple_stats(lfp,signal_filtered,...
@@ -248,7 +182,7 @@ for s = sess_list
             [data.rat,'_',data.sessionID,'_swr']),'-struct','ripple_info','-v7.3')
         
         clearvars -except varargin all_sessions sessions s sess_list save ...
-            overwrite WaitMessage
+            overwrite WaitMessage passband figs
         WaitMessage.Send;
     end
 end
