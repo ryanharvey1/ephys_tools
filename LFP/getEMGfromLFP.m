@@ -76,7 +76,7 @@ chunksize = 20;
 % toc
 
 %%% option 2
-filtered = filterLFP(lfp, 'fs', fs, 'type', 'butter', 'passband', [300 499],...
+filtered = filterLFP(lfp, 'fs', fs, 'type', 'butter', 'passband', [300 600],...
     'graphics', false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -16,10 +16,10 @@ finished_sess = dir(fullfile(basepath,'EMG_from_LFP','*.mat'));
 
 sess_list = find(~contains(extractBefore({sessions.name},'.mat'),...
     extractBefore({finished_sess.name},'_emg')));
-
+sessions = sessions(sess_list);
 
 function run_save_emg(data)
-emg = getEMGfromLFP(data.lfp.signal','fs',data.lfp.lfpsamplerate,'graphics',false);
+emg = getEMGfromLFP(data.lfp.signal,'fs',data.lfp.lfpsamplerate,'graphics',false);
 
 % save mat file to processed data folder
 processedpath=strsplit(data.session_path,filesep);
@@ -31,11 +31,22 @@ fcn = @run_save_emg;
 
 
 WaitMessage = parfor_wait(length(sess_list),'Waitbar',true);
-for i = sess_list
+parfor i = 1:length(sessions)
     
     data = load(fullfile(sessions(i).folder,sessions(i).name),...
-        'session_path','lfp','rat','sessionID');
+        'session_path','rat','sessionID');
     
+    [~,data.basename] = fileparts(data.session_path);
+    
+%     sess_info = LoadParameters(data.session_path);
+    
+    lfp = bz_GetLFP('all','basepath',data.session_path,...
+        'basename',data.basename,...
+        'noPrompts',true,...
+        'downsample',1);
+    data.lfp.signal = double(lfp.data);
+    data.lfp.lfpsamplerate = lfp.samplingRate;
+
     feval(fcn, data); 
     
     WaitMessage.Send;
