@@ -55,13 +55,15 @@ Dependencies:
 
 2. At the same time, it's a good idea to run `filter_raw_dat.m` which high pass filters your channels for later average waveform extraction. 
 
-3. Run Kilosort and manually adjust your units with Phy
+3. Run `get_lfp.m` to make .xml and .lfp files. Open up your .lfp or .dat file in neuroscope to mark bad channels. 
 
-4. Now that you have saved and are happy with your Phy results, cd to your current session folder and run `after_spikesort_cleanup.main`. This will create a 'Sorted' folder that contains your your spike time stamps and quality metrics. 
+4. Run Kilosort and manually adjust your units with Phy. (If you created the .xml file from step 3, you can run `KS2Wrapper.m` to run kilosort2)
 
-5. Now is a good time to set up animal metadata. run `handleAnimalMetaData` and answer a couple questions in the command window. Animal metadata stores info like strain, birth date, surgery info, manipulation info, recording sites, electrode turn record, recording session info, etc.
+5. Now that you have saved and are happy with your Phy results, cd to your current session folder and run `after_spikesort_cleanup.main`. This will create a 'Sorted' folder that contains your your spike time stamps and quality metrics. 
 
-6. cd back to your current session folder and run `postprocess`. This will compile spikes, lfp, and behavior, calculate several features, and save them to a processed data .m file in the 'ProcessedData' folder. These processed data files can then be used for much or all future analyses. Below shows the contents of a processed data file. 
+6. Now is a good time to set up animal metadata. run `handleAnimalMetaData` and answer a couple questions in the command window. Animal metadata stores info like strain, birth date, surgery info, manipulation info, recording sites, electrode turn record, recording session info, etc.
+
+7. cd back to your current session folder and run `postprocess`. This will compile spikes, lfp, and behavior, calculate several features, and save them to a processed data .m file in the 'ProcessedData' folder. These processed data files can then be used for much or all future analyses. Below shows the contents of a processed data file. 
 
    ```matlab
    data = load('F:\Projects\HPCatn\ProcessedData\HPCatn05_S20181229143332.mat')
