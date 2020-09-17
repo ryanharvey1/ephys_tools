@@ -30,7 +30,7 @@ function data = get_lfp(data,varargin)
 
 p = inputParser;
 p.addParameter('Fold',32000); % raw sample rate
-p.addParameter('Fnew',1000); % downsampled sample rate for .lfp file
+p.addParameter('Fnew',1250); % downsampled sample rate for .lfp file
 p.addParameter('overwrite_lfp',0); % reload wide band and overwrite .lfp 
 p.addParameter('fs_for_datastruct',200); % downsampled sample rate for data struct
 p.parse(varargin{:});
@@ -48,7 +48,7 @@ end
 warning off
 % load lfp from .lfp file
 if exist(fullfile(data.session_path,[data.basename,'.lfp']),'file') && overwrite_lfp == 0
-    data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct);
+    data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct,Fnew,Fold);
     return
 end
 
@@ -83,7 +83,7 @@ fwrite(fidout,signal,'int16');
 fclose(fidout);
 
 disp('loading downsampled lfp')
-data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct);
+data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct,Fnew,Fold);
 
 end
 
@@ -111,7 +111,7 @@ else
 end
 end
 
-function session_info = make_load_xml(data,probe_map,overwrite_lfp)
+function session_info = make_load_xml(data,probe_map,overwrite_lfp,Fnew,Fold)
 if ~exist(probe_map{1},'file')
     msg = [probe_map{1},' does not exist'];
     error(msg)
@@ -119,11 +119,11 @@ end
 if ~exist([fullfile(data.session_path,data.basename),'.xml'],'file') || overwrite_lfp
     % write xml
     defaults.NumberOfChannels = 1;
-    defaults.SampleRate = 32000;
+    defaults.SampleRate = Fold;
     defaults.BitsPerSample = 16;
     defaults.VoltageRange = 20;
     defaults.Amplification = 1000;
-    defaults.LfpSampleRate = 1000;
+    defaults.LfpSampleRate = Fnew;
     defaults.PointsPerWaveform = 64;
     defaults.PeakPointInWaveform = 32;
     defaults.FeaturesPerWave = 4;
@@ -133,11 +133,11 @@ end
 session_info = LoadParameters(data.session_path);
 end
 
-function data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct)
+function data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct,Fnew,Fold)
     % get channel info
     lfpfile = locate_ncs(data.session_path);
     [probe_map,csc_list]=get_channel_list(lfpfile,data);
-    session_info = make_load_xml(data,probe_map,overwrite_lfp);
+    session_info = make_load_xml(data,probe_map,overwrite_lfp,Fnew);
     info = dir(fullfile(data.session_path,[data.basename,'.lfp']));
     
     lfp = bz_GetLFP('all','basepath',data.session_path,...
