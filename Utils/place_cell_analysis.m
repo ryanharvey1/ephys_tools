@@ -182,7 +182,7 @@ classdef place_cell_analysis
                 fields.masked_field{1} = ~isnan(ratemap);
                 fields.peakFR{1} = max(ratemap(:));
                 [r,c] = find(ratemap == fields.peakFR{1});
-                fields.peakLoc{1} = [r,c];
+                fields.peakLoc{1} = [r(1),c(1)];
                 [x_c,y_c] = centroid(polyshape(fields.bounds{1}(:,1),fields.bounds{1}(:,2)));
                 fields.com{1} = [x_c,y_c];
                 fields.nfields = 1;
@@ -236,7 +236,7 @@ classdef place_cell_analysis
                     fields.peakFR{f} = NaN;
                 else
                     [r,c] = find(temp_ratemap == fields.peakFR{f});
-                    fields.peakLoc{f} = [r,c];
+                    fields.peakLoc{f} = [r(1),c(1)];
                 end
                 
                 % get center of mass
@@ -288,7 +288,7 @@ classdef place_cell_analysis
                 fields.masked_field{1} = ~isnan(ratemap);
                 fields.peakFR{1} = max(ratemap(:));
                 [r,c] = find(ratemap == fields.peakFR{1});
-                fields.peakLoc{1} = [r,c];
+                fields.peakLoc{1} = [r(1),c(1)];
                 [x_c,y_c] = centroid(polyshape(fields.bounds{1}(:,1),fields.bounds{1}(:,2)));
                 fields.com{1} = [x_c,y_c];
                 fields.nfields = 1;
@@ -321,7 +321,7 @@ classdef place_cell_analysis
                 fields.masked_field{f} = ~isnan(ratemap);
                 fields.peakFR{f} = max(ratemap(:));
                 [r,c] = find(ratemap == fields.peakFR{f});
-                fields.peakLoc{f} = [r,c];
+                fields.peakLoc{f} = [r(1),c(1)];
                 [x_c,y_c] = centroid(polyshape(fields.bounds{f}(:,1),fields.bounds{f}(:,2)));
                 fields.com{f} = [x_c,y_c];
             end
