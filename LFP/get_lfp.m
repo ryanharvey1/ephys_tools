@@ -137,7 +137,7 @@ function data = load_lfp_from_file(data,overwrite_lfp,fs_for_datastruct,Fnew,Fol
     % get channel info
     lfpfile = locate_ncs(data.session_path);
     [probe_map,csc_list]=get_channel_list(lfpfile,data);
-    session_info = make_load_xml(data,probe_map,overwrite_lfp,Fnew);
+    session_info = make_load_xml(data,probe_map,overwrite_lfp,Fnew,Fold);
     info = dir(fullfile(data.session_path,[data.basename,'.lfp']));
     
     lfp = bz_GetLFP('all','basepath',data.session_path,...
