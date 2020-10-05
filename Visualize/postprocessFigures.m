@@ -609,7 +609,6 @@ classdef postprocessFigures
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
             if sum(data_video_spk(:,6)) == 0
-
                 return
             end
             
