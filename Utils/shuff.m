@@ -64,7 +64,7 @@ for i=1:size(sessions,1)
     
     % Get cell indcies
     cells = find_cells(data,...
-        str2double(extractBetween(sessions{i,2},'TT','.mat')),str2double(sessions{i,3}));
+        sscanf(sessions{i,2},'TT%d.mat'),sessions{i,3});
     
     % Grab frames with embedded spikes for non-track
     if isempty(runningdir)
