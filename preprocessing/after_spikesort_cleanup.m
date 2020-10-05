@@ -274,7 +274,7 @@ classdef after_spikesort_cleanup
             clear opts
             
             % Remove duplicate spikes from kilosort 
-            [overlap_matrix , sp] = rm_spk(sp);
+            [overlap_matrix , sp] = rm_spk(sp,max(clusterinfo.id));
          
             % Update spike count 
             clusterinfo.n_spikes = clusterinfo.n_spikes - overlap_matrix(ismember(overlap_matrix(:,1),clusterinfo.id),2); 
@@ -392,24 +392,26 @@ classdef after_spikesort_cleanup
 end
 
 
-function [overlap_matrix , sp] = rm_spk(sp)
+function [overlap_matrix , sp] = rm_spk(sp,maxID)
 % Removes double counted spikes from kilosort output
 % Adapted from Allen Institute / ecephys_spike_sorting / postprocessing.py
 % LB 06/2020
 
 % Input: 
 %   sp: structure of kilosort data from loadKSdir fuction
+%   maxID: maximum cluster id (can be obtained from clusterid or
+%          cluster_group.tsv
 
 % Output: 
 %  sp: with spike times, spike templates, cluster identity, and amplitude sans removed values
-%  overlap_matrix: n x 1 array of number of spikes removed from each
-%  cluster. 
+%      overlap_matrix: n x 1 array of number of spikes removed from each
+%      cluster. 
 
-    overlap_matrix = zeros(max(sp.clu)+1,1);
+    overlap_matrix = zeros(maxID+1,1);
 
     rm_idx = []; % to keep track of removed spikes
     
-        for idx1 = 0:max(sp.clu)+1 
+        for idx1 = 0:maxID+1 
 
             for_unit1 = find(sp.clu == idx1); % get index from original array
             
