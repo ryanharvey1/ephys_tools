@@ -25,10 +25,20 @@ dataset = 'F:\ClarkP30_Recordings\ProcessedData\';
 % 1Hz peak firing rate. 
 compile_cell_measures(rats,transgenic)
 
-
 %% Runs through Hardcastle LN GLM for HD,Place, and HD/Place(Full model)
 batch_hd_glm(dataset,save_path,'F:\ClarkP30_Recordings\Analysis\cell_list.csv')
 
+%% Import hd_cell_list and create index .csv using find cells (For python processing)
+hd = readtable('F:\ClarkP30_Recordings\Analysis\hd_cell_list.csv');
+cell_idx = table;
+cd 'F:\ClarkP30_Recordings\ProcessedData\'
+for i = 1 : length(hd.SessionID)
+    data = load(['F:\ClarkP30_Recordings\ProcessedData\',hd.SessionID{i}],'spikesID');
+    tet = sscanf(hd.tetrode{i},'TT%d.mat');
+    cell_idx.n(i,1) = find_cells(data,tet,hd.cell(i));
+end
+
+writetable(cell_idx,['F:\ClarkP30_Recordings\Analysis\','hd_cell_spike_idx.csv'])
 %% For all cells classified as HD, find additional measures of interest,
 % compile, and save as csv for analysis in R or Python. Saves copy to analysis folder and keeps data_all 
 % (long format of all measures across max 4 conditions) in workspace. 
