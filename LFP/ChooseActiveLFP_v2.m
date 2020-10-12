@@ -2,8 +2,8 @@ function [f_peak, active_lfp_ind] = ChooseActiveLFP_v2(self)
 
 % active_lfp_ind = ChooseActive(root)
 
-        for k = 1:size(self.signal,1)
-           [f_peak(k), pr(k)] = calc_spectrum(self.signal(k,:),self.lfpsamplerate);
+        for k = 1:size(self.lfp.signal,1)
+           [f_peak(k), pr(k)] = calc_spectrum(self.lfp.signal(k,:),self.lfp.lfpsamplerate);
         end
         
         [~, active_lfp_ind] = max(pr);
@@ -47,9 +47,9 @@ function [f_peak,power_ratio] = calc_spectrum(lfp,fs)
     ftmp = f(imax);
     stmp = S(imax);
 
-    [a_peak,ind] = max(stmp(ftmp > 7 & ftmp < 11)); % intrinsic frequency
+    [a_peak,ind] = max(stmp(ftmp > 4 & ftmp < 12)); % intrinsic frequency
 
-    ftmp = ftmp(ftmp > 7 & ftmp < 11);
+    ftmp = ftmp(ftmp > 4 & ftmp < 12);
     
     if ~isempty(ind)                                    % if theta peak was found
         f_peak = ftmp(ind)';     
