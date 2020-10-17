@@ -8,10 +8,11 @@
 % create x-axis vectors
 hd_vector = 2*pi/n_dir_bins/2:2*pi/n_dir_bins:2*pi - 2*pi/n_dir_bins/2;
 ego_vector = ego_bins; 
-% theta_vector = hd_vector;
+theta_vector = hd_vector;
 % speed_vector = 2.5:50/n_speed_bins:47.5;
-dist_vector = dist_bins;
+% dist_vector = dist_bins;
 % plot the tuning curves
+
 figure(1)
 subplot(3,4,1)
 ratemap = pos_curve;
@@ -30,19 +31,19 @@ axis([0 2*pi -inf inf])
 xlabel('direction angle (rad)')
 title('Head direction')
 
-subplot(3,4,3)
-plot(ego_vector,ego_curve,'k','linewidth',3)
-box off
-axis([0 360 -inf inf])
-xlabel('Egocentric Bearning (deg)')
-title('Egocentric Bearing')
+% subplot(3,4,3)
+% plot(ego_vector,ego_curve,'k','linewidth',3)
+% box off
+% axis([0 360 -inf inf])
+% xlabel('Egocentric Bearning (deg)')
+% title('Egocentric Bearing')
 
-subplot(3,4,4)
-plot(dist_vector,dist_curve,'k','linewidth',3)
-xlabel('Distance from wall (cm)')
-axis([0 dist_range(1,2)*2 -inf inf])
+subplot(3,4,3)
+plot(theta_vector,theta_curve,'k','linewidth',3)
+xlabel('Phase of Theta')
+axis([0 2*pi -inf inf])
 box off
-title('Distance')
+title('Theta')
 
 %% compute and plot the model-derived response profiles
 
@@ -53,7 +54,7 @@ param_full_model = param{1};
 pos_param = param_full_model(1:n_pos_bins^2);
 hd_param = param_full_model(n_pos_bins^2+1:n_pos_bins^2+n_dir_bins);
 ego_param = param_full_model(n_pos_bins^2+n_dir_bins+1:n_pos_bins^2+n_dir_bins+n_ego_bins);
-dist_param = param_full_model(numel(param_full_model)-n_ego_bins+1:numel(param_full_model));
+% dist_param = param_full_model(numel(param_full_model)-n_ego_bins+1:numel(param_full_model));
 
 % compute the scale factors
 % NOTE: technically, to compute the precise scale factor, the expectation
@@ -66,8 +67,8 @@ scale_factor_dist = mean(exp(ego_param))*mean(exp(hd_param))*mean(exp(pos_param)
 % compute the model-derived response profiles
 pos_response = scale_factor_pos*exp(pos_param);
 hd_response = scale_factor_hd*exp(hd_param);
-ego_response = scale_factor_ego*exp(ego_param);
-dist_response = scale_factor_dist*exp(dist_param);
+% ego_response = scale_factor_ego*exp(ego_param);
+% dist_response = scale_factor_dist*exp(dist_param);
 
 % plot the model-derived response profiles
 subplot(3,4,5)

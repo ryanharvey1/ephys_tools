@@ -1,6 +1,13 @@
 classdef HD_cell_analysis
-    %UNTITLED5 Summary of this class goes here
-    %   Detailed explanation goes here
+    % Class of functions to quantify features of head direction tuning
+    
+    % To do: 
+    %   Measures to create: 
+    %       - Anticipatory Time Interval
+    %       - Tuning Quality (Preferred Direction(s),tuning width, kappa)
+    %       - Ensemble Analysis 
+    % Misc: 
+    %       - Standardize input arguments (data,session,cell)
     
     properties
         Property1
@@ -8,7 +15,8 @@ classdef HD_cell_analysis
     
     methods(Static)
         
-        %Distributive Ratio
+   % Distributive Ratio
+    
         function DR = distributiveRatio(ratemap,frames,hdTuning,mazesize)
             
             thetabins = rad2deg((pi/30)/2:(pi/30):2*pi-(pi/30)/2);
@@ -41,6 +49,8 @@ classdef HD_cell_analysis
             
         end
         
+   % Directional information content
+     
         function DIC  = computeDIC(histAng,hdTuning,OverallFR)
             %Computes the directional information content on unsmoothed ratemap for
             %directional data. Adapted from Langston et al 2010. by LB March 2018
@@ -62,9 +72,12 @@ classdef HD_cell_analysis
             DIC = sum(ICi)/OverallFR;
         end
         
-        function stable_score=stability(data_video_spk,samplerate)
-            %Computes the correlation of tuning curves generated after each
-            %complete sampling of the horizontal azimuth.
+   % Tuning Stability
+    
+        function stable_score = stability(data_video_spk,samplerate)
+            % Computes the correlation of tuning curves generated after each
+            % complete sampling of the horizontal azimuth.
+            
             %Input:
             %     data_video_spk: n x 6 matrix containing timestamps, x
             %     coords, y coords, head direction (deg), instantaneous
@@ -75,51 +88,59 @@ classdef HD_cell_analysis
             %   stability: mean correlation between all pairwise
             %   correlations of tuning curves
             %
-            % By LB & RH 2018, updated by LB September 2019
-            
-            %initialize bins to determine sampling
-            angBins = rad2deg((pi/30)/2:(pi/30):2*pi-(pi/30)/2);
+            % By LB & RH 2018, updated by LB September 2019, Updated by RH
+            % 2020
             
             %initlize loop parameters
-            i = 1;
-            ii = 2;
-            chunk = [];
-            hdTuning = [];
-            heading = data_video_spk(:,4);
-            
-            %             if fig
-            %             figure;
-            %             plot(data_video_spk(:,2),data_video_spk(:,3),'.k')
-            %             end
-            %
-            while ii < length(heading)
-                histAng = histcounts(heading(i:ii),angBins);
-                if sum(histAng>0)==length(angBins)-1
-                    temp = data_video_spk(i:ii,:);
-                    spk_a = temp(temp(:,6)==1,4);
-                    a = temp(temp(:,6)==0,4);
-                    [~,~,~,~,~,hdtuning] = tuningcurve(a,spk_a,samplerate);
-                    hdTuning = [hdTuning;hdtuning];
-                    chunk = [chunk;i,ii];
-                    %                     hold on
-                    %                     plot(data_video_spk(i:ii,2),data_video_spk(i:ii,3))
-                    %                     i = ii+1;
-                    %                     ii = ii+1;
+            a = data_video_spk(data_video_spk(:,6) == 0,4);
+            ts = data_video_spk(data_video_spk(:,6) == 0,1);
+            frames = data_video_spk(data_video_spk(:,6) == 0,:);
+          
+            bins = 0:6:360;
+            bin_check = zeros(1,length(bins));
+            ii = 1;
+            hd_tune = [];
+            for i = 1:size(a,1)
+                for b = 1:length(bins)
+                    if a(i) > bins(b) && a(i) <= bins(b+1)
+                        bin_check(b) = 1;
+                        break
+                    end
                 end
-                ii = ii+1;
+                if sum(bin_check) == length(bin_check)-1
+                    idx = frames(:,1) >= ts(ii) & frames(:,1) <= ts(i);
+                    temp_a = a(idx);
+                    
+                    idx = data_video_spk(:,1) >= ts(ii) & data_video_spk(:,1) <= ts(i);
+                    temp_spk_frames = data_video_spk(idx,:);
+                    
+                    [~,~,~,~,~,hdtuning] = tuningcurve(temp_a,...
+                        temp_spk_frames(temp_spk_frames(:,6) == 1,4),samplerate);
+                    
+                 
+                    hd_tune = [hd_tune;hdtuning];
+                    
+                    ii = i+1;
+                    bin_check = zeros(1,length(bins));
+                end
+                if i == size(a,1) && isempty(hd_tune)
+                    stable_score = NaN;
+                    warning('insufficient azimuth sampling')
+                    return
+                end
             end
             
-            store = [];
-            corrMat = corr(hdTuning');
-            for k = 1:size(corrMat,2)-1
-                data = diag(corrMat,k);
-                store = [store;data];
-            end
+            %smooth over 36 degrees
+            hd_tune = smoothdata([hd_tune hd_tune hd_tune],2,'gaussian',6);
+            hd_tune = hd_tune(:,61:120);
             
-            stable_score = nanmean(store);
-            
+            corrMat = corr(hd_tune');
+            corrMat(logical(eye(length(corrMat)))) = NaN;
+            stable_score = nanmean(corrMat(:));
         end
         
+   % Tuning Stability across session
+   
         function [within_Coeff,within,normWithin] = four_quarter_stability(data_video_spk,sampleRate,method)
             %four_quarter_stability computes the 4-quarter stability score for head direction signals based off
             %Boccara et al.
@@ -197,8 +218,10 @@ classdef HD_cell_analysis
 %             end
 %             normWithin=normTemp;
         end
-        
-        function anticipatory_time_interval=computeATI(data,session,cell)
+   
+   % Anticipatory time interval (NOT COMPLETE)
+   
+        function anticipatory_time_interval = computeATI(data,session,cell)
             
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
@@ -225,23 +248,22 @@ classdef HD_cell_analysis
             % Identify clockwise (v > 90deg/s), counterclockwise(v > -90deg/s), and still frames |v| < 30deg/s and
             % make tuning curves.
             
-            [~,~,~,~,prefdirec,hdTuning_c]=...
+            [~,~,~,~,prefdirec,hdTuning_c] =...
                 tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk > 90),30)
             
-            [~,~,~,~,prefdirec,hdTuning_cc]=...
+            [~,~,~,~,prefdirec,hdTuning_cc] =...
                 tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(in_phase_vel_spk < -90),30)
             
-            [~,~,~,~,prefdirec,hdTuning_s]=...
+            [~,~,~,~,prefdirec,hdTuning_s] =...
                 tuningcurve(in_phase_hd(anglevel > 90),in_phase_hd_spk(abs(in_phase_vel_spk) < 30),30)
             
-            [~,~,~,~,prefdirec,hdTuning]=...
+            [~,~,~,~,prefdirec,hdTuning] =...
                 tuningcurve(data_video_nospk(:,4),data_video_spk(data_video_spk(:,6)==1,4),30)
             
             % ADD CROSS_VALIDATION FOR ABOVE TO VERIFY MEAN DIRECTION IS
             % NOT OBTAINED BY CHANCE
             
             figure;
-            
             plot(hdTuning_s,'Color',[.7 .7 .7],'LineWidth',2)
             hold on;
             plot(hdTuning_c,'b','LineWidth',2)
@@ -263,9 +285,10 @@ classdef HD_cell_analysis
             
             %time-shift analysis for future (add 1/samplerate to ts) and past
             %(subtract 1/samplerate to ts) and current
-            
-            
+
         end
+        
+   
         
     end
 end

@@ -1,21 +1,17 @@
 
-function glm_res = run_me(data,session,celln,varargin)
+function glm_res = glm_HD(data,session,celln,varargin)
 %%% Description of run_me
 
 % This script is segmented into several parts. 
 % 1. data is loaded. 
-% 2. 7 LN models are fit to the cell's spike train. 
-% Each model uses information (below) to predict a section of the
-% spike train: 
-%   - position
-%   - head direction
-%   - running speed 
-%   - egocentric bearing
+% 2. HD LN model is fit to the cell's spike train. 
+% The model uses head direction information to predict a section of the
+% spike train
 % 3. Model fitting and model performance is computed through
 %    10-fold cross-validation, and the minimization procedure is carried out
 %    through fminunc. 
-% 4. forward-search procedure is implemented to find the simplest 'best' model 
-%    describing this spike train. 
+% 4. Signrank test to determine if observed log-likelihood values differ
+% from zero. If not, selected model is NaN, otherwise model selects for HD.
 % 
 % Input: 
 %  - data: processed data file from ephys_tools. 
@@ -34,11 +30,10 @@ function glm_res = run_me(data,session,celln,varargin)
 % V1: Kiah Hardcastle, March 16, 2017
 % Adapted for ephys_tools RH 2019 
 % Added EBC predictors LB 02/2020
-% Simplified for Place, HD, Ego & made into function LB 09/2020 
+% Simplified for HD & made into function LB 09/2020 
 
 p = inputParser;
 addOptional(p,'numFolds',10,@isnumeric)
-addOptional(p,'n_pos_bins',20,@isnumeric)
 addOptional(p,'n_circ_bins',18,@isnumeric)
 addOptional(p,'n_speed_bins',10,@isnumeric)
 parse(p,varargin{:})
@@ -46,11 +41,8 @@ parse(p,varargin{:})
 % Initialize model hyperparameters
 model_params = struct;
 model_params.numFolds = p.Results.numFolds;
-model_params.pos_bins = p.Results.n_pos_bins;
 model_params.hd_bins = p.Results.n_circ_bins;
-model_params.ego_bins = p.Results.n_circ_bins;
 model_params.speed_bins = p.Results.n_speed_bins;
-model_params.numModels = 7;
 
 % boxSize = length (in cm) of one side of the square box
 boxSize=data.maze_size_cm(session);
@@ -77,16 +69,13 @@ posx_c = frames(:,2);
 posy_c = frames(:,3);
 pos = [posx_c posy_c];
 
-% sampleRate = sampling rate of neural data
-sampleRate = data.samplerate;
-
 % head direction
 hd = deg2rad(frames(:,4));
 
 %% fit the model
 fprintf('(2/5) Fitting all linear-nonlinear (LN) models\n')
 
-[glm_res,smooth_fr] = fit_all_ln_models(pos,hd,spiketrain,post,model_params,boxSize);
+[glm_res,smooth_fr] = fit_all_ln_models(pos,hd,spiketrain,post,model_params);
 
 
 %% find the simplest model that best describes the spike train
@@ -101,25 +90,19 @@ end
 
 %% Local Functions 
 
-function [glm_res,smooth_fr] = fit_all_ln_models(pos,hd,spiketrain,post,model_params,boxSize)
+function [glm_res,smooth_fr] = fit_all_ln_models(pos,hd,spiketrain,post,model_params)
 %% Description
 % The model: r = exp(W*theta), where r is the predicted # of spikes, W is a
-% matrix of one-hot vectors describing variable (P, H, E, or S) values, and
+% matrix of one-hot vectors describing variable (HD) values, and
 % theta is the learned vector of parameters.
 glm_res = struct;
-glm_res.model_type = {'Place-HD-Ego';'Place-HD';'Place-Ego'; 'HD-Ego';'Place';'HD';'Ego'};
+glm_res.model_type = {'HD'};
 
-%% Compute the position, head direction, speed, and egocentric bearing matrices
+%% Compute the head direction and speed
 
-% initialize the number of bins that position, head direction, speed, and
-% egocentric bearing will be divided into
-n_pos_bins = model_params.pos_bins;
+% initialize the number of bins that head direction and speed will be divided into
 n_dir_bins = model_params.hd_bins;
 n_speed_bins = model_params.speed_bins;
-n_ego_bins = model_params.ego_bins;
-
-% compute position matrix
-[posgrid, ~] = pos_map(pos, n_pos_bins, boxSize);
 
 % compute head direction matrix
 [hdgrid,~,~] = hd_map(hd,n_dir_bins);
@@ -127,57 +110,31 @@ n_ego_bins = model_params.ego_bins;
 % compute speed matrix
 [~,~,speed] = speed_map(pos(:,1),pos(:,2),n_speed_bins);
 
-% compute EBC matrices (bearing and distance)
-[egogrid, ~, ~, ~, ~, ~,~] = ebc_map(pos,hd, n_ego_bins);
-
 % remove times when the animal ran > 100 cm/s (these data points may contain artifacts)
 too_fast = find(speed >= 100);
-posgrid(too_fast,:) = []; hdgrid(too_fast,:) = []; 
+hdgrid(too_fast,:) = []; 
 spiketrain(too_fast) = []; 
-egogrid(too_fast,:) = [];
 
-
-%% Fit all 7 LN models
-% Initialize saved variables
-testFit = cell(model_params.numModels,1);
-trainFit = cell(model_params.numModels,1);
-param = cell(model_params.numModels,1);
-A = cell(model_params.numModels,1);
-modelType = cell(model_params.numModels,1);
-
-% ALL VARIABLES
-A{1} = [ posgrid hdgrid egogrid]; modelType{1} = [1 1 1];
-
-% TWO VARIBALE 
-A{2} = [ posgrid hdgrid]; modelType{2} = [1 1 0];
-A{3} = [ posgrid egogrid]; modelType{3} = [1 0 1];
-A{4} = [ hdgrid egogrid]; modelType{4} = [0 1 1];
-
-% ONE VARIABLE 
-A{5} = posgrid; modelType{5} = [1 0 0];
-A{6} = hdgrid; modelType{6} = [0 1 0];
-A{7} = egogrid; modelType{7} = [0 0 1];
+%% Fit HD LN models
+% HD model
+A = hdgrid; 
 
 % compute a filter, which will be used to smooth the firing rate
 filter = gaussmf(-4:4,[2 0]); filter = filter/sum(filter); 
 dt = mean(diff(post)); fr = spiketrain/dt;
 smooth_fr = conv(fr,filter,'same');
-num_models = model_params.numModels;
 num_folds = model_params.numFolds;
 
-parfor n = 1:num_models
-    fprintf('\t- Fitting model %d of %d\n', n, num_models);
-    [testFit{n},trainFit{n},param{n}] = fit_model(A{n},dt,spiketrain,filter,modelType{n},num_folds);
-end
+[testFit,trainFit,param] = fit_model(A,dt,spiketrain,filter,num_folds);
 
 % save model fits 
-glm_res.train = cell2mat(trainFit);
-glm_res.test = cell2mat(testFit);
+glm_res.train = trainFit;
+glm_res.test = testFit;
 glm_res.param = param;
 
 end
 
-function [testFit,trainFit,param_mean] = fit_model(A,dt,spiketrain,filter,modelType,numFolds)
+function [testFit,trainFit,param_mean] = fit_model(A,dt,spiketrain,filter,numFolds)
 
 %% Description
 % This code will section the data into 10 different portions. Each portion
@@ -232,7 +189,7 @@ for k = 1:numFolds
     else
         init_param = param;
     end
-    [param] = fminunc(@(param) ln_poisson_model(param,data,modelType),init_param,opts);
+    [param] = fminunc(@(param) ln_poisson_model(param,data),init_param,opts);
     
     %%%%%%%%%%%%% TEST DATA %%%%%%%%%%%%%%%%%%%%%%%
     % compute the firing rate
@@ -295,51 +252,67 @@ param_mean = nanmean(paramMat);
 
 end
 
+function [f, df] = ln_poisson_model(param,data)
+
+%updated by LB to limit predictor to HD
+
+X = data{1}; % subset of A
+Y = data{2}; % number of spikes
+
+% compute the firing rate
+u = X * param;
+rate = exp(u);
+
+% roughness regularizer weight - note: these are tuned using the sum of f,
+% and thus have decreasing influence with increasing amounts of data
+b_hd = 5e1;
+
+% start computing the Hessian
+% rX = bsxfun(@times,rate,X);
+% hessian_glm = rX'*X;
+
+%% find the H parameters and compute their roughness penalties
+% initialize parameter-relevant variables
+J_hd = 0; J_hd_g = []; %J_hd_h = [];
+
+
+% compute the contribution for f, df, and the hessian
+[J_hd,J_hd_g,~] = rough_penalty_1d_circ(param,b_hd); % J_hd_h
+
+
+%% compute f, the gradient, and the hessian
+
+f = sum(rate-Y.*u) + J_hd;
+df = real(X' * (rate - Y) + J_hd_g);
+% hessian = hessian_glm + blkdiag(J_hd_h);
+end
+
+%% smoothing functions called in the above script
+function [J,J_g,J_h] = rough_penalty_1d_circ(param,beta)
+
+numParam = numel(param);
+D1 = spdiags(ones(numParam,1)*[-1 1],0:1,numParam-1,numParam);
+DD1 = D1'*D1;
+
+% to correct the smoothing across first and last bin
+DD1(1,:) = circshift(DD1(2,:),[0 -1]);
+DD1(end,:) = circshift(DD1(end-1,:),[0 1]);
+
+J = beta*0.5*param'*DD1*param;
+J_g = beta*DD1*param;
+J_h = beta*DD1;
+end
+
 function selected_model = select_best_model(testFit,model_params)
 testFit_mat = testFit;
-LLH_values = reshape(testFit_mat(:,3),model_params.numFolds,model_params.numModels);
-
-% find the best single model
-singleModels = 5:7;
-[~,top1] = max(nanmean(LLH_values(:,singleModels))); top1 = top1 + singleModels(1)-1;
-
-% find the best double model that includes the single model
-if top1 == 5 % P-> PH, PE
-    [~,top2] = max(nanmean(LLH_values(:,[2 3])));
-    vec = [2 3]; top2 = vec(top2);
-elseif top1 == 6 % H -> HP, HE
-    [~,top2] = max(nanmean(LLH_values(:,[2 4])));
-    vec = [2 4]; top2 = vec(top2);
-elseif top1 == 7 % E -> PE, HE
-    [~,top2] = max(nanmean(LLH_values(:,[3 4])));
-    vec = [3 4]; top2 = vec(top2);
-end
-
-% full model PHE
-top3 = 1; 
-
-% Grab logliklihood values for top models
-LLH1 = LLH_values(:,top1); LLH2 = LLH_values(:,top2);LLH3 = LLH_values(:,top3);
-
-% compare increasingly complicated models 
-[p_llh_12,~] = signrank(LLH2,LLH1,'tail','right');
-[p_llh_23,~] = signrank(LLH3,LLH2,'tail','right');
-
-
-if p_llh_12 < 0.05 % double model is sig. better
-    if p_llh_23 < 0.05  % triple model is sig. better
-        selected_model = top3; %full model
-    else
-        selected_model = top2; %double model
-    end
-else
-    selected_model = top1; %single model
-end
+LLH_values = reshape(testFit_mat(:,3),model_params.numFolds,1);
 
 % re-set if selected model is not above baseline
-pval_baseline = signrank(LLH_values(:,selected_model),[],'tail','right');
+pval_baseline = signrank(LLH_values,[],'tail','right');
 
 if pval_baseline > 0.05
     selected_model = NaN;
+else
+    selected_model = 1;
 end
 end

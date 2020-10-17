@@ -7,7 +7,7 @@
 
 % create x-axis vectors
 hd_vector = 2*pi/n_dir_bins/2:2*pi/n_dir_bins:2*pi - 2*pi/n_dir_bins/2;
-theta_vector = hd_vector;
+ego_vector = hd_vector;
 speed_vector = 2.5:50/n_speed_bins:47.5;
 
 % plot the tuning curves
