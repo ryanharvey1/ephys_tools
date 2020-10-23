@@ -17,10 +17,19 @@ for i = 1:length(sessions)
     % load data
     data = load([dataset,sessions{i}],'frames','Spikes','events');
     
+    condition = size(data.events,2);
+    disp(num2str(condition));
     % Run Attractor analysis
-    res = attractor_main(data);
+    if condition >= 4 || condition == 2
+        for cond = 1:condition
+            result{cond} = attractor_main(data,cond);
+        end
+    else
+        result = attractor_main(data,1);
+    end
     
-    save_res([save_path,'attractor_res_',sessions{i}],res)
+    save_res([save_path,'attractor_res_',sessions{i}],result)
+    clear result
     waitmessage.Send;
 end
 waitmessage.Destroy
@@ -33,19 +42,19 @@ function save_res(save_path,res)
  save(save_path,'res')
 end
 
-function res = attractor_main(data)
+function res = attractor_main(data,session)
 % Performs spatial and temporal cross correlation analyses from Bassett,
 % Wills, Cacucci 2018.
 % Input:
 %   data: ephys_tools data structure
 %
 % Output:
-%   res: Structur containing 
+%   res: Structer containing 
 % 
 %
 
 spikes = data.Spikes;
-events = data.events(:,1);
+events = data.events(:,session);
 frames = get_baseline_frames(data,events);
 
 res = struct;
@@ -54,12 +63,16 @@ cmp = [];
 p = 1;
 for i = 1:length(data.Spikes)
     for ii = i+1:length(data.Spikes)
-        cmp = [cmp;[i, ii]];
         
         % Gather spikes
         ref = get_baseline_spikes(i,spikes,events);
         test = get_baseline_spikes(ii,spikes,events);
         
+        if isempty(ref) || isempty(test)
+            continue
+        end
+        
+        cmp = [cmp;[i, ii]];
         % Calculate Spatial Correlation
         [spatial_corr(p,:), r(p)] = spatial_xcorr(ref,test,frames);
         
@@ -94,19 +107,31 @@ ref = spikes{celln}(spike_idx);
 
 end
 
-function [cor,central_sec] = temporal_xcorr(ref,test)
+function [zhist,central_sec] = temporal_xcorr(ref,test)
+% code to create z-scored cross-correlograms from Butler & Taube (2017)
+% inputs: ts1 and ts2 (lists of spike times in seconds)
+% output: zhist (histogram with normalized counts in each timebin, 0.5 ms
+% bins, -20 to 20 s, 
 
-max_lag = 20;
-% t_bin=0.005;
-t_bin=0.200;
-% Acor - taken from intrinsic frequency 2
-if t_bin / mod(max_lag, t_bin) ~= 2 % set lags so it is 'even' (odd number of coefficients and zero centered')
-    max_lag = t_bin*floor(max_lag/t_bin)+.5*t_bin;
+[real_hist,lags] = MClustStats.CrossCorr(ref, test, 0.2, 201);
+
+%% make distribution of 100 jittered/shuffled xcorrs
+rep_num = 0;
+all_shuff_hist = nan(100,201);
+V = -0.010:0.001:0.010;
+while rep_num < 100
+    jitter1 = ref + V(randi([1,numel(V)])); % jitter each spike train by +-10 ms
+    jitter2 = test + V(randi([1,numel(V)]));
+    [shuff_hist,~] = MClustStats.CrossCorr(jitter1, jitter2, 0.2, 201);
+    all_shuff_hist(rep_num+1,:) = shuff_hist;
+    rep_num = rep_num + 1;
 end
-[cor, lags] = CrossCorr(ref,test,'lag',[-max_lag max_lag],'binsize',t_bin,'norm','prob');
- cor = cor./sum(cor,2); % normalize
-% Get mean 1s
-central_sec = nanmean(cor(lags > -0.5 & lags < 0.5));
+
+%compute average and sd for each shuffle lag bin to z-score actual histogram
+mean_shuff = mean(all_shuff_hist,1);
+sd_shuff = std(all_shuff_hist,1);
+zhist = (real_hist'-mean_shuff)./sd_shuff;
+central_sec = mean(zhist(1,lags >= -0.5 &  lags <= 0.5));
 
 end
 
@@ -114,27 +139,30 @@ function [spatial_corr, r] = spatial_xcorr(ref,test,frames)
 
 % subsample spikes to decrease run time 
 spike_num = randperm(length(ref),min(length(ref),1000));
-
+angle_spike = interp1(frames(:,1),frames(:,4),test);
 for iii = 1:length(spike_num)
     
+    % Create time boundary for iteration
     out_bound = ref(spike_num(iii)) + 10;
     in_bound = ref(spike_num(iii));
     
+    % Create test/ref indicies, get occupancy angles, and angles for test
+    % neuron during test neuron spike.
     index = test > in_bound & test < out_bound;
     hd_idx = frames(:,1) > in_bound & frames(:,1) < out_bound;
-    current_spikes = test(index);
     angles = frames(hd_idx, 4);
-    ts = frames(hd_idx,1);
+    current_angles = angle_spike(index);
     
-    % Continue if ts or spikes are inadequate
+     % Continue if ts or spikes are inadequate
+    ts = frames(hd_idx,1);
+    current_spikes = test(index); % Get current spikes 
     if length(ts) < 2 || isempty(current_spikes)
         continue
     end
-    % line up spikes with HD
-    angle_spike = interp1(ts,angles,current_spikes);
+
     
     % Gather occupancy and spike_angle
-    [bin_angle(iii,:) , bin_spikes(iii,:)] =  binned_spikes(angles,angle_spike);
+    [bin_angle(iii,:) , bin_spikes(iii,:)] =  binned_spikes(angles,current_angles);
     
 end
 
