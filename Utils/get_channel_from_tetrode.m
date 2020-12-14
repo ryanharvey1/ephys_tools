@@ -1,9 +1,8 @@
 
-function channel_num = get_channel_from_tetrode(data,tetrode_path)
+function channel_num = get_channel_from_tetrode(data,cell)
 
 % pull out tetrode number to match with channels
-[~, filename] = fileparts(tetrode_path);
-trodeID = str2double(extractAfter(filename,'TT'));
+trodeID = str2double(extractBetween(data.spikesID.TetrodeNum{cell},'TT','.mat'));
 
 % find channels
 available_channels = data.lfp.channel_list.tetrode_num;
