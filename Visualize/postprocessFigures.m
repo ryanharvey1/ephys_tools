@@ -335,7 +335,7 @@ classdef postprocessFigures
             spkframes = data.linear_track{session}.(direction){1,cell}.dataspks;
             mazetypes = data.mazetypes;
            
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
             
             if ~iscell(laps) || isempty(laps)
                 return
@@ -383,7 +383,7 @@ classdef postprocessFigures
             
             ratemap = data.ratemap{cell,session};
             
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
             
             % set up colormap
             theta=0:.01:2*pi;
@@ -412,7 +412,7 @@ classdef postprocessFigures
         function spikesonpath_2d(data,session,cell,colorcode)
             % PLOT SPIKES ON PATH WITH EACH SPIKE COLOR
             % CODED BY ITS THETA PHASE
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
             
             ax=gca;
             [dataspks,~] = createframes_w_spikebinary(data,session,cell);
@@ -487,7 +487,7 @@ classdef postprocessFigures
         
         function phase_by_pos(data,session,cell,direction)
             
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
 
             ax = gca;
             dataspks = data.linear_track{session}.(direction){1,cell}.dataspks;
@@ -561,7 +561,7 @@ classdef postprocessFigures
             x = dataspks(dataspks(:,6) == 0,2);
             spkts = dataspks(dataspks(:,6) == 1,1);
             
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
             
             if isempty(x)
                 return
@@ -604,7 +604,7 @@ classdef postprocessFigures
         
         function phasemap_2d(data,session,cell)
             
-            trodeID = get_channel_from_tetrode(data,data.spikesID.paths{cell});
+            trodeID = get_channel_from_tetrode(data,cell);
             
             [data_video_spk,data_video_nospk]=createframes_w_spikebinary(data,session,cell);
             
@@ -683,10 +683,11 @@ classdef postprocessFigures
             
             avgwave = data.avgwave{cell};
             measures = data.measures(cell,:,session);
-            
+            [~,idx] = sort(max(abs(avgwave),[],2));
+            avgwave = avgwave(flip(idx),:);
             sam=size(avgwave,2);
             waves=zeros(4,sam);
-            waves(1:size(avgwave,1),:)=avgwave;
+            waves(1:size(avgwave,1),:)= -1*avgwave;
             plot(1:sam,waves(1,:),'LineWidth',2, 'color','k');hold on
             plot(sam+1:sam*2,waves(2,:),'LineWidth',2, 'color','k');
             plot(1:sam,waves(3,:)+max(abs([waves(1,:),waves(2,:)])),...
