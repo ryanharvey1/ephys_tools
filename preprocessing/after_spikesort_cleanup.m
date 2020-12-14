@@ -9,8 +9,8 @@ classdef after_spikesort_cleanup
         
         function main(varargin)
             % after_spikesort_cleanup compiles cluster data from spike sort 3d,
-            % mclust 4.4, & kilosort2/phy and exports .mat files that contain 
-            % spikes times, avg waveforms, and quality metrics to be loaded 
+            % mclust 4.4, & kilosort2/phy and exports .mat files that contain
+            % spikes times, avg waveforms, and quality metrics to be loaded
             % within load_spikes.m
             %
             %   Example:
@@ -37,18 +37,18 @@ classdef after_spikesort_cleanup
                 
                 after_spikesort_cleanup.handle_tfiles
                 
-            % Spikesort3D    
+                % Spikesort3D
             elseif ~isempty(dir(['*',filesep,'*_clust.ntt*']))
                 
                 after_spikesort_cleanup.handle_ntt
                 
-            % Kilosort2 / phy    
+                % Kilosort2 / phy
             elseif exist(fullfile(pwd,'spike_times.npy'),'file')
                 
                 after_spikesort_cleanup.handle_phy
                 
             elseif ~isempty(dir('*Kilosort2_*'))
-  
+                
                 after_spikesort_cleanup.handle_phy
             end
         end
@@ -233,10 +233,8 @@ classdef after_spikesort_cleanup
             % load phy output (spike times, cluster id, & waveforms)
             % calcuate cluster quality metrics
             % save all to .mat files in currently used format
-            
-            tic
-            
-            myKsDir=pwd;
+                        
+            myKsDir = pwd;
             basedir = pwd;
             
             % check to see if there is a specific kilosort folder
@@ -251,6 +249,7 @@ classdef after_spikesort_cleanup
             end
             disp(myKsDir)
             
+            % Make a directory to store sorted data
             mkdir(fullfile(pwd,'Sorted'))
             
             
@@ -273,12 +272,6 @@ classdef after_spikesort_cleanup
             clusterinfo = readtable(fullfile(myKsDir,'cluster_info.tsv'), opts);
             clear opts
             
-            % Remove duplicate spikes from kilosort 
-            [overlap_matrix , sp] = rm_spk(sp,max(clusterinfo.id));
-         
-            % Update spike count 
-            clusterinfo.n_spikes = clusterinfo.n_spikes - overlap_matrix(ismember(overlap_matrix(:,1),clusterinfo.id),2); 
-            
             % locate cells to keep (1=MUA, 2=Good, 3=Unsorted)
             % (Spikes from clusters labeled "noise" have already been omitted)
             spkts=[];
@@ -296,7 +289,7 @@ classdef after_spikesort_cleanup
             disp('...')
             
             % set params to extract average waveforms
-            datfile='filtered.dat';
+            datfile = 'filtered.dat';
             gwfparams.dataDir = [basedir,filesep];    % KiloSort/Phy output folder
             gwfparams.myKsDir = [myKsDir,filesep];
             gwfparams.fileName = datfile;         % .dat file containing the raw
@@ -305,128 +298,173 @@ classdef after_spikesort_cleanup
             gwfparams.wfWin = [-7 24]*2;              % Number of samples before and after spiketime to include in waveform
             gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
             
-            if ~isfile(datfile)
-                filter_raw_dat
-            end
             
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
             [clusterIDs, unitQuality, ~] = sqKilosort.maskedClusterQuality(myKsDir);
             
             % Load ts from video to get first frame
-            % kilosort assumes first frame is ts zero, so we need to align 
+            % kilosort assumes first frame is ts zero, so we need to align
             % the spike times based on the first recorded frame, and then
             % subtract the video sample rate from the spike times to
             % account for the difference in sample rate between spikes (~32000hz)
             % and video (~30hz)
-            [ts] = Nlx2MatVT(fullfile(basedir,'VT1.nvt'),[1,0,0,0,0,0],0,1);
-
-            % split data into respective tetrodes
-            for i=0:4:sp.n_channels_dat-4
-                
-                % spike times
-                output=[spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3)))),...
-                    double(clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3)))))];
-                
-                if isempty(output)
-                    continue
+            if ~isempty( dir([basedir,filesep,'**\*.ncs']))
+                % create filtered dat if one doesn't exsist
+                if ~isfile(datfile)
+                    filter_raw_dat
                 end
                 
-                % convert seconds to microseconds, add the first video ts, 
-                % and then subtract video sample rate
-                output(:,1)=(output(:,1)*10^6+ts(1))-mean(diff(ts));
-
-                disp([num2str(length(unique(output(:,2)))),' Clusters'])
-                disp(['Saving ','TT',num2str(i/4+1),'.mat'])
-                save(fullfile('Sorted',['TT',num2str(i/4+1),'.mat']),'output')
-                
-                % average waveforms
-                gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
-                gwfparams.spikeClusters = clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))));
-                
-                wf = getWaveForms(gwfparams);
-                
-                for u=1:size(wf.waveFormsMean,1)
-                    ch_num=1;
-                    for ch=[i+1:i+4]
-                        try
-                            means{u}(ch_num,:)=squeeze(wf.waveFormsMean(u,ch,:));
-                        catch
-                            means{u}(ch_num,:)=zeros(1,length(gwfparams.wfWin(1):gwfparams.wfWin(2)));
-                        end
-                        ch_num=ch_num+1;
-                    end
+                [ts] = Nlx2MatVT(fullfile(basedir,'VT1.nvt'),[1,0,0,0,0,0],0,1);
+                % split data into respective tetrodes
+                waveform_from_tt(sp,clu,ts,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
+            elseif ~isempty( dir([basedir,filesep,'**\*video_ts.csv']))
+                % create filtered dat if one doesn't exsist
+                if ~isfile(datfile)
+                    filter_raw_dat_from_dat
                 end
-                
-                orig_filename=fullfile(basedir,['TT',num2str(i/4+1),'.ntt']);
-                
-                confidence=NaN(1,length(means));
-                
-                final_grades=confidence;
-                
-                ui=1;
-                for u=unique(output(:,2))'
-                    t=((output((output(:,2)==u),1))./10^6)*1000;
-                    ISI=diff(t) + 1e-100;
-                    ISI_store(ui,1)=sum((ISI<3))/length(ISI);
-                    ui=ui+1;
-                end
-                
-                grades=nan(size(unique(output(:,2)),1),27);
-                
-                
-                grades(:,1)=NaN(1,size(unique(output(:,2)),1))';
-                grades(:,3)=ISI_store;
-                grades(:,5)=unitQuality(ismember(clusterIDs-1,unique(output(:,2))));
-                grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
-                
-                save(fullfile(basedir,'Sorted',['TT',num2str(i/4+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
-                
-                clear means grades ISI_store
-                
+                % split data into respective shanks
+                waveform_from_probe(sp,clu,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
             end
-            toc
-            disp('finished... go post process this session :)')
+            
+                disp('finished... go post process this session :)')
         end
     end
     
 end
 
 
-function [overlap_matrix , sp] = rm_spk(sp,maxID)
-% Removes double counted spikes from kilosort output
-% Adapted from Allen Institute / ecephys_spike_sorting / postprocessing.py
-% LB 06/2020
-
-% Input: 
-%   sp: structure of kilosort data from loadKSdir fuction
-%   maxID: maximum cluster id (can be obtained from clusterid or
-%          cluster_group.tsv
-
-% Output: 
-%  sp: with spike times, spike templates, cluster identity, and amplitude sans removed values
-%      overlap_matrix: n x 1 array of number of spikes removed from each
-%      cluster. 
-
-    overlap_matrix = zeros(maxID+1,1);
-
-    rm_idx = []; % to keep track of removed spikes
+function waveform_from_tt(sp,clu,ts,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
+% split data into respective tetrodes
+for i = 0:4:sp.n_channels_dat-4
     
-        for idx1 = 0:maxID+1 
-
-            for_unit1 = find(sp.clu == idx1); % get index from original array
-            
-            spikes_to_remove = diff(sp.st(for_unit1)) < .00016; % difference is less than .16 ms i.e. overlapping waveforms
-
-            overlap_matrix(idx1+1,2) = sum(spikes_to_remove); % keep track of removed spike total
-            overlap_matrix(idx1+1,1) = idx1; % keep track of cell id
-            rm_idx = [rm_idx; for_unit1(spikes_to_remove)]; % index of removed spikes
-            
+    % spike times
+    output=[spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3)))),...
+        double(clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3)))))];
+    
+    if isempty(output)
+        continue
+    end
+    
+    % convert seconds to microseconds, add the first video ts,
+    % and then subtract video sample rate
+    output(:,1)=(output(:,1)*10^6+ts(1)) - mean(diff(ts));
+    
+    disp([num2str(length(unique(output(:,2)))),' Clusters'])
+    disp(['Saving ','TT',num2str(i/4+1),'.mat'])
+    save(fullfile('Sorted',['TT',num2str(i/4+1),'.mat']),'output')
+    
+    % average waveforms
+    gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
+    gwfparams.spikeClusters = clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))));
+    
+    wf = getWaveForms(gwfparams);
+    
+    for u=1:size(wf.waveFormsMean,1)
+        ch_num=1;
+        for ch=[i+1:i+4]
+            try
+                means{u}(ch_num,:)=squeeze(wf.waveFormsMean(u,ch,:));
+            catch
+                means{u}(ch_num,:)=zeros(1,length(gwfparams.wfWin(1):gwfparams.wfWin(2)));
+            end
+            ch_num=ch_num+1;
         end
-        
-        % Apply remove index to sp
-        sp.st(rm_idx) = [];
-        sp.spikeTemplates(rm_idx) = [];
-        sp.clu(rm_idx) = [];
-        sp.tempScalingAmps(rm_idx) = [];
+    end
+    
+    orig_filename = fullfile(basedir,['TT',num2str(i/4+1),'.ntt']);
+    
+    confidence = NaN(1,length(means));
+    
+    final_grades = confidence;
+    
+    ui=1;
+    for u=unique(output(:,2))'
+        t=((output((output(:,2)==u),1))./10^6)*1000;
+        ISI=diff(t) + 1e-100;
+        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ui=ui+1;
+    end
+    
+    grades=nan(size(unique(output(:,2)),1),27);
+    
+    
+    grades(:,1)=NaN(1,size(unique(output(:,2)),1))';
+    grades(:,3)=ISI_store;
+    grades(:,5)=unitQuality(ismember(clusterIDs-1,unique(output(:,2))));
+    grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
+    
+    save(fullfile(basedir,'Sorted',['TT',num2str(i/16+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
+    
+    clear means grades ISI_store
+    
+end
+end
+
+function waveform_from_probe(sp,clu,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
+
+% split data into respective shanks
+for i = 0:16:sp.n_channels_dat-16
+    
+    % spike times
+    output=[spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+16)))),...
+        double(clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+16)))))];
+    
+    % convert seconds to microseconds
+    output(:,1)=(output(:,1)*10^6);
+    
+    if isempty(output)
+        continue
+    end
+    
+    disp([num2str(length(unique(output(:,2)))),' Clusters'])
+    disp(['Saving ','TT',num2str(i/16+1),'.mat'])
+    save(fullfile('Sorted',['TT',num2str(i/16+1),'.mat']),'output')
+    
+    % average waveforms
+    gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+16))))*sp.sample_rate);
+    gwfparams.spikeClusters = clu(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+16))));
+    
+    wf = getWaveForms(gwfparams);
+    
+    for u=1:size(wf.waveFormsMean,1)
+        ch_num=1;
+        for ch=[i+1:i+16]
+            try
+                means{u}(ch_num,:)=squeeze(wf.waveFormsMean(u,ch,:));
+            catch
+                means{u}(ch_num,:)=zeros(1,length(gwfparams.wfWin(1):gwfparams.wfWin(2)));
+            end
+            ch_num=ch_num+1;
+        end
+    end
+    
+    [~,basename] = fileparts(basedir);
+    orig_filename = fullfile(basedir,[basename,'.dat']);
+    
+    confidence = NaN(1,length(means));
+    
+    final_grades = confidence;
+    
+    ui=1;
+    for u=unique(output(:,2))'
+        t=((output((output(:,2)==u),1))./10^6)*1000;
+        ISI=diff(t) + 1e-100;
+        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ui=ui+1;
+    end
+    
+    grades=nan(size(unique(output(:,2)),1),27);
+    
+    
+    grades(:,1)=NaN(1,size(unique(output(:,2)),1))';
+    grades(:,3)=ISI_store;
+    grades(:,5)=unitQuality(ismember(clusterIDs-1,unique(output(:,2))));
+    grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
+    
+    save(fullfile(basedir,'Sorted',['TT',num2str(i/16+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
+    
+    clear means grades ISI_store
+    
+end
 end
 
