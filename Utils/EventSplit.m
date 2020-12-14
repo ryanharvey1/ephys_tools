@@ -28,6 +28,18 @@ function [ timestamps,StartofRec,EndofRec ] = EventSplit( path )
 % labeling events when recording. 
 % save([path filesep 'events.mat'],'timestamps','StartofRec','EndofRec')
 
+% for Open Ephys with python script acquisition 
+if ~isempty( dir([path,filesep,'**\*events_ts.csv']))
+    file = dir([path,filesep,'**\*events_ts.csv']);
+    events = readtable([file.folder,filesep,file.name]);
+    events = events(events.Var1 >= 1,:); %keep first input thru end cause zero is null 
+    StartofRec = events.start'*10^6;
+    EndofRec = events.xEnd'*10^6;
+    timestamps = [];
+    save([path filesep 'events.mat'],'StartofRec','EndofRec','timestamps')
+    return
+end
+
 if exist([path filesep 'events.mat'],'file')==2
     load([path filesep 'events.mat'])
     return
