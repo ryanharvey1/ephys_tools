@@ -20,7 +20,11 @@ if isempty(xmli)
 end
 rxml = xmltools(fbasename);
 
-rxml = rxml.child(2);
+try
+    rxml = rxml.child(1);
+catch
+    rxml = rxml.child(2);
+end
 
 % from this level all children are the different parameters fields
 xml.FileName = fbasename;
