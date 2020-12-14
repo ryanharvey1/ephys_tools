@@ -1,0 +1,9 @@
+#ignore Matlab autosave files
+*.m~
+*.asv
+
+#ignore .pyc files
+*.pyc
+
+#ignore .DS_Store (mac)
+.DS_Store
