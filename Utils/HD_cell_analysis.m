@@ -1,12 +1,12 @@
 classdef HD_cell_analysis
     % Class of functions to quantify features of head direction tuning
     
-    % To do: 
-    %   Measures to create: 
+    % To do:
+    %   Measures to create:
     %       - Anticipatory Time Interval
     %       - Tuning Quality (Preferred Direction(s),tuning width, kappa)
-    %       - Ensemble Analysis 
-    % Misc: 
+    %       - Ensemble Analysis
+    % Misc:
     %       - Standardize input arguments (data,session,cell)
     
     properties
@@ -15,8 +15,8 @@ classdef HD_cell_analysis
     
     methods(Static)
         
-   % Distributive Ratio
-    
+        % Distributive Ratio
+        
         function DR = distributiveRatio(ratemap,frames,hdTuning,mazesize)
             
             thetabins = rad2deg((pi/30)/2:(pi/30):2*pi-(pi/30)/2);
@@ -49,8 +49,8 @@ classdef HD_cell_analysis
             
         end
         
-   % Directional information content
-     
+        % Directional information content
+        
         function DIC  = computeDIC(histAng,hdTuning,OverallFR)
             %Computes the directional information content on unsmoothed ratemap for
             %directional data. Adapted from Langston et al 2010. by LB March 2018
@@ -72,8 +72,8 @@ classdef HD_cell_analysis
             DIC = sum(ICi)/OverallFR;
         end
         
-   % Tuning Stability
-    
+        % Tuning Stability
+        
         function stable_score = stability(data_video_spk,samplerate)
             % Computes the correlation of tuning curves generated after each
             % complete sampling of the horizontal azimuth.
@@ -95,7 +95,7 @@ classdef HD_cell_analysis
             a = data_video_spk(data_video_spk(:,6) == 0,4);
             ts = data_video_spk(data_video_spk(:,6) == 0,1);
             frames = data_video_spk(data_video_spk(:,6) == 0,:);
-          
+            
             bins = 0:6:360;
             bin_check = zeros(1,length(bins));
             ii = 1;
@@ -117,7 +117,7 @@ classdef HD_cell_analysis
                     [~,~,~,~,~,hdtuning] = tuningcurve(temp_a,...
                         temp_spk_frames(temp_spk_frames(:,6) == 1,4),samplerate);
                     
-                 
+                    
                     hd_tune = [hd_tune;hdtuning];
                     
                     ii = i+1;
@@ -139,8 +139,8 @@ classdef HD_cell_analysis
             stable_score = nanmean(corrMat(:));
         end
         
-   % Tuning Stability across session
-   
+        % Tuning Stability across session
+        
         function [within_Coeff,within,normWithin] = four_quarter_stability(data_video_spk,sampleRate,method)
             %four_quarter_stability computes the 4-quarter stability score for head direction signals based off
             %Boccara et al.
@@ -206,21 +206,21 @@ classdef HD_cell_analysis
                 within_Coeff=nanmean([first,second,third,fourth,fifth,sixth]);
                 
             elseif strcmp(method, 'std')
-      
+                
                 within_Coeff = nanmean(nanstd(normWithin));
                 
             end
             
-%             normTemp=[];
-%             for i=1:4
-%                 tempTune=within.hdTuning{i,:};
-%                 normTemp=[normTemp; rescale(tempTune,0,1)];
-%             end
-%             normWithin=normTemp;
+            %             normTemp=[];
+            %             for i=1:4
+            %                 tempTune=within.hdTuning{i,:};
+            %                 normTemp=[normTemp; rescale(tempTune,0,1)];
+            %             end
+            %             normWithin=normTemp;
         end
-   
-   % Anticipatory time interval (NOT COMPLETE)
-   
+        
+        % Anticipatory time interval (NOT COMPLETE)
+        
         function anticipatory_time_interval = computeATI(data,session,cell)
             
             
@@ -285,10 +285,83 @@ classdef HD_cell_analysis
             
             %time-shift analysis for future (add 1/samplerate to ts) and past
             %(subtract 1/samplerate to ts) and current
-
+            
         end
         
-   
+        function [beta_1, p_value] = drift(data,session,cell,plots)
+            % Evaluates drift by performing regression by evaluating linear
+            % association between difference in spike times and difference in
+            % head angle.
+            %
+            %   Input:
+            %       - data: structure containing frames, event timestamps, and spikes. Output of ephys_tools/Analysis/postprocess.m
+            %       - session: condition number to run. Corresponds to event
+            %       timestamps.
+            %       - cell: cell index (obtained from find_cells).
+            %       -plots: 0 or 1 for no plot and plot respectively.
+            %   Output: 
+            %       - beta_1: estimated coefficient from least squares model fit.  
+            %
+            % To-do: 
+            %    add cross validation method
+            
+            addpath('D:\Users\BClarkLab\ephys_tools\external_packages\Colormaps')
+            
+            % Unpack data
+            spikes = data.Spikes{cell,1};
+            events = data.events(:,session);
+            
+            frames = data.frames(data.frames(:,1) > events(1,1) & data.frames(:,1) < events(2,1),:);
+            spikes = spikes(spikes > events(1,1) & spikes < events(2,1));
+            angles = deg2rad(interp1(frames(:,1),frames(:,4),spikes));
+            
+            % Get differences
+            delta_spike = log(diff(spikes));
+            delta_HD = log(abs(rad2deg(circ_dist(angles(1:end-1,1),angles(2:end,1)))));
+            delta_HD = delta_HD( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
+            delta_spike = delta_spike( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
+            
+            % Fit linear model
+            mdl = fitlm(delta_HD,delta_spike);
+            beta_1 = mdl.Coefficients.Estimate(2,1);
+            p_value = mdl.Coefficients.pValue(2,1);
+            
+            % divide
+            % Plot spike on path over time
+            if plots
+               fig=figure('DefaultAxesFontSize',8,'defaultAxesFontName','sans-serif','defaultTextFontName','sans-serif');
+               fig.Color = [1,1,1];
+                [fig_width_in, fig_height_in] = set_size('beamer', 1, [2,2]);
+                set(fig,'Position',[1 1 fig_width_in fig_height_in])
+                
+                subplot(2,2,1)
+                plot(data.hdTuning{cell,session},'k','LineWidth',2);
+                xlabel('Head Direction (6 deg/bin)')
+                ylabel('Firing Rate (Hz)')
+                subplot(2,2,2)
+                plot(frames(:,1),frames(:,4),'-k')
+                xlabel('Time (s)')
+                ylabel('Head Direction (deg)')
+                hold on;
+                scatter(spikes,rad2deg(angles),'filled','r')
+                subplot(2,2,3)
+                scatter(delta_spike,delta_HD)
+                h = lsline;
+                set(h(1),'color','r','LineWidth',2)
+                xlabel('log delta time')
+                ylabel('log delta angle')
+                axis tight
+                subplot(2,2,4)
+                xedges = min(delta_spike):.5:max(delta_spike);
+                yedges = min(delta_HD):.5:max(delta_HD);
+                imagesc(histcounts2(delta_spike,delta_HD,xedges,yedges)')
+                colormap(magma(255))
+                axis xy
+                xlabel('log delta time')
+                ylabel('log delta angle')
+            end
+        end
+        
         
     end
 end
