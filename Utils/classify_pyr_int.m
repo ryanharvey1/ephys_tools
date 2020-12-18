@@ -1,17 +1,23 @@
 
-df = readtable('F:\Projects\PAE_PlaceCell\swr_data\post_processed\swr_df.csv');
-data_path = 'F:\Projects\PAE_PlaceCell\ProcessedData\';
-save_path = 'F:\Projects\PAE_PlaceCell\cell_recruitment\';
-mkdir(save_path);
+df = readtable('F:\ClarkP30_Recordings\Analysis\hd_cell_list.csv');
+data_path = 'F:\ClarkP30_Recordings\ProcessedData\';
+save_path = 'F:\ClarkP30_Recordings\Analysis\Cell_Classification\';
 
+% 
+df.session = df.SessionID;
 % run through each session
 WaitMessage = parfor_wait(length(unique(df.session)),'Waitbar',false,'ReportInterval',1);
 sessions = unique(df.session);
 parfor i = 1:length(sessions)
-    if exist([save_path,sessions{i},'.mat'],'file')
+    %     if exist([save_path,sessions{i},'.mat'],'file')
+    %         continue
+    %     end
+    
+    if exist([save_path,sessions{i}],'file')
         continue
     end
-    data = load([data_path,sessions{i},'.mat'],'avgwave','Spikes','spikesID');
+    %     data = load([data_path,sessions{i},'.mat'],'avgwave','Spikes','spikesID');
+    data = load([data_path,sessions{i}],'avgwave','Spikes','spikesID','frames');
     
     dat = main(data);
     
@@ -20,41 +26,72 @@ parfor i = 1:length(sessions)
     WaitMessage.Send;
 end
 WaitMessage.Destroy
-
+%%
 df = load_all(save_path);
 df.waves_zscore = zscore(df.waves,0,2);
 
 % rough split for now
-idx = df.trough_to_peak < 0.2;
-df.cell_type(idx) = 'int';
+idx = df.trough_to_peak < 0.23 ;
+df.cell_type(idx) = {'int'};
 
-idx = df.trough_to_peak > 0.2;
-df.cell_type(idx) = 'pyr';
+idx = df.trough_to_peak > 0.23;
+df.cell_type(idx) = {'pyr'};
 
 df_to_save = df;
 df_to_save.waves = [];
 df_to_save.waves_zscore = [];
+mkdir([save_path,'processed\']);
 writetable(df_to_save,[save_path,'processed\pyr_int_df.csv'])
 
+fig = figure; 
+fig.Color = [1 1 1];
+plot(df.trough_to_peak(df.trough_to_peak < 0.25& df.avg_fr > 5,1),...
+    log(df.avg_fr(df.trough_to_peak < 0.25& df.avg_fr > 5,1)),'.k')
+xlim([0 1]) 
+hold on
+plot(df.trough_to_peak(df.trough_to_peak < 0.25& df.avg_fr < 5,1),...
+    log(df.avg_fr(df.trough_to_peak < 0.25& df.avg_fr < 5,1)),'.r')
+plot(df.trough_to_peak(df.trough_to_peak < 0.25& df.avg_fr < 5,1),...
+    log(df.avg_fr(df.trough_to_peak < 0.25& df.avg_fr < 5,1)),'.r')
+plot([0.25,0.25],ylim)
+plot(xlim,[log(5),log(5)])
 % WIP scratch code below
-%%
-figure;
-idx = df.avg_fr > 5 & df.trough_to_peak < 0.2;
 
+%% Figure trough_to_peak vs local variation scatter
+
+X = [df.trough_to_peak, df.local_variation,df.coeff_variation];
+X(df.short_isi > .02,:) = [];
+[coeff,score,latent,tsquared,explained,mu] = pca(X);
+figure
+scatter3(score(:,1),score(:,2),score(:,3))
+figure;
+histogram(score(:,1),100)
+
+
+%% Z-scored waveforms 
+figure;
+idx = df.avg_fr > 5 & df.trough_to_peak < 0.23;
 plot(df.waves_zscore(idx,:)','Color',[.7,.7,.7,0.1])
 box off
 axis off
 darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
 
 figure;
-idx = df.avg_fr < 5 & df.trough_to_peak > 0.2;
-
+idx = df.avg_fr < 5 & df.trough_to_peak > 0.23;
 plot(df.waves_zscore(idx,:)','Color',[.7,.7,.7,0.1])
 box off
 axis off
 darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
+
+figure;
+idx = df.avg_fr < 5 & df.trough_to_peak < 0.23;
+plot(df.waves_zscore(idx,:)','Color',[.7,.7,.7,0.1])
+box off
+axis off
 %%
-X = [df.peak_to_trough, df.trough_to_peak, df.spk_wavelet, df.local_variation,df.avg_fr];
+X = [df.trough_to_peak, df.spk_wavelet,log(df.coeff_variation)];
+figure; plotmatrix(X)
+
 [coeff,score,latent,tsquared,explained,mu] = pca(X);
 figure
 scatter(score(:,1),score(:,2))
@@ -63,7 +100,7 @@ histogram(score(:,1),100)
 
 eva = evalclusters(score(:,1:2),'kmeans','CalinskiHarabasz','KList',[1:6]);
 % eva.OptimalK
-[idx,C] = kmeans(score(:,1:2),2,'Replicates',10,'Distance','cityblock');
+[idx,C] = kmeans(score(:,1:2),4,'Replicates',10,'Distance','sqeuclidean');
 
 
 figure;
@@ -71,8 +108,6 @@ subplot(3,1,1)
 plot(df.waves_zscore(idx==1,:)')
 subplot(3,1,2)
 plot(df.waves_zscore(idx==2,:)')
-subplot(3,1,3)
-plot(df.waves_zscore(idx==3,:)')
 darkBackground(gcf,[0.1 0.1 0.1],[0.7 0.7 0.7])
 
 figure
@@ -91,7 +126,6 @@ scatter(df.local_variation(idx==2),df.trough_to_peak(idx==2),5,'filled')
 %%
 
 df.waves_zscore = zscore(df.waves,0,2);
-
 idx = df.trough_to_peak > 0.25;
 figure;
 plot(df.waves_zscore(idx,:)')
@@ -100,7 +134,8 @@ idx = df.trough_to_peak < 0.25;
 figure;
 plot(df.waves_zscore(idx,:)')
 %%
-X = [df.peak_to_trough, df.trough_to_peak, df.spk_wavelet, df.local_variation];
+
+X = [df.peak_to_trough, df.trough_to_peak, df.spk_wavelet, df.local_variation,log(df.coeff_variation)];
 X = normalize(X,'norm');
 
 [coeff,score,latent,tsquared,explained,mu] = pca(X);
@@ -115,6 +150,7 @@ threshold = sqrt(chi2inv(0.99,2));
 options = statset('MaxIter',1000); % Increase number of EM iterations
 AIC = zeros(2,1);
 gmfit = cell(2,1);
+
 figure;
 for k=1:2
     gmfit{k} = fitgmdist(score(:,1:2),k,'CovarianceType','diagonal',...
@@ -209,19 +245,24 @@ waves = get_waveform(data);
 [peakToTrough,troughToPeak] = get_waveform_delay_times(waves);
 % get spike duration via wavelet transform
 spkW = get_spike_wavelet(waves,peakToTrough);
-% get local variation (DOI: 10.1162/089976603322518759)
-lv = get_local_variation(data.Spikes);
+% get short isi,local variation (DOI: 10.1162/089976603322518759),
+% coefficient of variation.
+ [short_isi,lv,cv] = isi_metrics(data.Spikes);
 % get average firing rate
 avg_fr = get_average_fr(data.Spikes);
 % get waveform asymmetry
 asymmetry = get_waveform_asymmetry(waves);
+
+
 
 dat.waves = waves;
 dat.flipped = flipped;
 dat.peakToTrough = peakToTrough;
 dat.troughToPeak = troughToPeak;
 dat.spkW = spkW;
+dat.short_isi = short_isi; 
 dat.lv = lv;
+dat.cv = cv;
 dat.id = data.spikesID;
 dat.avg_fr = avg_fr;
 dat.asymmetry = asymmetry;
@@ -334,11 +375,15 @@ for a = 1:size(waveforms,1)
 end
 end
 
-function lv = get_local_variation(spikes)
+function [short_isi,lv,cv] = isi_metrics(spikes)
 for i = 1:size(spikes,1)
     ts = spikes{i};
     T = diff(ts);
+    lag = .002;
+    short_isi(i) = sum(T < lag)/length(T);
+    T = T(T > lag);
     lv(i) = (1/(length(T)-1)) * nansum((3*(diff(T)).^2) ./ ((T(1:end-1) + T(2:end)).^2));
+    cv(i) = std(T)/mean(T);
 end
 end
 
@@ -392,8 +437,13 @@ for a = 1:size(waveforms,1)
 end
 end
 
+% function save_data(save_path,session,dat)
+% save([save_path,session,'.mat'],'dat')
+% end
+
+
 function save_data(save_path,session,dat)
-save([save_path,session,'.mat'],'dat')
+save([save_path,session],'dat')
 end
 
 function df = load_all(save_path)
@@ -420,6 +470,8 @@ df.peak_to_trough = dat.peakToTrough;
 df.trough_to_peak = dat.troughToPeak;
 df.spk_wavelet = dat.spkW;
 df.local_variation = dat.lv';
+df.coeff_variation = dat.cv'; 
+df.short_isi = dat.short_isi'; 
 df.avg_fr = dat.avg_fr';
 df.asymmetry = dat.asymmetry';
 % add waveforms
