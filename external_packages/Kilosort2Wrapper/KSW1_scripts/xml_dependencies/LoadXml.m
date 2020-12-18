@@ -21,9 +21,9 @@ end
 rxml = xmltools(fbasename);
 
 try
-    rxml = rxml.child(1);
-catch
     rxml = rxml.child(2);
+catch
+    rxml = rxml.child(1);
 end
 
 % from this level all children are the different parameters fields
