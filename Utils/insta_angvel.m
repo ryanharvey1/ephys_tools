@@ -1,4 +1,4 @@
-function anglevel=insta_angvel(theta,samplerate)
+function anglevel = insta_angvel(theta,samplerate)
 % insta_angvel: calc instant angular velocity
 %
 % Input:
@@ -8,19 +8,11 @@ function anglevel=insta_angvel(theta,samplerate)
 % Output:
 %           anglevel: angular velocity in angles/sec
 %
-% Ryan H, Laura B; updated 10/1/2019 
+% Ryan H, Laura B; updated 10/26/2020
 %
-normDeg=mod(diff(theta),360);
-DiffDeg=[360-normDeg,normDeg];
 
-[~,I]=min(DiffDeg,[],2);
-
-DiffDeg(:,1)=-DiffDeg(:,1);
-
-angvel(I==2,1)=DiffDeg(I==2,2);
-angvel(I==1,1)=DiffDeg(I==1,1);
-
-anglevel=angvel*samplerate;
+angdist = circ_dist(theta(1:end-1),theta(2:end));
+anglevel = angdist*samplerate;
 
 end
 
