@@ -25,7 +25,7 @@ for i = 1:length(sessions)
             result{cond} = attractor_main(data,cond);
         end
     else
-        result = attractor_main(data,1);
+        result = {attractor_main(data,1)};
     end
     
     save_res([save_path,'attractor_res_',sessions{i}],result)
@@ -77,7 +77,7 @@ for i = 1:length(data.Spikes)
         [spatial_corr(p,:), r(p)] = spatial_xcorr(ref,test,frames);
         
         % Calculate Spa
-        [cor(p,:),central_sec(p)]  = temporal_xcorr(ref,test);
+        [real_hist(p,:),cor(p,:),central_sec(p)]  = temporal_xcorr(ref,test);
         p = p + 1;
     end
     
@@ -85,9 +85,11 @@ end
 
 res.spatial_corr = spatial_corr;
 res.r = r;
-res.cor = cor;
+res.zcor = cor;
+res.real_cor = real_hist; 
 res.central_sec = central_sec;
 res.pair_ID = cmp;
+
 end
 
 %% Plot
@@ -107,31 +109,17 @@ ref = spikes{celln}(spike_idx);
 
 end
 
-function [zhist,central_sec] = temporal_xcorr(ref,test)
-% code to create z-scored cross-correlograms from Butler & Taube (2017)
+function [real_hist,zhist,central_sec] = temporal_xcorr(ref,test)
+% code to create z-scored cross-correlograms
 % inputs: ts1 and ts2 (lists of spike times in seconds)
 % output: zhist (histogram with normalized counts in each timebin, 0.5 ms
 % bins, -20 to 20 s, 
 
 [real_hist,lags] = MClustStats.CrossCorr(ref, test, 0.2, 201);
+zhist = zscore(real_hist);
 
-%% make distribution of 100 jittered/shuffled xcorrs
-rep_num = 0;
-all_shuff_hist = nan(100,201);
-V = -0.010:0.001:0.010;
-while rep_num < 100
-    jitter1 = ref + V(randi([1,numel(V)])); % jitter each spike train by +-10 ms
-    jitter2 = test + V(randi([1,numel(V)]));
-    [shuff_hist,~] = MClustStats.CrossCorr(jitter1, jitter2, 0.2, 201);
-    all_shuff_hist(rep_num+1,:) = shuff_hist;
-    rep_num = rep_num + 1;
-end
+central_sec = mean(zhist(lags >= -0.5 &  lags <= 0.5,1));
 
-%compute average and sd for each shuffle lag bin to z-score actual histogram
-mean_shuff = mean(all_shuff_hist,1);
-sd_shuff = std(all_shuff_hist,1);
-zhist = (real_hist'-mean_shuff)./sd_shuff;
-central_sec = mean(zhist(1,lags >= -0.5 &  lags <= 0.5));
 
 end
 
