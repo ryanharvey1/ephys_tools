@@ -34,7 +34,7 @@ This repo contains code used to process and analyze our in-vivo electrophysiolog
 
 6. Populate the newly created folders with any data you have already collected. Notes on how to do this are in create_project_folder.m's documentation at the top of the function. 
 
-Currently, ephys_tools only supports Neuralynx data formats (more formats should be easy enough to integrate in the future). However, it does support several spike sorters ([Spike Sort 3D](https://neuralynx.com/software/spikesort-3d), [MClust](https://github.com/adredish/MClust-Spike-Sorting-Toolbox), & [Kilosort2](https://github.com/MouseLand/Kilosort2) / [Phy](https://github.com/cortex-lab/phy))
+Currently, ephys_tools supports Neuralynx data and Open Ephys formats (more formats can be integrated in the future). However, it does support several spike sorters ([Spike Sort 3D](https://neuralynx.com/software/spikesort-3d), [MClust](https://github.com/adredish/MClust-Spike-Sorting-Toolbox), & [Kilosort2](https://github.com/MouseLand/Kilosort2) / [Phy](https://github.com/cortex-lab/phy))
 
 ***
 
@@ -46,7 +46,7 @@ ephys_tools has functions to convert your spike sorted data into a single .mat f
 
 Dependencies:
 
-*  [Kilosort2](https://github.com/MouseLand/Kilosort2) 
+* [Kilosort2](https://github.com/MouseLand/Kilosort2) 
 * [sortingQuality](https://github.com/cortex-lab/sortingQuality)
 * [spikes](https://github.com/cortex-lab/spikes)
 * [npy-matlab](https://github.com/kwikteam/npy-matlab)
