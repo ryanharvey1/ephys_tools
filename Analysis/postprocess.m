@@ -42,9 +42,12 @@ if DLC_flag
     [ts, x, y, angles] = process_DLC_for_ephys();
 else
     [ts,x,y,angles] = Nlx2MatVT([path,filesep,'VT1.nvt'],[1,1,1,1,0,0],0,1);
+    % find first csc
+    files = dir(fullfile(path,'*.ncs'));
+    ts_csc = Nlx2MatCSC(fullfile(path,files(1).name),[1 0 0 0 0], 0, 1, [] );
+    data.offset = ts_csc(1);
 end
 
-data.offset = ts(1);
 
 % calculate sample rate from ts
 data.samplerate = get_framerate(ts);
@@ -183,7 +186,7 @@ for event=1:size(data.events,2)
     data_video(:,5) = smoothdata(data_video(:,5),'movmedian',data.samplerate*.8);
     
     % DURATION OF SESSION (MIN)
-    data.session_duration(event)=(length(data_video)/data.samplerate)/60;
+    data.session_duration(event)=(data_video(end,1) - data_video(1,1)) /60;
     disp(['SESSION_',num2str(event),' WAS ',num2str(data.session_duration(event)),' MIN'])
 %     if data.session_duration(event)<3
 %         disp('SESSION TOO SHORT...SKIPPING');
