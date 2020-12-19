@@ -1,7 +1,17 @@
 # ephys_tools
 
-by [Ryan Harvey](https://sites.google.com/view/ryaneharvey/home) (reharvey@unm.edu) & [Laura Berkowitz](https://twitter.com/LauraBerkowitz) (lberkowitz@unm.edu)
+## Contributors
 
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+<tr>     
+     <td align="center"><a href="https://github.com/ryanharvey1"><img src="https://avatars3.githubusercontent.com/u/16714674?s=400&u=08b04d641912e453b02db42f08b6e5e2bb353166&v=4" width="100px;" alt=""/><br /><sub><b>Ryan Harvey</b></sub></a><br /><a href="https://github.com/ryanharvey1"</td>
+    <td align="center"><a href="https://github.com/lolaBerkowitz"><img src="https://avatars2.githubusercontent.com/u/31447162?s=400&u=cf4002e1ac6d7642fde99e19b4abbbd56463d1c6&v=4" width="100px;" alt=""/><br /><sub><b>Laura Berkowitz</b></sub></a><br /><a href="https://github.com/lolaBerkowitz"</td>
+<tr> 
+</table>    
+       
 University of New Mexico, Psychology Department
 
 This repo contains code used to process and analyze our in-vivo electrophysiology tetrode data as well as code to analyze data from a few behavioral tasks. Everything is under development and many functions are not general or polished, so if you find something that needs changing, please open an issue.  
