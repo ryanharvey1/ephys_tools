@@ -226,19 +226,23 @@ classdef after_spikesort_cleanup
         end
         
         
-        function handle_phy
+        function handle_phy(basedir)
             % handle_phy: compliles phy output into currently used .mat format
             
             % for multiple kilosort runs, will use most recent folder
             % load phy output (spike times, cluster id, & waveforms)
             % calcuate cluster quality metrics
             % save all to .mat files in currently used format
-                        
-            myKsDir = pwd;
-            basedir = pwd;
+            if ~exist('basedir','var')      
+                myKsDir = pwd;
+                basedir = pwd;
+            else
+                myKsDir = basedir;
+            end
+
             
             % check to see if there is a specific kilosort folder
-            ks_folder = dir('Kilosort*');
+            ks_folder = dir(fullfile(basedir,'Kilosort*'));
             if ~isempty(ks_folder)
                 if size(ks_folder,1) > 1 % Multiple Kilosort runs if greater than 1
                     [~,newest] = max([ks_folder.datenum]); % Use the most recent
@@ -250,7 +254,7 @@ classdef after_spikesort_cleanup
             disp(myKsDir)
             
             % Make a directory to store sorted data
-            mkdir(fullfile(pwd,'Sorted'))
+            mkdir(fullfile(basedir,'Sorted'))
             
             
             % load kilosort data processed in phy using 'spikes' function
@@ -302,24 +306,27 @@ classdef after_spikesort_cleanup
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
             [clusterIDs, unitQuality, ~] = sqKilosort.maskedClusterQuality(myKsDir);
             
-            % Load ts from video to get first frame
-            % kilosort assumes first frame is ts zero, so we need to align
-            % the spike times based on the first recorded frame, and then
-            % subtract the video sample rate from the spike times to
-            % account for the difference in sample rate between spikes (~32000hz)
-            % and video (~30hz)
+
+            
             if ~isempty( dir([basedir,filesep,'**\*.ncs']))
                 % create filtered dat if one doesn't exsist
-                if ~isfile(datfile)
-                    filter_raw_dat
+                if ~isfile(fullfile(basedir,datfile))
+                    filter_raw_dat('raw_dir',basedir)
                 end
                 
-                [ts] = Nlx2MatVT(fullfile(basedir,'VT1.nvt'),[1,0,0,0,0,0],0,1);
+                % Load ts from csc to get first frame
+                % kilosort assumes first frame is ts zero, so we need to align
+                % the spike times based on the first recorded frame.
+                
+                % find first csc
+                files = dir(fullfile(basedir,'*.ncs'));
+                ts = Nlx2MatCSC(fullfile(basedir,files(1).name),[1 0 0 0 0], 0, 1, [] );
+
                 % split data into respective tetrodes
                 waveform_from_tt(sp,clu,ts,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
             elseif ~isempty( dir([basedir,filesep,'**\*video_ts.csv']))
                 % create filtered dat if one doesn't exsist
-                if ~isfile(datfile)
+                if ~isfile(fullfile(basedir,datfile))
                     filter_raw_dat_from_dat
                 end
                 % split data into respective shanks
@@ -347,7 +354,7 @@ for i = 0:4:sp.n_channels_dat-4
     
     % convert seconds to microseconds, add the first video ts,
     % and then subtract video sample rate
-    output(:,1)=(output(:,1)*10^6+ts(1)) - mean(diff(ts));
+    output(:,1)=(output(:,1)*10^6+ts(1));
     
     disp([num2str(length(unique(output(:,2)))),' Clusters'])
     disp(['Saving ','TT',num2str(i/4+1),'.mat'])
@@ -393,7 +400,7 @@ for i = 0:4:sp.n_channels_dat-4
     grades(:,5)=unitQuality(ismember(clusterIDs-1,unique(output(:,2))));
     grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
     
-    save(fullfile(basedir,'Sorted',['TT',num2str(i/16+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
+    save(fullfile(basedir,'Sorted',['TT',num2str(i/4+1),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
     
     clear means grades ISI_store
     
