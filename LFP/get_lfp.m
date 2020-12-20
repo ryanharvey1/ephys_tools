@@ -256,13 +256,13 @@ good([session_info.spikeGroups.groups{:}] + 1) = 1;
 csc_list.good_channels(sum(lfp.data) ~= 0 & good,1) = 1;
 
 % get aligned ts
-if ~isfield(data,'offset')
-    [vts] = Nlx2MatVT(fullfile(data.session_path,'VT1.nvt'),[1,0,0,0,0,0],0,1);
-    data.offset = vts(1);
-end
+
 ts = Nlx2MatCSC(lfpfile{1},[1 0 0 0 0], 0, 1, [] );
+if ~isfield(data,'offset')
+    data.offset = ts(1);
+end
 ts = interp1(linspace(1,length(lfp.data),length(ts)), ts, 1:length(lfp.data));
-ts = (ts-data.offset) / 10^6;
+ts = (ts-data.offset) ./ 10^6;
 
 % get phase
 [theta_phase,~,~]=Phase([ts',BandpassFilter(double(lfp.data),lfp.samplingRate, [4 12])]);

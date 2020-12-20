@@ -12,7 +12,7 @@ end
 
 % lfp
 % check to see if already aligned
-if ~mean(diff(data.lfp.ts)) == 1e-03 || ~data.lfp.ts(data.lfp.lfpsamplerate + 1) == 1
+if ~mean(diff(data.lfp.ts)) == 1/data.lfp.lfpsamplerate || ~data.lfp.ts(data.lfp.lfpsamplerate + 1) == 1
     data.lfp.ts=data.lfp.ts-data.offset;
 %     data.lfp.signal(:,data.lfp.ts<0)=[];
 %     data.lfp.theta(:,data.lfp.ts<0)=[];
