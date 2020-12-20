@@ -3,6 +3,7 @@
 function [ts, x, y, angles] = process_DLC_for_ephys(varargin)
 % 
 p = inputParser;
+
 p.addParameter('basepath',pwd);
 p.addParameter('bodypart1','red');
 p.addParameter('bodypart2','yellow');
