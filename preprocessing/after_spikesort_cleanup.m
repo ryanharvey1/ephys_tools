@@ -324,7 +324,7 @@ classdef after_spikesort_cleanup
 
                 % split data into respective tetrodes
                 waveform_from_tt(sp,clu,ts,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
-            elseif ~isempty( dir([basedir,filesep,'**\*video_ts.csv']))
+            else 
                 % create filtered dat if one doesn't exsist
                 if ~isfile(fullfile(basedir,datfile))
                     filter_raw_dat_from_dat
@@ -358,7 +358,7 @@ for i = 0:4:sp.n_channels_dat-4
     
     disp([num2str(length(unique(output(:,2)))),' Clusters'])
     disp(['Saving ','TT',num2str(i/4+1),'.mat'])
-    save(fullfile('Sorted',['TT',num2str(i/4+1),'.mat']),'output')
+    save(fullfile(basedir,'Sorted',['TT',num2str(i/4+1),'.mat']),'output')
     
     % average waveforms
     gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+3))))*sp.sample_rate);
@@ -425,7 +425,7 @@ for i = 0:16:sp.n_channels_dat-16
     
     disp([num2str(length(unique(output(:,2)))),' Clusters'])
     disp(['Saving ','TT',num2str(i/16+1),'.mat'])
-    save(fullfile('Sorted',['TT',num2str(i/16+1),'.mat']),'output')
+    save(fullfile(basedir,'Sorted',['TT',num2str(i/16+1),'.mat']),'output')
     
     % average waveforms
     gwfparams.spikeTimes=ceil(spkts(ismember(clu,clusterinfo.id(ismember(clusterinfo.channel,i:i+16))))*sp.sample_rate);
