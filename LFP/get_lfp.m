@@ -7,8 +7,9 @@ function data = get_lfp(data,varargin)
 %   Input:
 %           data: ephys_tool's data structure
 %           varargin:
-%               Fold: lfp sample rate (32000)
-%               Fnew: resampled lfp sample rate (1000)
+%               Fold: raw signal sample rate (32000, for neuralynx, 30000
+%               for binary format from Open Ephys).
+%               Fnew: resampled lfp sample rate (1250)
 %               overwrite_lfp: overwrite the .lfp and xml (0)
 %               fs_for_datastruct: resampled lfp sample rate to be saved in
 %               the postprocessed data structure (200)
