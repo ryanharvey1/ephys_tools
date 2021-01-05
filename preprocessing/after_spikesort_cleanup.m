@@ -291,7 +291,7 @@ classdef after_spikesort_cleanup
             gwfparams.fileName = datfile;         % .dat file containing the raw
             gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
             gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
-            gwfparams.wfWin = [-7 24]*2;              % Number of samples before and after spiketime to include in waveform
+            gwfparams.wfWin = [-7 24];              % Number of samples before and after spiketime to include in waveform
             gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
             
             
