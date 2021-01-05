@@ -54,6 +54,7 @@ parfor iratID=1:length(ratID)
                 % CALL after_spikesort_cleanup
                 if after_spike_sort_cleanup
                     disp('running after_spikesort_cleanup')
+                    delete(fullfile(basepath,'sorted\*.mat'))
                     after_spikesort_cleanup.main('path_name',basepath)
                 end
                 
