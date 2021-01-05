@@ -95,11 +95,7 @@ classdef after_spikesort_cleanup
                     grades(ii,1)=l_output.Lratio;
                     
                     % AVERAGE WAVE FORMS
-                    waves=(mean(Samples(:,:,CellNumbers==i),3)')./100;
-                    means{1,ii}=[interp1(linspace(1,150,length(waves)),waves(1,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(2,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(3,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(4,:),1:150)];
+                    means{1,ii}=(mean(Samples(:,:,CellNumbers==i),3)')./100;
                     
                     % SHORT ISI
                     ISI=diff(Timestamps(CellNumbers==i)/1000) + 1e-100;
@@ -126,12 +122,7 @@ classdef after_spikesort_cleanup
             wvfn=strcat(wvfn(1).folder,filesep,{wvfn.name}');
             for i=1:length(wvfn)
                 load(wvfn{i},'mWV')
-                mWV=mWV';
-                for ch=1:4
-                    means_all{i}(ch,:)=interp1(1:size(mWV,2),mWV(ch,:),...
-                        linspace(1,size(mWV,2),150),'spline');
-                end
-                
+                means_all{i} = mWV';
             end
             
             % locate cluster quality files
