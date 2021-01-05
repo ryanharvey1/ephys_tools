@@ -33,7 +33,8 @@ classdef after_spikesort_cleanup
             end
             
             % MClust
-            if exist(fullfile(pwd,'FD'),'file')
+            files = dir('*.t64');
+            if length(files)>1
                 
                 after_spikesort_cleanup.handle_tfiles
                 
