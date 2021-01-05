@@ -99,7 +99,7 @@ classdef after_spikesort_cleanup
                     
                     % SHORT ISI
                     ISI=diff(Timestamps(CellNumbers==i)/1000) + 1e-100;
-                    grades(ii,3)=sum((ISI<3))/length(ISI);
+                    grades(ii,3)=sum((ISI<2))/length(ISI);
                     
                     % N SPIKES
                     grades(ii,6)=sum(CellNumbers==i);
@@ -174,7 +174,7 @@ classdef after_spikesort_cleanup
                     t=S(ii).T;
                     
                     ISI=diff(t*1000) + 1e-100;
-                    ISI_store(ii,1)=sum((ISI<3))/length(ISI);
+                    ISI_store(ii,1)=sum((ISI<2))/length(ISI);
                     
                     Timestamps=[Timestamps;t];
                     CellNumbers=[CellNumbers;repmat(ii,length(t),1)];
@@ -380,7 +380,7 @@ for i = 0:4:sp.n_channels_dat-4
     for u=unique(output(:,2))'
         t=((output((output(:,2)==u),1))./10^6)*1000;
         ISI=diff(t) + 1e-100;
-        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ISI_store(ui,1)=sum((ISI<2))/length(ISI);
         ui=ui+1;
     end
     
@@ -448,7 +448,7 @@ for i = 0:16:sp.n_channels_dat-16
     for u=unique(output(:,2))'
         t=((output((output(:,2)==u),1))./10^6)*1000;
         ISI=diff(t) + 1e-100;
-        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ISI_store(ui,1)=sum((ISI<2))/length(ISI);
         ui=ui+1;
     end
     
