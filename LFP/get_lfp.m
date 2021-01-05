@@ -7,8 +7,9 @@ function data = get_lfp(data,varargin)
 %   Input:
 %           data: ephys_tool's data structure
 %           varargin:
-%               Fold: lfp sample rate (32000)
-%               Fnew: resampled lfp sample rate (1000)
+%               Fold: raw signal sample rate (32000, for neuralynx, 30000
+%               for binary format from Open Ephys).
+%               Fnew: resampled lfp sample rate (1250)
 %               overwrite_lfp: overwrite the .lfp and xml (0)
 %               fs_for_datastruct: resampled lfp sample rate to be saved in
 %               the postprocessed data structure (200)
@@ -27,7 +28,6 @@ function data = get_lfp(data,varargin)
 %               data.lfp.csc_channel_list
 %
 % ryan h 2020, adapted for probes laura b Nov 2020
-addpath(genpath('D:\Users\BClarkLab\ephys_tools\external_packages\analysis-tools'))
 p = inputParser;
 p.addParameter('Fold',32000); % raw sample rate
 p.addParameter('Fnew',1250); % downsampled sample rate for .lfp file
@@ -197,13 +197,13 @@ function [probe_map,csc_list]=get_channel_list(lfpfile,data)
 % many session may only have one continuous 'lfp' channel per tetrode
 if length(dir(fullfile(data.session_path,'*.ncs'))) ==...
         length(dir(fullfile(data.session_path,'*.ntt')))
-    probe_map = {[num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))),...
-        'tt_without_all_channels.xlsx']};
+    probe_map = [num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))),...
+        'tt_without_all_channels.xlsx'];
     csc_list.channel_num(:,1) = 1:4:max(str2double(extractBetween(lfpfile,'CSC','.ncs'))) * 4 - 3;
     csc_list.tetrode_num(:,1) = 1:max(str2double(extractBetween(lfpfile,'CSC','.ncs')));
 else
-    probe_map = {[num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))/4),...
-        'tt.xlsx']};
+    probe_map = [num2str(max(str2double(extractBetween(lfpfile,'CSC','.ncs')))/4),...
+        'tt.xlsx'];
     csc_list.channel_num(:,1) = str2double(extractBetween(lfpfile,'CSC','.ncs'));
     csc_list.tetrode_num(:,1) = reshape(repmat(1:length(lfpfile)/4, 4, 1),length(lfpfile)/4*4,1);
 end
