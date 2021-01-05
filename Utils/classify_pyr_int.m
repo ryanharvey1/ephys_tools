@@ -1,21 +1,29 @@
 
-df = readtable('F:\ClarkP30_Recordings\Analysis\hd_cell_list.csv');
-data_path = 'F:\ClarkP30_Recordings\ProcessedData\';
-save_path = 'F:\ClarkP30_Recordings\Analysis\Cell_Classification\';
+% for laura's data
+% df = readtable('F:\ClarkP30_Recordings\Analysis\hd_cell_list.csv');
+% data_path = 'F:\ClarkP30_Recordings\ProcessedData\';
+% save_path = 'F:\ClarkP30_Recordings\Analysis\Cell_Classification\';
+
+df = readtable('F:\Projects\PAE_PlaceCell\analysis\swr_data\post_processed\swr_df.csv');
+data_path = 'F:\Projects\PAE_PlaceCell\ProcessedData\';
+save_path = 'F:\Projects\PAE_PlaceCell\analysis\cell_recruitment\';
+mkdir(save_path);
 
 % 
-df.session = df.SessionID;
+% df.session = df.SessionID;
+df.session = df.session;
+
 % run through each session
 WaitMessage = parfor_wait(length(unique(df.session)),'Waitbar',false,'ReportInterval',1);
 sessions = unique(df.session);
 parfor i = 1:length(sessions)
-    %     if exist([save_path,sessions{i},'.mat'],'file')
-    %         continue
-    %     end
-    
-    if exist([save_path,sessions{i}],'file')
+    if exist([save_path,sessions{i},'.mat'],'file')
         continue
     end
+    
+%     if exist([save_path,sessions{i}],'file') % for laura's data
+%         continue
+%     end
     %     data = load([data_path,sessions{i},'.mat'],'avgwave','Spikes','spikesID');
     data = load([data_path,sessions{i}],'avgwave','Spikes','spikesID','frames');
     
@@ -247,12 +255,13 @@ waves = get_waveform(data);
 spkW = get_spike_wavelet(waves,peakToTrough);
 % get short isi,local variation (DOI: 10.1162/089976603322518759),
 % coefficient of variation.
- [short_isi,lv,cv] = isi_metrics(data.Spikes);
+[short_isi,lv,cv] = isi_metrics(data.Spikes);
 % get average firing rate
 avg_fr = get_average_fr(data.Spikes);
 % get waveform asymmetry
 asymmetry = get_waveform_asymmetry(waves);
-
+% get number of spikes
+n_spikes = cellfun(@numel, data.Spikes)';
 
 
 dat.waves = waves;
@@ -266,6 +275,7 @@ dat.cv = cv;
 dat.id = data.spikesID;
 dat.avg_fr = avg_fr;
 dat.asymmetry = asymmetry;
+dat.n_spikes = n_spikes;
 end
 
 function waves = get_waveform(temp)
@@ -474,6 +484,7 @@ df.coeff_variation = dat.cv';
 df.short_isi = dat.short_isi'; 
 df.avg_fr = dat.avg_fr';
 df.asymmetry = dat.asymmetry';
+df.n_spikes = dat.n_spikes';
 % add waveforms
 df.waves = dat.waves;
 end
