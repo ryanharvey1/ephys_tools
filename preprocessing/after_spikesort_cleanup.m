@@ -33,7 +33,8 @@ classdef after_spikesort_cleanup
             end
             
             % MClust
-            if exist(fullfile(pwd,'FD'),'file')
+            files = dir('*.t64');
+            if length(files)>1
                 
                 after_spikesort_cleanup.handle_tfiles
                 
@@ -94,15 +95,11 @@ classdef after_spikesort_cleanup
                     grades(ii,1)=l_output.Lratio;
                     
                     % AVERAGE WAVE FORMS
-                    waves=(mean(Samples(:,:,CellNumbers==i),3)')./100;
-                    means{1,ii}=[interp1(linspace(1,150,length(waves)),waves(1,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(2,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(3,:),1:150);...
-                        interp1(linspace(1,150,length(waves)),waves(4,:),1:150)];
+                    means{1,ii}=(mean(Samples(:,:,CellNumbers==i),3)')./100;
                     
                     % SHORT ISI
                     ISI=diff(Timestamps(CellNumbers==i)/1000) + 1e-100;
-                    grades(ii,3)=sum((ISI<3))/length(ISI);
+                    grades(ii,3)=sum((ISI<2))/length(ISI);
                     
                     % N SPIKES
                     grades(ii,6)=sum(CellNumbers==i);
@@ -125,12 +122,7 @@ classdef after_spikesort_cleanup
             wvfn=strcat(wvfn(1).folder,filesep,{wvfn.name}');
             for i=1:length(wvfn)
                 load(wvfn{i},'mWV')
-                mWV=mWV';
-                for ch=1:4
-                    means_all{i}(ch,:)=interp1(1:size(mWV,2),mWV(ch,:),...
-                        linspace(1,size(mWV,2),150),'spline');
-                end
-                
+                means_all{i} = mWV';
             end
             
             % locate cluster quality files
@@ -182,7 +174,7 @@ classdef after_spikesort_cleanup
                     t=S(ii).T;
                     
                     ISI=diff(t*1000) + 1e-100;
-                    ISI_store(ii,1)=sum((ISI<3))/length(ISI);
+                    ISI_store(ii,1)=sum((ISI<2))/length(ISI);
                     
                     Timestamps=[Timestamps;t];
                     CellNumbers=[CellNumbers;repmat(ii,length(t),1)];
@@ -299,7 +291,7 @@ classdef after_spikesort_cleanup
             gwfparams.fileName = datfile;         % .dat file containing the raw
             gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
             gwfparams.nCh = sp.n_channels_dat;        % Number of channels that were streamed to disk in .dat file
-            gwfparams.wfWin = [-7 24]*2;              % Number of samples before and after spiketime to include in waveform
+            gwfparams.wfWin = [-7 24];              % Number of samples before and after spiketime to include in waveform
             gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
             
             
@@ -388,7 +380,7 @@ for i = 0:4:sp.n_channels_dat-4
     for u=unique(output(:,2))'
         t=((output((output(:,2)==u),1))./10^6)*1000;
         ISI=diff(t) + 1e-100;
-        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ISI_store(ui,1)=sum((ISI<2))/length(ISI);
         ui=ui+1;
     end
     
@@ -456,7 +448,7 @@ for i = 0:16:sp.n_channels_dat-16
     for u=unique(output(:,2))'
         t=((output((output(:,2)==u),1))./10^6)*1000;
         ISI=diff(t) + 1e-100;
-        ISI_store(ui,1)=sum((ISI<3))/length(ISI);
+        ISI_store(ui,1)=sum((ISI<2))/length(ISI);
         ui=ui+1;
     end
     
