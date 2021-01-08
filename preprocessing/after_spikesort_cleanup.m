@@ -327,7 +327,7 @@ classdef after_spikesort_cleanup
             else 
                 % create filtered dat if one doesn't exsist
                 if ~isfile(fullfile(basedir,datfile))
-                    filter_raw_dat_from_dat
+                    filter_raw_dat_from_dat('raw_dir',basedir)
                 end
                 % split data into respective shanks
                 waveform_from_probe(sp,clu,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
