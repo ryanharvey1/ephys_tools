@@ -753,9 +753,7 @@ classdef postprocessFigures
             [r,~,Ispk,~,~,tuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),...
                 data_video_spk(data_video_spk(:,6)==1,4),data.samplerate);
             
-            angBins=0:6:360;
-            bin_centers=movmedian(angBins,2);
-            bin_centers(1)=[];
+            bin_centers=3:6:360-3;
             Polarplot = polar(deg2rad(bin_centers),tuning,'b');
             set(Polarplot,'linewidth',1,'color','k');
             axis off
