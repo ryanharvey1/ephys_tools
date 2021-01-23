@@ -24,7 +24,7 @@ postprocessFigures.avg_waveforms(data,session,cell)
 
 if f
     % Save the figure
-    saveas(fig,[save_path,filesep,data.sessionID,'_','session_',num2str(session),'_cell_',num2str(cell),'.png'],'png')
+    saveas(fig,[save_path,filesep,data.sessionID,'_','session_',num2str(session),'_cell_',num2str(cell),'.pdf'],'pdf')
     close all
 end
 
