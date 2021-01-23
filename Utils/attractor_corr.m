@@ -93,13 +93,6 @@ res.pair_ID = cmp;
 end
 
 %% Plot
-% subplot(1,3,1)
-% plot_tuning(tuning{cell_1,:})
-% subplot(1,3,2)
-% plot_tuning(tuning{cell_2,:})
-% subplot(1,3,3)
-% plot_spatial_xcorr(spatial_corr)
-
 
 
 %% Local Functions

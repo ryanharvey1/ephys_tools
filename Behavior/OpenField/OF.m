@@ -11,57 +11,34 @@ classdef OF
     
     methods(Static)
         
-        function [length,velocity,mean_vel,acceleration,mean_accel,distance_vector] = path_measures(j,params,fr)
-            % Builds an occupancy map for maze. Assums params table.
+        function length = path_length(x,y,velocity)
+            % Computes total path length during running
             % inputs:
-            %   j: subject index
-            %   params: table made from OF_preprocess
-            %   fr: frame rate
+            %   x: position vector of x-coordinates of length n
+            %   y: position vecotr of y-coordinates of length n
+            %   velocity: vector of instantaneous velocity (length of n - 1)
             % output:
             %   length: total path length in cm for active motion
-            %   velocity: vector of instantaneous velocity (n - 1 length of
-            %       path vector)
-            %   acceleration: vector of instantanous acceleration (n - 1
-            %       length of path vector).
-            %   distance_vector: vector of distance between coordinates  (n - 1
-            %       length of path vector).
-            %   mean_vel: average velocity during motion.
-            %   mean_accel: mean absolute acceleration when animal is
-            %       moving over 3cm/s.
             
-            back = params.backCM{j};
-            x = back(:,1); y = back(:,2);
-            
-            %squared distance between consecutive points
-            sqrXDiff = (diff(x)).^2;
-            sqrYDiff = (diff(y)).^2;
             
             %distance formula
-            distance_vector = sqrt(sqrXDiff + sqrYDiff);
-            velocity = (distance_vector)*fr; %instanteous velocity
-            acceleration = gradient(velocity,1/fr); %instanteous acceleration
-            
-            velocity = smoothdata(velocity,'movmedian',fr*.8); %smoothed with moving median window over less than 1 second
+            distance_vector = sqrt((diff(x)).^2 + (diff(y)).^2);
             
             % Summary Path Measures
             length = sum(distance_vector(velocity>=3,1));%Total Path length for points greater than 3cm/s
             
-            % Mean Velocity during movement
-            mean_vel = nanmean(velocity(velocity>=3,1));
-            
-            % Mean absolute acceleration
-            accel_idx = acceleration ~= 0 ;
-            run_idx = velocity >= 3;
-            mean_accel = nanmean(abs(acceleration(run_idx & accel_idx,1)));
         end
         
-        function stop_measures = stops(j,params,fr)
+        function stop_measures = stops(x,y,ts,velocity,fr,epoch)
             % Finds when animal stops ( < 3cm/s velocity for at least 1
             % second) and computes stop features.
             % inputs:
-            %       j: subject index
-            %       params: table made from OF_preprocess
+            %       x: position vector for x of length n
+            %       y: position vector for y of length n
+            %       ts: timestamps of length n
             %       fr: frame rate
+            %       velocity: instantaneous velocity of length n-1
+            %       epoch: length of minimum stop epoch in frames
             % outputs:
             %       stop_measures: structure containing outcome measures.
             %           stopIdx: logical index of points where rat is
@@ -71,33 +48,23 @@ classdef OF
             %           tsStop: cell array of time stamps corresponding to stop
             %           NumStops: number of stops made
             %
-            back = params.backCM{j};
-            ts=params.ts{j};
-            x = back(:,1); y = back(:,2);
-            %squared distance between consecutive points
-            sqrXDiff = (diff(x)).^2;
-            sqrYDiff = (diff(y)).^2;
             
-            %distance formula
-            distance_vector = sqrt(sqrXDiff + sqrYDiff);
-            velocity = (distance_vector)*fr; %instanteous velocity
-            velocity = smoothdata(velocity,'movmedian',fr*.8); %smoothed with moving median window over less than 1 second
             
-            stop_measures.stopIdx=contiguousframes(velocity < 3,30);
+            stop_measures.stopIdx = contiguousframes(velocity < 3,epoch);
             [startStop,endStop,~]=findgroups(stop_measures.stopIdx);
             
             %     This finds coords for stopping
             for ii=1:length(startStop)
-                motionless{ii}=[back(startStop(ii):endStop(ii),1),back(startStop(ii):endStop(ii),2)];
+                motionless{ii}=[x(startStop(ii):endStop(ii)),y(startStop(ii):endStop(ii))];
                 timeMotionless{ii}=size(motionless{ii},1)/fr;
-                tsStop{ii}=ts(startStop(ii):endStop(ii),1);
+                tsStop{ii}=ts(startStop(ii):endStop(ii));
             end
             
-            stop_measures.stops=motionless;
-            stop_measures.timeStopped=timeMotionless;
-            stop_measures.tsStop=tsStop;
+            stop_measures.stops = motionless;
+            stop_measures.timeStopped = timeMotionless;
+            stop_measures.tsStop = tsStop;
             
-            %     Create Number of Stops
+            %Create Number of Stops
             stop_measures.NumStops = size(stop_measures.stops,2);
             
             %Find center of mass for stops.
@@ -114,7 +81,7 @@ classdef OF
                 stop(ii,2)=stopCenter(2,1);
             end
             
-            stop_measures.stopCenter=stop;
+            stop_measures.stopCenter = stop;
             
         end
         
@@ -209,67 +176,54 @@ classdef OF
             
         end
         
-        function [occ,map] = occ_map(j,params,binsize,fr)
+        function [occ,map] = occ_map(x,y,diameter,binsize,fr)
             % Builds an occupancy map for maze. Assums params table.
             % inputs:
-            %   j: subject index
-            %   params: table made from OF_preprocess
+            %   x: position vector of x-coordinates of length n
+            %   y: position vecotr of y-coordinates of length n
             %   binsize: how big each bin should be in cm
             %   fr: frame rate
+            %
             % output:
             %   occ: smoothed occupancy map
             %   map: raw occupancy map
             
             %Creates bin edges for heatmap
-            xedge=linspace(-(params.dia{j}/2),(params.dia{j}/2),round(params.dia{j}/binsize));
-            yedge=linspace(-(params.dia{j}/2),(params.dia{j}/2),round(params.dia{j}/binsize));
+            xedge=linspace(-(diameter/2),(diameter/2),round(diameter/binsize));
+            yedge=linspace(-(diameter/2),(diameter/2),round(diameter/binsize));
             
             %Bin coordinates for heat map and apply guassian filter to smooth
-            back = params.backCM{j};
-            [map] = histcounts2(back(:,1),back(:,2),xedge,yedge);
+            [map] = histcounts2(x,y,xedge,yedge);
             map=flipud(imrotate(map,90));
             map=map/fr;
+            
+            % smooths over 1.5 cm
             occ = imgaussfilt(map, 1.5);
         end
         
-        function [out,in] = thigmotaxis(j,params,fr,center_proportion)
-            % Builds an occupancy map for maze. Assums params table.
-            % inputs:
-            %   j: subject index
-            %   params: table made from OF_preprocess
-            %   center_proportion: The inner proportion of the maze (.8
-            %       would allow for thigmotaxis boundary of outer 20% of maze.
-            %   fr: frame rate
-            % output:
-            %   occ: smoothed occupancy map
-
-            back = params.backCM{j};
+        function [out] = thigmotaxis(x,y,fr,diameter,center_proportion)
+            % Computes time spent near outside wall
             
             %Create annuli for center and outter edge of maze
-            outsideDwell=createZones([0,0],params.dia{j},'type','annulus','fig',0,'annulusSize',center_proportion); %default annulus size is 80% for createZones
-            centerDwell=createZones([0,0],params.dia{j},'type','annulus','fig',0,'annulusSize',center_proportion); %default annulus size is 80% for createZones
+            outsideDwell = createZones([0,0],diameter,'type','annulus','fig',0,'annulusSize',center_proportion); %default annulus size is 80% for createZones
+            centerDwell = createZones([0,0],diameter,'type','annulus','fig',0,'annulusSize',center_proportion); %default annulus size is 80% for createZones
             
             %Calculate dwell time for outter edge
-            [in,~]=inpolygon(back(:,1),back(:,2),outsideDwell(:,1),outsideDwell(:,2));
-            out=sum(~in)/fr;
+            [in,~] = inpolygon(x,y,outsideDwell(:,1),outsideDwell(:,2));
+            out = sum(~in)/fr;
             
-            clear in outsideDwell
             
-            %Calculate dwell time for center maze
-            [in,~]=inpolygon(back(:,1),back(:,2),centerDwell(:,1),centerDwell(:,2));
-            in=sum(in)/fr;
-
         end
         
         function sa = search_area(map)
             % computes proportion of maze area occupied by animal given
             % occupancy map.
             % inputs:
-            %   map: raw occpancy map (nxn grid of binned occupancy
+            %   map: raw occpancy map (n x n grid of binned occupancy
             %   weighted by frame rate)
             
             % output:
-            %   sa: search area as a numeric proportion (e.g. .10 = 10%
+            %   sa: search area as a proportion (e.g. .10 = 10%
             %   of maze searched).
             
             %Use meshgrid to serve as basis for logical mask.
@@ -291,6 +245,124 @@ classdef OF
             sa=sum(sum(map>0))/sum(sum(~isnan(map))); %Calculate the proportion of bins occupied by animal.
             
         end
+        
+        function metrics = home_base_metics(out_home,x,y,velocity,x_home,y_home,stopIdx,tsStop)
+            
+            % This finds stops that occur in the home base boundary
+            [startStop,~,~] = findgroups(stopIdx);
+            
+            [~,~,metrics.entries] = findgroups(out_home);
+            
+            % total time in home base
+            metrics.hbOcc = nansum(out_home)/fr;
+            
+            % average velocity in home base
+            metrics.hbVel = nanmean(velocity(out_home(1:end-1,1),1)); %remove last tempIn idx to accomodate velocity length
+            
+            
+            % time moving slow in home base in seconds
+            metrics.slowInHB = nansum(out_home(1:end-1) & stopIdx)/fr; % time being slow in homebase
+            
+            % proportion of time being slow in home base
+            metrics.HBclass= slowInHB/hbOcc; % proportion of time being slow in hb
+            
+            % number times an animal stoped in the home base
+            metrics.HBstops = nansum(inpolygon(x(startStop,1),...
+                y(startStop,2),x_home(1:end-2)',y_home(1:end-2)')); % Find number of times animals initiated a start in the home base
+            
+            % index for the time it takes to reach the home base
+            time2HB_idx = inpolygon(x(startStop,1),...
+                x(startStop,2),x_home(1:end-2)',y_home(1:end-2)');
+            
+            % time to first time in home base
+            firstIdx = find(time2HB_idx);
+            
+            % save time to home base
+            time2HB_time = tsStop{1,firstIdx(1)};
+            metrics.time2HB = time2HB_time(1,1);
+            
+            
+        end
+        
+        function [HBBound,HBcoords,HBcenter,out_home,x_home,y_home] = rescale_home_base(home_base_x,home_base_y,upHBmap,upFactor,diameter,fr)
+            
+            %rescale coordinates back to pool size
+            x_home = rescale([home_base_x,upFactor+1,size(upHBmap,2)-upFactor],-(diameter/2),(diameter/2));
+            y_home = rescale([home_base_y,upFactor+1,size(upHBmap,2)-upFactor],-(diameter/2),(diameter/2));
+            
+            % logical index for all coordinates inside home base
+            in_home = inpolygon(x,y,x_home(1:end-2)',y_home(1:end-2)');
+            
+            % coordinates for frames inside home base for at least 2seconds
+            out_home = contiguousframes(in_home,fr*2); %has to be inside of hb for at least 2 sec to count as entryd
+            
+            % boundary of home base
+            HBBound = [x_home(1:end-2)',y_home(1:end-2)'];
+            
+            % time in home base
+            HBcoords = [x(out_home,1),y(out_home,2)];
+            
+            [ ~,~, tempC] = min_encl_ellipsoid(HBBound(:,1),HBBound(:,2));
+            HBcenter= [tempC(1,1),tempC(2,1)];
+        end
+        
+        function [HB_stop_dist,HB_close_stop,HB_stop_dist_vector] = stops_to_homebase(HBcenter,stops)
+            
+            % Average Proximity of stops from hb center
+            disttemp = zeros(size(stops,2),1);
+            for i = 1:size(stops,2)
+                temp = stops{1,i};
+                dist = sqrt((HBcenter(1,1)-temp(:,1)).^2+(HBcenter(1,2)-temp(:,2)).^2);
+                disttemp(i,1) = nanmean(dist);
+                
+            end
+            
+            HB_stop_dist = nanmean(disttemp); %average stop distance
+            HB_close_stop = sum(disttemp<25); %number of stops within 25cm from hb center
+            HB_stop_dist_vector = disttemp;
+            
+        end
+        
+        function [HB_avg_dist,HB_max_dist,HB_min_dist] = distance_between_homebase(HBcenter)
+            % input:
+            %   - HBcenter: vector of HB centers
+            % output:
+            %   -HB_avg_dist: average distance between home bases
+            %   -HB_max_dist: maximum distance between home bases
+            %   -HB_min_dist: minimum distance between home bases
+            %
+            % Calculate distance measures between high occupancy coordinates centers
+            temp = [];
+            if size(HBcenter,2) > 1
+                for hb = 1:size(pHBcenter,2)
+                    temp = [temp; HBcenter{1,hb}];
+                end
+                HB_avg_dist = nanmean(pdist(temp));
+                HB_max_dist = max(pdist(temp));
+                HB_min_dist = min(pdist(temp));
+            else
+                HB_avg_dist = NaN;
+                HB_max_dist = NaN;
+                HB_min_dist = NaN;
+            end
+        end
+        
+        
+        function HBdist2Cue =  homebase_dist_from_cue(cueCM,HBcenter)
+            % calculating proximity of high occupancy coordinates center from the
+            % cue boundary
+            
+            k = convhull(cueCM(:,1),cueCM(:,2));
+            cueBoundary = [cueCM(k,1),cueCM(k,2)];
+            
+            for r = 1:size(HBcenter,2)
+                distances = sqrt(sum(bsxfun(@minus, cueBoundary, [HBcenter{1,r}(:,1),HBcenter{1,r}(:,2)]).^2,2));
+                HBdist2Cue{1,r} = unique(distances(distances == min(distances))); %Find minimum distance from cue boundary to hb center
+            end
+            
+        end
+        
+        
         
     end
 end
