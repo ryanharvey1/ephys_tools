@@ -777,7 +777,7 @@ classdef place_cell_analysis
             ThPrecess.stats=NaN;
             ThPrecess.data=NaN;
             
-            if size(spks_VEL,1)<10
+            if size(spks_VEL,1)<20
                 return
             end
             
@@ -800,7 +800,7 @@ classdef place_cell_analysis
             % PLOT
             % figure;
             % PlotPhasePrecession(data,stats)
-            spks_VEL_working = interp1(phase(:,1),phase(:,2),spks_VEL(:,1)','linear');
+            spks_VEL_working = interp1(phase(:,1),phase(:,2),spks_VEL(:,1)','nearest');
             
             % COMPUTE PHASE LOCKING
             ThPrecess.phaselock.Rlength=circ_r(spks_VEL_working');
