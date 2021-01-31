@@ -62,7 +62,7 @@ for i = 1:length(ts_bins)-1
     spikes = spikes(spikes>=ts_bins(i) & spikes<=ts_bins(i+1));
     % Get angle spike
     try
-    angspk = interp1(ts,ang,spikes);
+    angspk = circular_interp(ts,ang,spikes);
     catch
         smoothed(i,:) = zeros(size(hdTuning,2),1);
         continue
@@ -105,14 +105,14 @@ ang = data.frames(:,4);
 % cell_idx = find_cells(data,tet,data.spikesID.CellNum(cell));
 spikes = data.Spikes{cell,1};
 % Get angle spike
-angspk = interp1(ts,ang,spikes);
+angspk = circular_interp(ts,ang,spikes);
 % set up colormap
 theta=0:.01:2*pi;
 color = hsv(length(theta));
 theta = theta';
 plot(ts,ang,'Color',[.8 .8 .8]);
 hold on
-h=scatter(spikes,angspk,5,interp1(rad2deg(theta),color,angspk),'filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2);
+h=scatter(spikes,angspk,5,interp1(rad2deg(theta),color,angspk,'nearest'),'filled','MarkerFaceAlpha',.2,'MarkerEdgeAlpha',.2);
 % set(h,'FaceAlpha',.5);
 box off
 % xlabel('Time (sec)')
@@ -163,7 +163,7 @@ theta=0:.01:2*pi;
 color=hsv(length(theta));
 [~,I] = max(smoothed);
 h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-    interp1(rad2deg(theta)',color,hd_centers(I)));
+    interp1(rad2deg(theta)',color,hd_centers(I)),'nearest');
 set(h,'FaceAlpha',.5)
 % subaxis(2,1,2);
 % postprocessFigures.avg_waveforms(data,cond,cell)
