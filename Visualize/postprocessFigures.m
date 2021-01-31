@@ -360,12 +360,12 @@ classdef postprocessFigures
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
                     interp1(rad2deg(theta)',color,...
-                    interp1(ts,unlinear_together(idx,4),spkts)),'filled');
+                    interp1(ts,unlinear_together(idx,4),spkts),'nearest'),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
                     interp1(theta',color,...
-                    interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),spkts)),'filled');
+                    interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),spkts,'nearest'),'nearest'),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(interp1(ts,unlinear_together(idx,2),spkts),...
                     interp1(ts,unlinear_together(idx,3),spkts),10,...
@@ -398,12 +398,12 @@ classdef postprocessFigures
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
                 scatter(x(spkbinary),ts(spkbinary),20,...
-                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
+                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4),'nearest'),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),ts(spkbinary),20,...
                     interp1(theta',...
                     color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
-                    ts(spkbinary)')),'filled');
+                    ts(spkbinary)'),'nearest'),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),ts(spkbinary),20,'r','filled');
             end
@@ -430,12 +430,12 @@ classdef postprocessFigures
             hold on;box off; axis off
             if strcmp(colorcode,'HD')
                 scatter(x(spkbinary),y(spkbinary),20,...
-                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4)),'filled');
+                    interp1(rad2deg(theta)',color,dataspks(spkbinary,4),'nearest'),'filled');
             elseif strcmp(colorcode,'phase')
                 scatter(x(spkbinary),y(spkbinary),20,...
                     interp1(theta',...
                     color,interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
-                    ts(spkbinary)')),'filled');
+                    ts(spkbinary)'),'nearest'),'filled');
             elseif strcmp(colorcode,'r')
                 scatter(x(spkbinary),y(spkbinary),20,'r','filled');
             end
@@ -509,7 +509,7 @@ classdef postprocessFigures
 %             [theta_phase,~,~]=Phase([data.lfp.ts',theta']);
             
             phase=interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
-                dataspks(logical(dataspks(:,6)),1)','linear');
+                dataspks(logical(dataspks(:,6)),1)','nearest');
             
             scatter([x(logical(dataspks(:,6)));x(logical(dataspks(:,6)))],...
                 [phase';phase'+2*pi]*180/pi,15,'Filled','k');
@@ -578,11 +578,11 @@ classdef postprocessFigures
             xspk=interp1(ts,x,spkts);
             
             phase=interp1(data.lfp.ts,...
-                data.lfp.theta_phase(trodeID,:),spkts','linear');
+                data.lfp.theta_phase(trodeID,:),spkts','nearest');
             spkmap=histcounts2([xspk;xspk],[phase';phase'+2*pi]*180/pi,xedge,phaseedge);
             
             phase=interp1(data.lfp.ts,...
-                data.lfp.theta_phase(trodeID,:),ts','linear');
+                data.lfp.theta_phase(trodeID,:),ts','nearest');
             occ=histcounts2([x;x],[phase';phase'+2*pi]*180/pi,xedge,phaseedge);
             occ=occ/data.samplerate;
             
@@ -632,7 +632,7 @@ classdef postprocessFigures
             phaseedge=linspace(0,720,bins*4);
             
             phase_spk = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
-                data_video_spk(data_video_spk(:,6)==1,1));
+                data_video_spk(data_video_spk(:,6)==1,1),'nearest');
             
             x_spk = interp1(results.ts,results.pass_index,...
                 data_video_spk(data_video_spk(:,6)==1,1));
@@ -641,7 +641,7 @@ classdef postprocessFigures
                 xedge,phaseedge);
             
             phase_occ = interp1(data.lfp.ts,data.lfp.theta_phase(trodeID,:),...
-                data_video_spk(data_video_spk(:,6)==0,1));
+                data_video_spk(data_video_spk(:,6)==0,1),'nearest');
             
             x_occ = interp1(results.ts,results.pass_index,...
                 data_video_spk(data_video_spk(:,6)==0,1));
@@ -782,7 +782,7 @@ classdef postprocessFigures
             smoothed_tuning = smoothdata([tuning,tuning,tuning],'gaussian',12);
             [~,I] = max(smoothed_tuning(61:120));
             h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-                interp1(rad2deg(theta)',color,bin_centers(I)));
+                interp1(rad2deg(theta)',color,bin_centers(I)),'nearest');
             set(h,'FaceAlpha',.5)
             
         end
