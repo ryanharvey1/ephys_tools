@@ -753,6 +753,9 @@ classdef postprocessFigures
             [r,~,Ispk,~,~,tuning]=tuningcurve(data_video_spk(data_video_spk(:,6)==0,4),...
                 data_video_spk(data_video_spk(:,6)==1,4),data.samplerate);
             
+            hdTuning = [tuning tuning tuning];
+            tuning = smoothdata(hdTuning,'Gaussian',6);
+            tuning = tuning(1,61:120);
             bin_centers=3:6:360-3;
             Polarplot = polar(deg2rad(bin_centers),tuning,'b');
             set(Polarplot,'linewidth',1,'color','k');
