@@ -120,7 +120,7 @@ function [spatial_corr, r] = spatial_xcorr(ref,test,frames)
 
 % subsample spikes to decrease run time 
 spike_num = randperm(length(ref),min(length(ref),1000));
-angle_spike = interp1(frames(:,1),frames(:,4),test);
+angle_spike = circular_interp(frames(:,1),frames(:,4),test);
 for iii = 1:length(spike_num)
     
     % Create time boundary for iteration
@@ -223,7 +223,7 @@ theta=0:.01:2*pi;
 color=hsv(length(theta));
 [~,I] = max(smoothed_tuning(61:120));
 h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-    interp1(rad2deg(theta)',color,bin_centers(I)));
+    interp1(rad2deg(theta)',color,bin_centers(I)),'nearest');
 set(h,'FaceAlpha',.5)
 end
 
@@ -256,6 +256,6 @@ uistack(vertical,'bottom')
 % color=hsv(length(theta));
 % [~,I] = max(spatial_corr);
 % h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-%     interp1(rad2deg(theta)',color,bin_centers(I)));
+%     interp1(rad2deg(theta)',color,bin_centers(I)),'nearest');
 % set(h,'FaceAlpha',.5)
 end

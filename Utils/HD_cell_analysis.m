@@ -134,6 +134,7 @@ classdef HD_cell_analysis
             hd_tune = smoothdata([hd_tune hd_tune hd_tune],2,'gaussian',6);
             hd_tune = hd_tune(:,61:120);
             
+            % mean pairwise correlations 
             corrMat = corr(hd_tune');
             corrMat(logical(eye(length(corrMat)))) = NaN;
             stable_score = nanmean(corrMat(:));
@@ -219,8 +220,133 @@ classdef HD_cell_analysis
             %             normWithin=normTemp;
         end
         
-        % Anticipatory time interval (NOT COMPLETE)
+        function [tuning_var,tuning_var_vec]= brownian_drift(data_video_spk,samplerate)
+            
+            %initlize loop parameters
+            a = data_video_spk(data_video_spk(:,6) == 0,4);
+            ts = data_video_spk(data_video_spk(:,6) == 0,1);
+            frames = data_video_spk(data_video_spk(:,6) == 0,:);
+            
+            bins = 0:6:360;
+            bin_check = zeros(1,length(bins));
+            ii = 1;
+            hd_tune = [];
+            for i = 1:size(a,1)
+                for b = 1:length(bins)
+                    if a(i) > bins(b) && a(i) <= bins(b+1)
+                        bin_check(b) = 1;
+                        break
+                    end
+                end
+                if sum(bin_check) == length(bin_check)-1
+                    idx = frames(:,1) >= ts(ii) & frames(:,1) <= ts(i);
+                    temp_a = a(idx);
+                    
+                    idx = data_video_spk(:,1) >= ts(ii) & data_video_spk(:,1) <= ts(i);
+                    temp_spk_frames = data_video_spk(idx,:);
+                    
+                    [~,~,~,~,~,hdtuning] = tuningcurve(temp_a,...
+                        temp_spk_frames(temp_spk_frames(:,6) == 1,4),samplerate);
+                    
+                    
+                    hd_tune = [hd_tune;hdtuning];
+                    
+                    ii = i+1;
+                    bin_check = zeros(1,length(bins));
+                end
+                if i == size(a,1) && isempty(hd_tune)
+                    stable_score = NaN;
+                    warning('insufficient azimuth sampling')
+                    return
+                end
+            end
+            
+            %smooth over 36 degrees
+            hd_tune = smoothdata([hd_tune hd_tune hd_tune],2,'gaussian',6);
+            hd_tune = hd_tune(:,61:120);
+            
+            % calculate variance over bins
+            tuning_var_vec = var(hd_tune,0,1); %df n-1
+            tuning_var = mean(tuning_var_vec); 
+            
+            
+        end
         
+        function [beta_1, p_value] = drift(data,session,cell,plots)
+            % Evaluates drift by performing regression by evaluating linear
+            % association between difference in spike times and difference in
+            % head angle.
+            %
+            %   Input:
+            %       - data: structure containing frames, event timestamps, and spikes. Output of ephys_tools/Analysis/postprocess.m
+            %       - session: condition number to run. Corresponds to event
+            %       timestamps.
+            %       - cell: cell index (obtained from find_cells).
+            %       -plots: 0 or 1 for no plot and plot respectively.
+            %   Output:
+            %       - beta_1: estimated coefficient from least squares model fit.
+            %
+            % To-do:
+            %    add cross validation method
+            
+            addpath('D:\Users\BClarkLab\ephys_tools\external_packages\Colormaps')
+            
+            % Unpack data
+            spikes = data.Spikes{cell,1};
+            events = data.events(:,session);
+            
+            frames = data.frames(data.frames(:,1) > events(1,1) & data.frames(:,1) < events(2,1),:);
+            spikes = spikes(spikes > events(1,1) & spikes < events(2,1));
+            angles = deg2rad(circular_interp(frames(:,1),frames(:,4),spikes));
+            
+            % Get differences
+            delta_spike = log(diff(spikes));
+            delta_HD = log(abs(rad2deg(circ_dist(angles(1:end-1,1),angles(2:end,1)))));
+            delta_HD = delta_HD( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
+            delta_spike = delta_spike( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
+            
+            % Fit linear model
+            mdl = fitlm(delta_HD,delta_spike);
+            beta_1 = mdl.Coefficients.Estimate(2,1);
+            p_value = mdl.Coefficients.pValue(2,1);
+            
+            % divide
+            % Plot spike on path over time
+            if plots
+                fig=figure('DefaultAxesFontSize',8,'defaultAxesFontName','sans-serif','defaultTextFontName','sans-serif');
+                fig.Color = [1,1,1];
+                [fig_width_in, fig_height_in] = set_size('beamer', 1, [2,2]);
+                set(fig,'Position',[1 1 fig_width_in fig_height_in])
+                
+                subplot(2,2,1)
+                plot(data.hdTuning{cell,session},'k','LineWidth',2);
+                xlabel('Head Direction (6 deg/bin)')
+                ylabel('Firing Rate (Hz)')
+                subplot(2,2,2)
+                plot(frames(:,1),frames(:,4),'-k')
+                xlabel('Time (s)')
+                ylabel('Head Direction (deg)')
+                hold on;
+                scatter(spikes,rad2deg(angles),'filled','r')
+                subplot(2,2,3)
+                scatter(delta_spike,delta_HD)
+                h = lsline;
+                set(h(1),'color','r','LineWidth',2)
+                xlabel('log delta time')
+                ylabel('log delta angle')
+                axis tight
+                subplot(2,2,4)
+                xedges = min(delta_spike):.5:max(delta_spike);
+                yedges = min(delta_HD):.5:max(delta_HD);
+                imagesc(histcounts2(delta_spike,delta_HD,xedges,yedges)')
+                colormap(magma(255))
+                axis xy
+                xlabel('log delta time')
+                ylabel('log delta angle')
+            end
+        end
+        
+        % Anticipatory time interval (NOT COMPLETE)
         function anticipatory_time_interval = computeATI(data,session,cell)
             
             
@@ -234,7 +360,7 @@ classdef HD_cell_analysis
             new_time = data_video_nospk(:,1) + ((1/data.samplerate)/2); %set time inbetween data points
             new_time(new_time>max(data_video_nospk(:,1)))=[];
             
-            in_phase_hd = interp1(data_video_nospk(:,1),data_video_nospk(:,4),new_time,'linear');
+            in_phase_hd = circular_interp(data_video_nospk(:,1),data_video_nospk(:,4),new_time);
             in_phase_ang_vel = interp1(new_time,anglevel,new_time,'linear');
             
             
@@ -287,81 +413,6 @@ classdef HD_cell_analysis
             %(subtract 1/samplerate to ts) and current
             
         end
-        
-        function [beta_1, p_value] = drift(data,session,cell,plots)
-            % Evaluates drift by performing regression by evaluating linear
-            % association between difference in spike times and difference in
-            % head angle.
-            %
-            %   Input:
-            %       - data: structure containing frames, event timestamps, and spikes. Output of ephys_tools/Analysis/postprocess.m
-            %       - session: condition number to run. Corresponds to event
-            %       timestamps.
-            %       - cell: cell index (obtained from find_cells).
-            %       -plots: 0 or 1 for no plot and plot respectively.
-            %   Output: 
-            %       - beta_1: estimated coefficient from least squares model fit.  
-            %
-            % To-do: 
-            %    add cross validation method
-            
-            addpath('D:\Users\BClarkLab\ephys_tools\external_packages\Colormaps')
-            
-            % Unpack data
-            spikes = data.Spikes{cell,1};
-            events = data.events(:,session);
-            
-            frames = data.frames(data.frames(:,1) > events(1,1) & data.frames(:,1) < events(2,1),:);
-            spikes = spikes(spikes > events(1,1) & spikes < events(2,1));
-            angles = deg2rad(interp1(frames(:,1),frames(:,4),spikes));
-            
-            % Get differences
-            delta_spike = log(diff(spikes));
-            delta_HD = log(abs(rad2deg(circ_dist(angles(1:end-1,1),angles(2:end,1)))));
-            delta_HD = delta_HD( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
-            delta_spike = delta_spike( ~any( isnan( delta_HD ) | isinf( delta_HD ), 2 ),: );
-            
-            % Fit linear model
-            mdl = fitlm(delta_HD,delta_spike);
-            beta_1 = mdl.Coefficients.Estimate(2,1);
-            p_value = mdl.Coefficients.pValue(2,1);
-            
-            % divide
-            % Plot spike on path over time
-            if plots
-               fig=figure('DefaultAxesFontSize',8,'defaultAxesFontName','sans-serif','defaultTextFontName','sans-serif');
-               fig.Color = [1,1,1];
-                [fig_width_in, fig_height_in] = set_size('beamer', 1, [2,2]);
-                set(fig,'Position',[1 1 fig_width_in fig_height_in])
-                
-                subplot(2,2,1)
-                plot(data.hdTuning{cell,session},'k','LineWidth',2);
-                xlabel('Head Direction (6 deg/bin)')
-                ylabel('Firing Rate (Hz)')
-                subplot(2,2,2)
-                plot(frames(:,1),frames(:,4),'-k')
-                xlabel('Time (s)')
-                ylabel('Head Direction (deg)')
-                hold on;
-                scatter(spikes,rad2deg(angles),'filled','r')
-                subplot(2,2,3)
-                scatter(delta_spike,delta_HD)
-                h = lsline;
-                set(h(1),'color','r','LineWidth',2)
-                xlabel('log delta time')
-                ylabel('log delta angle')
-                axis tight
-                subplot(2,2,4)
-                xedges = min(delta_spike):.5:max(delta_spike);
-                yedges = min(delta_HD):.5:max(delta_HD);
-                imagesc(histcounts2(delta_spike,delta_HD,xedges,yedges)')
-                colormap(magma(255))
-                axis xy
-                xlabel('log delta time')
-                ylabel('log delta angle')
-            end
-        end
-        
         
     end
 end

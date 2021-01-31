@@ -22,7 +22,8 @@ data_video_nospk=[data_video,in];
 
 X=interp1(data_video_nospk(idx,1),data_video_nospk(idx,2),SpikeFile,'linear');
 Y=interp1(data_video_nospk(idx,1),data_video_nospk(idx,3),SpikeFile,'linear');
-A=interp1(data_video_nospk(idx,1),data_video_nospk(idx,4),SpikeFile,'linear');
+A = circular_interp(data_video_nospk(idx,1),data_video_nospk(idx,4),SpikeFile);
+% A=interp1(data_video_nospk(idx,1),data_video_nospk(idx,4),SpikeFile,'nearest');
 VEL=interp1(data_video_nospk(idx,1),data_video_nospk(idx,5),SpikeFile,'linear');
 VELidx=interp1(data_video_nospk(idx,1),data_video_nospk(idx,6),SpikeFile,'linear');
 
