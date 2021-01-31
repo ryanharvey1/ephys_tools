@@ -44,7 +44,7 @@ plot(ts,wrapTo360(a),'color',[.7,.7,.7],'LineWidth',2)
 alpha(.55)
 hold on
 % plot spikes
-scatter(spks,wrapTo360(interp1(ts,a,spks)),'r','filled')
+scatter(spks,wrapTo360(circular_interp(ts,a,spks)),'r','filled')
 alpha(.25)
 legend({'Head Direction','Spike'})
 ylabel('Head Angle (Degrees)')
