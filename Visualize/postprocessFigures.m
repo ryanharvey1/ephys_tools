@@ -784,8 +784,7 @@ classdef postprocessFigures
             color=hsv(length(theta));
             smoothed_tuning = smoothdata([tuning,tuning,tuning],'gaussian',12);
             [~,I] = max(smoothed_tuning(61:120));
-            h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-                interp1(rad2deg(theta)',color,bin_centers(I)),'nearest');
+            h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),interp1(rad2deg(theta)',color,bin_centers(I),'nearest'));
             set(h,'FaceAlpha',.5)
             
         end
