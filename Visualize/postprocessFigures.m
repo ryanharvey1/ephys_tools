@@ -688,12 +688,12 @@ classdef postprocessFigures
             sam=size(avgwave,2);
             waves=zeros(4,sam);
             waves(1:size(avgwave,1),:)= -1*avgwave;
-            plot(1:sam,waves(1,:),'LineWidth',2, 'color','k');hold on
-            plot(sam+1:sam*2,waves(2,:),'LineWidth',2, 'color','k');
+            plot(1:sam,waves(1,:),'LineWidth',1, 'color','k');hold on
+            plot(sam+1:sam*2,waves(2,:),'LineWidth',1, 'color','k');
             plot(1:sam,waves(3,:)+max(abs([waves(1,:),waves(2,:)])),...
-                'LineWidth',2, 'color','k');
+                'LineWidth',1, 'color','k');
             plot(sam+1:sam*2,waves(4,:)+max(abs([waves(1,:),waves(2,:)])),...
-                'LineWidth',2, 'color','k');
+                'LineWidth',1, 'color','k');
             axis tight
             hold on;box off; axis off
             title(sprintf('ShortISI: %4.2f :IsoDist %4.2f',...
@@ -782,7 +782,7 @@ classdef postprocessFigures
             smoothed_tuning = smoothdata([tuning,tuning,tuning],'gaussian',12);
             [~,I] = max(smoothed_tuning(61:120));
             h=fill(get(Polarplot, 'XData'), get(Polarplot, 'YData'),...
-                interp1(rad2deg(theta)',color,bin_centers(I)),'nearest');
+                interp1(rad2deg(theta)',color,bin_centers(I),'nearest'));
             set(h,'FaceAlpha',.5)
             
         end
