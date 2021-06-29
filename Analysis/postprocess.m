@@ -39,7 +39,23 @@ prop = waveformprop(avgwave);
 
 % READ VIDEO DATA
 if DLC_flag
-    [ts, x, y, angles] = process_DLC_for_ephys();
+    [ts, x, y, angles] = process_DLC_for_ephys('basepath',path);
+    
+    % patch because some OE videos had double frame rate
+    if length(x) == length(ts)*2 && length(y) == length(ts)*2
+        x(1:2:end) = [];
+        y(1:2:end) = [];
+        angles(1:2:end) = [];
+    end
+    
+    % For Neuralynx acquisitions with DLC tracking 
+    if ~isempty(dir([path,filesep,'*.ntt']))
+        % find first csc
+        files = dir(fullfile(path,'*.ncs'));
+        ts_csc = Nlx2MatCSC(fullfile(path,files(1).name),[1 0 0 0 0], 0, 1, [] );
+        data.offset = ts_csc(1);
+    end
+    
 else
     [ts,x,y,angles] = Nlx2MatVT([path,filesep,'VT1.nvt'],[1,1,1,1,0,0],0,1);
     % find first csc
@@ -347,7 +363,7 @@ for event=1:size(data.events,2)
                 if event == 3 && contains(data.mazetypes{event-1},'Cylinder') && contains(path,'PAE')
                     [Displacement,DisplacementCorr] = Displacement2(ratemap,...
                         data.ratemap{i,event});
-                elseif event == 3 && contains(data.mazetypes{event-1},'Cylinder')
+                elseif event == 3 && contains(data.mazetypes{event-1},'Cylinder') && ~contains(data.mazetypes{event},'box') && ~contains(data.mazetypes{event},'pedestal')
                     [Displacement,DisplacementCorr] = Displacement2(ratemap,...
                         data.ratemap{i,event-1});
                 end
