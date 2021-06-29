@@ -51,6 +51,12 @@ classdef after_spikesort_cleanup
             elseif ~isempty(dir('*Kilosort2_*'))
                 
                 after_spikesort_cleanup.handle_phy
+                
+                % Klusta / phy
+            elseif ~isempty(dir('klusta_*'))
+                
+                after_spikesort_cleanup.handle_kwik
+                
             end
         end
         
@@ -111,7 +117,6 @@ classdef after_spikesort_cleanup
             end
             clear means grades
         end
-        
         
         
         function handle_tfiles
@@ -225,13 +230,13 @@ classdef after_spikesort_cleanup
             % load phy output (spike times, cluster id, & waveforms)
             % calcuate cluster quality metrics
             % save all to .mat files in currently used format
-            if ~exist('basedir','var')      
+            if ~exist('basedir','var')
                 myKsDir = pwd;
                 basedir = pwd;
             else
                 myKsDir = basedir;
             end
-
+            
             
             % check to see if there is a specific kilosort folder
             ks_folder = dir(fullfile(basedir,'Kilosort*'));
@@ -298,7 +303,7 @@ classdef after_spikesort_cleanup
             %             tetrodemap=reshape(repmat(1:sp.n_channels_dat/4,4,1),sp.n_channels_dat/4*4,1);
             [clusterIDs, unitQuality, ~] = sqKilosort.maskedClusterQuality(myKsDir);
             
-
+            
             
             if ~isempty( dir([basedir,filesep,'**\*.ncs']))
                 % create filtered dat if one doesn't exsist
@@ -313,10 +318,10 @@ classdef after_spikesort_cleanup
                 % find first csc
                 files = dir(fullfile(basedir,'*.ncs'));
                 ts = Nlx2MatCSC(fullfile(basedir,files(1).name),[1 0 0 0 0], 0, 1, [] );
-
+                
                 % split data into respective tetrodes
                 waveform_from_tt(sp,clu,ts,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
-            else 
+            else
                 % create filtered dat if one doesn't exsist
                 if ~isfile(fullfile(basedir,datfile))
                     filter_raw_dat_from_dat
@@ -325,7 +330,32 @@ classdef after_spikesort_cleanup
                 waveform_from_probe(sp,clu,clusterinfo,gwfparams,clusterIDs,unitQuality,spkts,basedir)
             end
             
-                disp('finished... go post process this session :)')
+            disp('finished... go post process this session :)')
+        end
+        
+        function handle_kwik(basedir)
+            
+            % Make a directory to store sorted data
+            mkdir(fullfile(basedir,'Sorted'))
+            
+            % Load xml
+            d   = dir([basedir,filesep,'*.xml']);
+            xml_data = LoadXml(fullfile(basedir,d(1).name));
+            n_channels = xml_data.nElecGps;
+            
+            
+            % waveform parameters for getWaveForms
+            gwfparams.dataDir = basedir;    % KiloSort/Phy output folder
+            gwfparams.fileName = 'filtered_CAR.dat';         % .dat file containing the raw
+            gwfparams.dataType = 'int16';            % Data type of .dat file (this should be BP filtered)
+            gwfparams.nCh = xml_data.nChannels  ;                      % Number of channels that were streamed to disk in .dat file
+            gwfparams.wfWin = [-7 22];              % Number of samples before and after spiketime to include in waveform
+            gwfparams.nWf = 2000;                    % Number of waveforms per unit to pull out
+            
+            % Loop through klust_* folders
+            waveform_from_klusta(n_channels,basedir,xml_data,gwfparams)
+            
+            disp('finished... go post process this session :)')
         end
     end
     
@@ -466,4 +496,114 @@ for i = 0:16:sp.n_channels_dat-16
     
 end
 end
+
+function waveform_from_klusta(n_channels,basedir,xml_data,gwfparams)
+[~,basename] = fileparts(basedir);
+
+% Loop through klust_* folders
+for shank = 1:n_channels
+    kwikdir = fullfile(basedir,['klusta_',num2str(shank)]);
+    
+    % read cluster_info.tsv
+    opts = delimitedTextImportOptions("NumVariables", 6);
+    opts.DataLines = [2, Inf];
+    opts.Delimiter = "\t";
+    opts.VariableNames = ["id", "channel", "depth", "firing_rate", "group", "n_spikes"];
+    opts.VariableTypes = ["double", "double", "double","double", "categorical","double"];
+    opts = setvaropts(opts, 4, "TrimNonNumeric", true);
+    opts = setvaropts(opts, 4, "ThousandsSeparator", ",");
+    opts = setvaropts(opts, 5, "EmptyFieldRule", "auto");
+    opts.ExtraColumnsRule = "ignore";
+    opts.EmptyLineRule = "read";
+    clusterinfo = readtable(fullfile(kwikdir,'cluster_info.tsv'), opts);
+    clear opts
+    
+    disp([num2str(sum(ismember(clusterinfo.group,'good'))),' good units'])
+    disp([num2str(sum(ismember(clusterinfo.group,'mua'))),' mua units'])
+    disp([num2str(sum(ismember(clusterinfo.group,'noise'))),' noise units'])
+    disp('...')
+    
+    % Load cluster and spike times
+    tkwik = fullfile(basedir,['klusta_',num2str(shank)],[basename '_sh' num2str(shank) '.kwik']);
+    % cluster identities
+    clusters = h5read(tkwik,['/channel_groups/' num2str(shank) '/spikes/clusters/main']);
+    % spike times
+    res = h5read(tkwik,['/channel_groups/' num2str(shank) '/spikes/time_samples']);
+    
+    % locate cells to keep 
+    spkts = [];
+    clu = [];
+    for i=unique(clusters)'
+        % keep spikes from good units only
+        if ismember(clusterinfo.group(clusterinfo.id == i),'good')
+            spkts=[spkts;res(clusters == i)];
+            clu=[clu;clusters(clusters == i)];
+        end
+    end
+    
+    % convert from samples to seconds to microseconds
+    spkts_mu = (double(spkts)/xml_data.SampleRate)*10^6;
+    
+    % compile for output
+    output = [spkts_mu, double(clu)];
+    
+    % No good units, just move to next shank
+    if isempty(output)
+        continue
+    end
+    
+    % save spike times and cluster identities
+    disp([num2str(length(unique(output(:,2)))),' Clusters'])
+    disp(['Saving ','TT',num2str(shank),'.mat'])
+    save(fullfile(basedir,'Sorted',['TT',num2str(shank),'.mat']),'output')
+    
+    % add spike times
+    gwfparams.spikeTimes =    spkts; % Vector of cluster spike times (in samples) same length as .spikeClusters
+    gwfparams.spikeClusters = clu; % Vector of cluster IDs (Phy nomenclature)   same length as .spikeTimes
+    
+    wf = getWaveForms(gwfparams);
+    
+    for u=1:size(wf.waveFormsMean,1)
+        ch_num=1;
+        for ch=[xml_data.SpkGrps(shank).Channels + 1]
+            try
+                means{u}(ch_num,:)=squeeze(wf.waveFormsMean(u,ch,:));
+            catch
+                means{u}(ch_num,:)=zeros(1,length(gwfparams.wfWin(1):gwfparams.wfWin(2)));
+            end
+            ch_num=ch_num+1;
+        end
+    end
+    
+    % Required for postprocess
+    orig_filename = fullfile(basedir,[basename,'.dat']);
+    % Required for postprocess
+    confidence = NaN(1,length(means));
+    % Required for postprocess
+    final_grades = confidence;
+    
+    ui=1;
+    for u = unique(output(:,2))'
+        t = ((output((output(:,2)==u),1))./10^6)*1000;
+        ISI = diff(t) + 1e-100;
+        ISI_store(ui,1) = sum((ISI<2))/length(ISI);
+        ui = ui+1;
+    end
+    
+    grades=nan(size(unique(output(:,2)),1),27);
+    
+    
+    grades(:,1)=NaN(1,size(unique(output(:,2)),1))';
+    grades(:,3)=ISI_store;
+    grades(:,5)=NaN(1,size(unique(output(:,2)),1))';
+    grades(:,6)=clusterinfo.n_spikes(ismember(clusterinfo.id,unique(output(:,2))));
+    
+    save(fullfile(basedir,'Sorted',['TT',num2str(shank),'_info.mat']),'confidence','final_grades','grades','means','orig_filename')
+    
+    clear means grades ISI_store
+end
+
+end
+
+
 
