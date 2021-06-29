@@ -14,3 +14,4 @@ nClusters = fscanf(Fp, '%d', 1);
 Clu = fscanf(Fp, '%d');
 nClusters = max(Clu);
 fclose(Fp);
+end
