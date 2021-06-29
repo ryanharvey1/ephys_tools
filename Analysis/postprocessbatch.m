@@ -4,10 +4,11 @@ tic
 p = inputParser;
 p.addParameter('overwrite_lfp',0); % raw sample rate
 p.addParameter('after_spike_sort_cleanup',0); % raw sample rate
+p.addParameter('DLC',0); %tracking with DLC 
 p.parse(varargin{:});
 overwrite_lfp = p.Results.overwrite_lfp;
 after_spike_sort_cleanup = p.Results.after_spike_sort_cleanup;
-
+dlc_flag = p.Results.DLC;
 if overwrite_lfp
     disp('WARNING. You are about to overwrite all neuroscope .xml and .lfp files')
     disp('Hit enter if this is okay')
@@ -40,7 +41,7 @@ end
 close all
 WaitMessage = parfor_wait(sum(nsessions),'Waitbar', true,'ReportInterval', 1);
 % CYCLE THROUGH ALL DATA
-parfor iratID=1:length(ratID)
+for iratID=1:length(ratID)
     parent = strcat(dataset,filesep,ratID(iratID)); % CHANGE BASED ON PARENT FOLDER
     disp(['CYCLING THROUGH RAT:',char(ratID(iratID))])
     parent=char(parent);
@@ -59,7 +60,7 @@ parfor iratID=1:length(ratID)
                 end
                 
                 % CALL POSTPROCESS FUNCTION
-                postprocess('path',basepath,'figures',0,'overwrite_lfp',overwrite_lfp); 
+                postprocess('path',basepath,'figures',0,'overwrite_lfp',overwrite_lfp,'DLC',dlc_flag); 
                 
                 % update wait 
                 WaitMessage.Send;
