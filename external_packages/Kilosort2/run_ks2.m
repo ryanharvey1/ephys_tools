@@ -17,7 +17,7 @@ ops.fproc   = fullfile(rootH, 'temp_wh.dat'); % proc file on a fast SSD
 fprintf('Looking for data inside %s \n', rootZ)
 
 % find the binary file
-fs          = dir(fullfile(rootZ, '*_CAR.dat'));
+fs          = dir(fullfile(rootZ, '*.dat'));
 ops.fbinary = fullfile(rootZ, fs(1).name);
 
 % preprocess data to create temp_wh.dat
