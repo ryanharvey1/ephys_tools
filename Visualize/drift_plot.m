@@ -5,9 +5,9 @@ fig=figure('DefaultAxesFontSize',8,'defaultAxesFontName','sans-serif','defaultTe
 fig.Color = [1,1,1];
 [fig_width_in, fig_height_in] = set_size('thesis', 1.5, [3,4]);
 set(fig,'Position',[1 3 fig_width_in fig_height_in])
-SessionID = drift_files.SessionID{1};
+session = drift_files.session{1};
 
-data = load(['F:\ClarkP30_Recordings\ProcessedData\',drift_files.SessionID{1}],'spikesID');
+data = load(['F:\ClarkP30_Recordings\ProcessedData\',drift_files.session{1}],'spikesID');
 cell = drift_files.cell(1);
 tet = sscanf(drift_files.tetrode{1},'TT%d.mat');
 cell_idx = find_cells(data,tet,cell);
@@ -16,39 +16,39 @@ cell_idx = find_cells(data,tet,cell);
 conditions = {'Baseline','Standard 1','Rotation','Standard 2'};
 % plot tuning curves
 subplot(3,4,1)
-example_HD(SessionID,1,cell_idx)
+example_HD(session,1,cell_idx)
 title(conditions(1),'FontWeight','normal')
 subplot(3,4,2)
-example_HD(SessionID,2,cell_idx)
+example_HD(session,2,cell_idx)
 title(conditions(2),'FontWeight','normal')
 subplot(3,4,3)
-example_HD(SessionID,3,cell_idx)
+example_HD(session,3,cell_idx)
 title(conditions(3),'FontWeight','normal')
 subplot(3,4,4)
-example_HD(SessionID,4,cell_idx)
+example_HD(session,4,cell_idx)
 title(conditions(4),'FontWeight','normal')
 % plot moving turning curves over time bins
 subplot(3,4,5)
-moving_tuning(SessionID,1,cell_idx,1)
+moving_tuning(session,1,cell_idx,1)
 subplot(3,4,6)
-moving_tuning(SessionID,2,cell_idx,0)
+moving_tuning(session,2,cell_idx,0)
 subplot(3,4,7)
-moving_tuning(SessionID,3,cell_idx,0)
+moving_tuning(session,3,cell_idx,0)
 subplot(3,4,8)
-moving_tuning(SessionID,4,cell_idx,0)
+moving_tuning(session,4,cell_idx,0)
 subplot(3,4,9)
-hd_tune_over_time(SessionID,1,cell_idx,1)
+hd_tune_over_time(session,1,cell_idx,1)
 subplot(3,4,10)
-hd_tune_over_time(SessionID,2,cell_idx,0)
+hd_tune_over_time(session,2,cell_idx,0)
 subplot(3,4,11)
-hd_tune_over_time(SessionID,3,cell_idx,0)
+hd_tune_over_time(session,3,cell_idx,0)
 subplot(3,4,12)
-hd_tune_over_time(SessionID,4,cell_idx,0)
+hd_tune_over_time(session,4,cell_idx,0)
 
 end
 
-function moving_tuning(SessionID,cond,cell,set_ylabel)
-data = load(['F:\ClarkP30_Recordings\ProcessedData\',SessionID],'frames','Spikes','spikesID','events');
+function moving_tuning(session,cond,cell,set_ylabel)
+data = load(['F:\ClarkP30_Recordings\ProcessedData\',session],'frames','Spikes','spikesID','events');
 idx = data.frames(:,1) >= data.events(1,cond) & data.frames(:,1) <= data.events(2,cond);
 data.frames = data.frames(idx,:);
 ts_bins = min(data.frames(:,1)):20:max(data.frames(:,1));
@@ -94,8 +94,8 @@ end
 
 end
 % plot head direction over time 
-function hd_tune_over_time(SessionID,cond,cell,set_label)
-data = load(['F:\ClarkP30_Recordings\ProcessedData\',SessionID],'frames','Spikes','spikesID','events');
+function hd_tune_over_time(session,cond,cell,set_label)
+data = load(['F:\ClarkP30_Recordings\ProcessedData\',session],'frames','Spikes','spikesID','events');
 % filter by cond
 idx = data.frames(:,1) >= data.events(1,cond) & data.frames(:,1) <= data.events(2,cond);
 data.frames = data.frames(idx,:);
@@ -128,8 +128,8 @@ else
     set(gca,'ytick',[])
 end
 end
-function example_HD(SessionID,cond,cell)
-data = load(['F:\ClarkP30_Recordings\ProcessedData\',SessionID],'hdTuning','spikesID');
+function example_HD(session,cond,cell)
+data = load(['F:\ClarkP30_Recordings\ProcessedData\',session],'hdTuning','spikesID');
 % tet = sscanf(data.spikesID.TetrodeNum{cell},'TT%d.mat');
 % cell_idx = find_cells(data,tet,data.spikesID.CellNum(cell));
 tuning = data.hdTuning{cell,cond};
@@ -138,7 +138,7 @@ smoothed = smooth_hd(tuning);
 % Ispk = data.measures(cell,contains(data.varnames,'Direct_infoContent'),cond);
 theta = 0:.01:2*pi;
 color = hsv(length(theta));
-% fig=figure('Name',[data.rat,'  ',data.sessionID,'  ', 'Cell: ',num2str(data.spikesID.CellNum(cell))],'NumberTitle','off');
+% fig=figure('Name',[data.rat,'  ',data.session,'  ', 'Cell: ',num2str(data.spikesID.CellNum(cell))],'NumberTitle','off');
 % fig.Color = [1 1 1];
 % subaxis(2,1,1);
 angBins = 0:6:360;
