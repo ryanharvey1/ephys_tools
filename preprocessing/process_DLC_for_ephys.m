@@ -1,17 +1,49 @@
 % Process DLC for postprocess
 
 function [ts, x, y, angles] = process_DLC_for_ephys(varargin)
+% calculates behavior correlates for data tracked using DLC. Accomodates
+% two behavioral pipelines from BClark lab (custom Open Ephys and Neuralynx). 
 % 
-p = inputParser;
+% Assumes folder/file structure for ephys_tools. Requires animal metadata
+% folder with led positions (either front,back,left,right relative to animal head).
+% DLC tracking points should match up with the strings indicated in
+% metadata (i.e. AnimalMetadata.ExtracellEphys.led_position.front = 'red'
+% and in 'red*' in DLC header). 
+% 
+% Laura Berkowitz 2020
+% updated with Neuralynx tracking LB March 2021
 
+% Inputs 
+p = inputParser;
 p.addParameter('basepath',pwd);
-p.addParameter('bodypart1','red');
-p.addParameter('bodypart2','yellow');
+p.addParameter('metadata','AnimalMetaData');
 p.parse(varargin{:});
 
 basepath = p.Results.basepath;
-bodypart1 = p.Results.bodypart1;
-bodypart2 = p.Results.bodypart2;
+metadata = p.Results.metadata;
+
+% Load animal metadata
+pathparts = strsplit(basepath,filesep);
+metadata_path = [pathparts{1},filesep,pathparts{2},filesep,metadata];
+load([metadata_path,filesep,pathparts{4},'_metadata.mat']);
+
+% grab led position
+front = AnimalMetadata.ExtracellEphys.led_position.front;
+back = AnimalMetadata.ExtracellEphys.led_position.back;
+left = AnimalMetadata.ExtracellEphys.led_position.left;
+right = AnimalMetadata.ExtracellEphys.led_position.right;
+
+% Assign led color to location
+if sum(ismember([front{1}],'nan')) == 3
+    % tracking points are right/left
+    bodypart1 = left{1};   
+    bodypart2 = right{1};
+else 
+    % tracking points are back/front
+    bodypart1 = front{1};   
+    bodypart2 = back{1};
+end
+
 
 % Find DLC excel
 file = table2cell(struct2table(dir([basepath,filesep,'*.csv'])));
@@ -28,16 +60,19 @@ dlc_file = file(dlc_idx,:);
 [header,tsxy]= open_dlc(dlc_file);
 
 % get x/y coordinates from bodyparts
-red = tsxy(:,contains(header(1,:),bodypart1) & ~contains(header(2,:),'likelihood'));
-yellow = tsxy(:,contains(header(1,:),bodypart2) & ~contains(header(2,:),'likelihood'));
+bodypart1 = tsxy(:,contains(header(1,:),bodypart1) & ~contains(header(2,:),'likelihood'));
+bodypart2 = tsxy(:,contains(header(1,:),bodypart2) & ~contains(header(2,:),'likelihood'));
 
 % median between x and y is center of the head, so lets make those our new
 % x/y values. 
-x = median([red(:,1) yellow(:,1)],2)';
-y = median([red(:,2) yellow(:,2)],2)';
+x = nanmedian([bodypart1(:,1) bodypart2(:,1)],2)';
+y = nanmedian([bodypart1(:,2) bodypart2(:,2)],2)';
 
-% Compute head angle
-angles = rad2deg(XYangleLED(red(:,1),red(:,2),yellow(:,1),yellow(:,2)))';
+ % Compute head angle
+angles = rad2deg(XYangleLED(bodypart1(:,1),bodypart1(:,2),bodypart2(:,1),bodypart2(:,2)))';
+if sum(ismember([front{1}],'nan')) == 3
+    angles = wrapTo360(angles-90); % account for markers on side of head instead of front/back
+end
 
 % Sync start of spikes with video 
 if ~isempty(dir([basepath,filesep,'*record_ts.csv']))
@@ -52,9 +87,18 @@ if ~isempty(dir([basepath,filesep,'*record_ts.csv']))
     % find difference between recording start and video timestamp start
     vid_offset = vid_ts.video_ts(1,1) - rec_ts.start_record;
     % add video offset to ts. 
-    ts = vid_ts.video_ts + vid_offset; 
+    ts = (vid_ts.video_ts - vid_ts.video_ts(1,1))+ vid_offset; 
+    % convert to microseconds 
+    ts = [ts*10^6]';
+    
+% for neuralynx bitfields     
+elseif ~isempty(dir([basepath,filesep,'*.ntt']))
+    ts = Nlx2MatVT([basepath,filesep,'VT1.nvt'],[1,0,0,0,0,0],0,1);
+    % remove trailing frames (Neuralynx capture has delay in closing video
+    % capture, so frames may bigger). 
+    ts = ts(1:length(angles));
 else 
-    % For now, just base timestamps off of DLC frames. These sessions are noted and will likely  not be used given the ambiguous offset.  
+    % For now, just base timestamps off of DLC frames. These sessions are noted and will likely not be used given the ambiguous offset.  
     ts = [0:1/30:tsxy(end,1)/30]*10^6;
 end
 
