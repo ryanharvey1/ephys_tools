@@ -29,12 +29,34 @@ function [ timestamps,StartofRec,EndofRec ] = EventSplit( path )
 % save([path filesep 'events.mat'],'timestamps','StartofRec','EndofRec')
 
 % for Open Ephys with python script acquisition 
-if ~isempty( dir([path,filesep,'**\*events_ts.csv']))
+if ~isempty( dir([path,filesep,'**\*events_ts.csv'])) && ~isempty(dir([path,filesep,'*record_ts.csv']))
+    % record start/stop & video (in UTC)
+    ts_file = dir([path,filesep,'*record_ts.csv']);
+    vid_file = dir([path,filesep,'*video_ts.csv']);
+    
+    rec_ts = readtable(ts_file.name);
+    vid_ts = readtable(vid_file.name); vid_ts(1,:) = []; 
+    
+    offset = vid_ts.video_ts(1,1) - rec_ts.start_record;
+    % events file (in UTC)
     file = dir([path,filesep,'**\*events_ts.csv']);
     events = readtable([file.folder,filesep,file.name]);
     events = events(events.Var1 >= 1,:); %keep first input thru end cause zero is null 
-    StartofRec = events.start'*10^6;
-    EndofRec = events.xEnd'*10^6;
+    
+    % offset & convert to microseconds
+    StartofRec = [(events.start - vid_ts.video_ts(1,1)) + offset]'*10^6;
+    EndofRec = [(events.xEnd - vid_ts.video_ts(1,1))+ offset]'*10^6;
+    timestamps = [];
+    save([path filesep 'events.mat'],'StartofRec','EndofRec','timestamps')
+    return
+elseif ~isempty( dir([path,filesep,'**\*events_ts.csv']))
+    % events file (in seconds)
+    file = dir([path,filesep,'**\*events_ts.csv']);
+    events = readtable([file.folder,filesep,file.name]);
+    events = events(events.Var1 >= 1,:); %keep first input thru end cause zero is null 
+    % offset & convert to microseconds
+    StartofRec = [events.start]'*10^6;
+    EndofRec = [events.xEnd]'*10^6;
     timestamps = [];
     save([path filesep 'events.mat'],'StartofRec','EndofRec','timestamps')
     return
