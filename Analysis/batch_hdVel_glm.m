@@ -19,47 +19,31 @@ function batch_hdVel_glm(dataset,save_path,sessions)
 %
 % Laura B 10/2020
 
-addpath(genpath('D:\Users\BClarkLab\ephys_tools\external_packages\ln-model-of-mec-neurons_laura'))
-cd(dataset)
-
 % Get cell id from compiled table
-sessions = readtable(sessions);
+sessions = flipud(readtable(sessions));
 for i = 1 : length(sessions.SessionID)
     
     %check to see if the cell was already run. If so, continue
     if exist([save_path,'HDVel_results_',extractBefore(sessions.SessionID{i},'.mat'),'_',extractBefore(sessions.tetrode{i},'.mat'),'_',num2str(sessions.cell(i)),'.mat'],'file')
         disp('GLM completed. Running next cell.')
         continue
-    elseif exist([save_path,'HDVel_GLMHDVel_results_',extractBefore(sessions.SessionID{i},'.mat'),'_',extractBefore(sessions.tetrode{i},'.mat'),'_',num2str(sessions.cell(i)),'.mat'],'file')
+    elseif exist([save_path,'HDVel_results_',extractBefore(sessions.SessionID{i},'.mat'),'_',extractBefore(sessions.tetrode{i},'.mat'),'_',num2str(sessions.cell(i)),'.mat'],'file')
         disp('GLM completed. Running next cell.')
         continue
     end
     
-    if strcmp(sessions.SessionID{i},sessions.SessionID{i-1}) && exist('data','var')
-        
-        % Run GLM
-        tet = sscanf(sessions.tetrode{i},'TT%d.mat');
-        sess = 1; % Lets just look at baseline 1 for now
-        [celln] = find_cells(data,tet,sessions.cell(i));
-        % Run GLM
-        disp('Running GLM')
-        glm_res = glm_HDVel(data,sess,celln);
-        
-    else
-        %Load Data session cell
-        data = load([dataset,filesep,sessions.SessionID{i}],'frames','spikesID','maze_size_cm','samplerate','Spikes','events');
-        sess = 1; % Lets just look at baseline 1 for now
-        tet = sscanf(sessions.tetrode{i},'TT%d.mat');
-        [celln] = find_cells(data,tet,sessions.cell(i));
-        
-        % Run GLM
-        disp('Running GLM')
-        glm_res = glm_HDVel(data,sess,celln);
-    end
+    %Load Data session cell
+    data = load([dataset,filesep,sessions.SessionID{i}],'frames','spikesID','maze_size_cm','samplerate','Spikes','events');
+    sess = 1; % Lets just look at baseline 1 for now
+    tet = sscanf(sessions.tetrode{i},'TT%d.mat');
+    [celln] = find_cells(data,tet,sessions.cell(i));
+    % Run GLM
+    disp('Running GLM')
+    glm_res = glm_HDVel(data,sess,celln);
     % Save file
     disp('saving results')
     save_glm_res(save_path,i,sessions,glm_res)
-    %     save([save_path,'HDVel_results_',extractBefore(sessions.SessionID{i},'.mat'),'_',extractBefore(sessions.tetrode{i},'.mat'),'_',num2str(sessions.cell(i)),'.mat'],'glm_res')
+    
 end
 
 end
