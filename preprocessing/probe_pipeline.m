@@ -1,45 +1,101 @@
-% Probe pipeline 
+ Probe pipeline 
+%
+% Procedures for processing electrophysiology data using Cambridge Neurotech
+% probes assy 156 in the BClark lab. 
+%
+% Dependencies
+%   - ephys_tools>external_packages>buzcode 
+%
+% LBerkowitz 2020
+
+% Set paths for data 
+data_folder = pwd;
+[~,basename] = fileparts(data_folder);
+probe_map = 'CED_E1_4X16_front_front.xlsx';
+ssd_path = 'C:\Kilo_temp';
+
 addpath(genpath('D:\Users\BClarkLab\ephys_tools\external_packages\analysis-tools'))
 
-% CD to your data 
-[~,basename] = fileparts(pwd);
+%% ##########################################################################
+
+%                       Setup data for clustering  
+
+% ##########################################################################
+
+%% Preprocessing (organize dat based on channel map) 
+% Channels were not organized during acquisition. This opens and saves the
+% dat file so channels are organized based on channel map. 
+
 %.0  Reorganize dat file if your data was not mapped when streamed to disk
-reorganize_dat_from_chanMap(pwd,'CED_E1_4X16_front_front.xlsx')
+reorganize_dat_from_chanMap(data_folder,probe_map)
 
-% 1. Apply CAR to remove high frequency noise 
-applyCARtoDat([basename ,'.dat'], 64, pwd);
-
-% 2. Get filtered raw dat signal
+% 1. Get filtered raw dat signal
 filter_raw_dat_from_dat
 
-% 3. Make xml file
-write_xml(pwd,'channel_map_64.xlsx',30000,1250) 
-% 4. In Neuroscope, check channel map, skip bad channels, and save. 
+% 2. Apply CAR to remove hypersynchronous events 
+applyCARtoDat(['filtered','.dat'], 64, data_folder);
 
+% 3. Make xml file
+write_xml(data_folder,'channel_map_64.xlsx',30000,1250) 
+
+%% 4. In Neuroscope, check channel map, skip bad channels, and save. 
+
+% follow steps for chosen spike sorting method (Kilosort2.5 or Klusta)
+
+%% ##########################################################################
+
+%                       Sorting using Kilosort2.5
+
+% ##########################################################################
+
+%% For Kilosort: Create lfp file and make channel map
 % 5. Get lfp, initial xml, and channel map. 
 get_lfp
 
-% 6. In Neuroscope, check channel map, skip bad channels, and save. 
+% 6. Update channel map from basename.xml
+create_channelmap_assy156(data_folder)
 
-% 7. Update channel map from .xml
-create_channelmap_assy156(pwd)
+%% Spike sorting
+% Move chanMap, xml, and dat to SSD folder. 
+%creating a folder on the ssd for chanmap,dat, and xml
+ks2_folder = fullfile(ssd_path, basename);
+mkdir(ks2_folder);
 
-% 8. Copy data over to SSD 
-command = ['robocopy ',pwd,' ','C:\Kilo_temp',filesep,basename];
-system(command);
+% 7. Spike sort using kilosort 2.5 (data on ssd)
+run_ks2([ssd_path,filesep,basename])
 
-% 9. Spike sort using kilosort 2.0
-run_ks2(['C:\Kilo_temp',filesep,basename])
-
-% 10. Copy back over to data file 
+% 8. Copy back over to data file 
 disp('Saving data back to data folder from ssd')
-command = ['robocopy ','C:\Kilo_temp',filesep,basename,' ',pwd,' /e'];
+command = ['robocopy ',ssd_path,filesep,basename,' ',data_folder,' /e'];
 system(command);
 
-% 11. Spike sort in Phy
+%% 9. Clean up kilo results in Phy
 
-% 12. After spike sort cleanup 
+%% 10. After spike sort cleanup 
 after_spikesort_cleanup.handle_phy
 
-% 13. Posprocess 
+% 11. Posprocess 
+postprocess('DLC',1)
+
+%% ##########################################################################
+
+%                       Sorting using Klusta 
+
+% ##########################################################################
+%% For Klusta
+d   = dir([data_folder,filesep,'*.xml']);
+parameters = LoadXml(fullfile(data_folder,d(1).name));
+
+% 5. create klusta_folders as well as prb and prm files 
+makeProbeMap(data_folder)
+
+% 6. Runs klusta on each shank by calling system
+run_klusta(data_folder)
+
+%% 7. Spike sort in Phy (Spike sorting kwik files in phy will update the kwik file)
+
+%% 9. After spike sort cleanup 
+after_spikesort_cleanup.handle_kwik(data_folder)
+
+% 10. Posprocess 
 postprocess('DLC',1)
