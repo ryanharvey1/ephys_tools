@@ -485,7 +485,7 @@ set(gca,'TickDir','out')
 % Source - http://labrigger.com/blog/2011/12/05/raster-plots-and-matlab/
 if size(spikes,1) == 1
     set(gca,'YTick', [])                        % don't draw y-axis ticks
-    set(gca,'PlotBoxAspectRatio',[1 0.05 1])    % short and wide
+%     set(gca,'PlotBoxAspectRatio',[1 0.05 1])    % short and wide
     set(gca,'YColor',get(gcf,'Color'))          % hide the y axis
     ylim([0.5 1.5])
 end
