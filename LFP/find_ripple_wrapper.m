@@ -31,13 +31,25 @@ all_sessions = 1;
 
 p = inputParser;
 p.addParameter('figs',0);
-p.addParameter('ripple_fs',[130 200]);
+p.addParameter('ripple_fs',[130 200]); % Hz
+p.addParameter('thresholds',[2,5]); % power
+p.addParameter('minRipLen',20); % ms
+p.addParameter('maxRipLen',100); % ms
+p.addParameter('minInterRippleInterval',30); % ms
+p.addParameter('limit_peak',50); % power
 p.addParameter('save',1);
 p.addParameter('overwrite',0);
 
 p.parse(varargin{:});
 figs = p.Results.figs;
 passband = p.Results.ripple_fs;
+
+thresholds = p.Results.thresholds;
+minRipLen = p.Results.minRipLen;
+maxRipLen = p.Results.maxRipLen;
+minInterRippleInterval = p.Results.minInterRippleInterval;
+limit_peak = p.Results.limit_peak;
+
 save_results = p.Results.save;
 overwrite = p.Results.overwrite;
 
@@ -68,7 +80,7 @@ for s = sess_list
     % load movement data
     data = load(fullfile(sessions(s).folder,sessions(s).name),...
         'frames','session_path','basename','sessionID','rat',...
-        'mazetypes','linear_track','events','lfp','Spikes');
+        'mazetypes','linear_track','events','lfp','Spikes','offset');
     speed = data.frames(:,5);
     mov_ts = data.frames(:,1);
 
@@ -80,7 +92,7 @@ for s = sess_list
     lfp_ts = lfp.timestamps';
     frequency = lfp.samplingRate;
     lfp = double(lfp.data');
-
+        
     processedpath=strsplit(data.session_path,filesep);
     processedpath(end-2:end)=[];
     emg_file = fullfile(strjoin(processedpath,filesep),'EMG_from_LFP',...
@@ -97,23 +109,32 @@ for s = sess_list
         end
         if length(data.lfp.channel_list.tetrode_num) > 8 % only use EMG on hyperdrives
             [ripples{ch}] = bz_FindRipples_ephys_tools(lfp(ch,:)',lfp_ts',...
-                'EMGfilename',emg_file,...
-                'EMGThresh',0.9,...
-                'noise',noise,...
+                'thresholds',thresholds,...
+                'durations',[minInterRippleInterval,maxRipLen],...
+                'minDuration',minRipLen,...
+                'frequency',frequency,...
                 'passband',passband,...
-                'frequency',frequency);
+                'EMGfilename',emg_file,...
+                'EMGThresh',0.85,...
+                'noise',noise);
         else
             [ripples{ch}] = bz_FindRipples_ephys_tools(lfp(ch,:)',lfp_ts',...
-                'noise',noise,...
+                'thresholds',thresholds,...
+                'durations',[minInterRippleInterval,maxRipLen],...
+                'minDuration',minRipLen,...
+                'frequency',frequency,...
                 'passband',passband,...
-                'frequency',frequency);
+                'noise',noise);
         end
     end
     
     [ripples] = combine_and_exclude_close_events(ripples);
+    disp([num2str(length(ripples.peaks)) ' events.']);
+
     
-    
-%     ripples = exclude_by_unit_activity(ripples,data,lfp_ts);
+    ripples = exclude_by_unit_activity(ripples,data,lfp_ts);
+    disp(['After unit thresholding: ' num2str(length(ripples.peaks)) ' events.']);
+
 %     ripples = exclude_by_multi_unit_activity(ripples,data,lfp_ts);
     
     % store channel used, noise channel, and snr
@@ -125,7 +146,7 @@ for s = sess_list
     % exclude movement
     [mov_ts,idx] = unique(mov_ts);
     temp_speed = interp1(mov_ts,speed(idx),ripples.timestamps);
-    above_speed_thres = ~any(temp_speed < 3 | isnan(temp_speed),2);
+    above_speed_thres = ~any(temp_speed < 4 | isnan(temp_speed),2);
     ripples.timestamps(above_speed_thres,:) = [];
     ripples.peaks(above_speed_thres) = [];
     ripples.peakNormedPower(above_speed_thres,:) = [];
@@ -277,6 +298,9 @@ maps.unfiltered_ripples = unfiltered_ripples;
 end
 
 function ripples = exclude_by_unit_activity(ripples,data,lfp_ts)
+% remove ripples with less than 2 active units
+n_active_units = 2;
+
 dt = (lfp_ts(2) - lfp_ts(1));
 bin_edges = [lfp_ts - dt/2, lfp_ts(end) + dt/2];
 for i = 1:length(data.Spikes)
@@ -291,7 +315,7 @@ for r = 1:size(ripples.timestamps,1)
 end
 % convert to binary
 sum_spikes = sum_spikes > 0;
-idx = sum(sum_spikes) < 1;
+idx = sum(sum_spikes) < n_active_units; 
 
 ripples.peaks(logical(idx)) = [];
 ripples.timestamps(logical(idx),:) = [];

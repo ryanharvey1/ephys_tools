@@ -16,6 +16,11 @@ else
         disp(fullfile(sessions(s).folder,sessions(s).name))
         ripple_info = load(fullfile(sessions(s).folder,sessions(s).name));
         
+        % check if ripple maps are 151 in length (there's a bug somewhere in Sync)
+        if size(ripple_info.maps.ripples,2) ~= 151
+            ripple_info = sync_to_size(ripple_info);
+        end
+        
         maps = [maps;ripple_info.maps.unfiltered_ripples];
         maps_filtered = [maps_filtered;ripple_info.maps.ripples];
         
@@ -44,11 +49,43 @@ else
     
     save(fullfile(basepath,'SWR_workspace.mat'),'SWR');
 end
-
+%%
 move_fig(basepath)
 
 %%
+diff(SWR.maps_zscore,1,2);
 
+ [coeff,score,latent,tsquared,explained,mu] = pca(normalize(SWR.maps,2,'center'));
+   figure
+    h = scatter3(score(:,1),score(:,2),score(:,3));
+
+%%
+window_ = round(size(SWR.maps,2)/2-25:size(SWR.maps,2)/2+25);
+
+minPCvar = 0.8;
+probClus = 0;
+autoClus = 1;
+numRep = 100;
+waveletParams = {1000, [70 300], 1};
+save_dir = 'F:\Projects\PAE_PlaceCell\som_ripple_figs';
+[clusData, clussMap, clusNum, probMatrix] = RhythSOM_Classifier(normalize(SWR.maps(:,window_),2,'range'), minPCvar,...
+    probClus, autoClus, numRep, waveletParams,save_dir) ;
+
+%%
+list_of_good = find(clusData == 28);
+figure
+imagesc(SWR.maps_zscore(list_of_good,:))
+figure;
+plot(SWR.maps_zscore(list_of_good,:)')
+
+
+list_of_good = find(clusData == 4);
+for i = 1:length(list_of_good)
+    fig =  figure;
+    plot(SWR.maps(list_of_good(i),:))
+    pause
+    close(fig)
+end
 
 %%
 
@@ -171,7 +208,30 @@ move_fig(basepath)
 % biplot(coeff(:,1:3),'scores',score(:,1:3));
 % axis image
 
-
+function ripple_info = sync_to_size(ripple_info)
+for i = 1:size(ripple_info.maps.ripples,1)
+    
+    ripples(i,:) = interp1(linspace(1,151,size(ripple_info.maps.ripples,2)),...
+        ripple_info.maps.ripples(i,:),1:151);
+    
+    frequency(i,:) = interp1(linspace(1,151,size(ripple_info.maps.frequency,2)),...
+        ripple_info.maps.frequency(i,:),1:151);
+    
+    phase(i,:) = interp1(linspace(1,151,size(ripple_info.maps.phase,2)),...
+        ripple_info.maps.phase(i,:),1:151);
+    
+    amplitude(i,:) = interp1(linspace(1,151,size(ripple_info.maps.amplitude,2)),...
+        ripple_info.maps.amplitude(i,:),1:151);
+    
+    unfiltered_ripples(i,:) = interp1(linspace(1,151,size(ripple_info.maps.unfiltered_ripples,2)),...
+        ripple_info.maps.unfiltered_ripples(i,:),1:151);
+end
+ripple_info.maps.ripples = ripples;
+ripple_info.maps.frequency = frequency;
+ripple_info.maps.phase = phase;
+ripple_info.maps.amplitude = amplitude;
+ripple_info.maps.unfiltered_ripples = unfiltered_ripples;
+end
 
 function [] = move_fig(basepath)
 % move figure with arrow keys.
@@ -233,7 +293,7 @@ disp([SWR.data.session_id{i},...
     ' ripple: ',num2str(SWR.data.result(i))])
 
 if S.start_of_session
-    [coeff,score,latent,tsquared,explained,mu] = pca(SWR.maps_zscore);
+    [coeff,score,latent,tsquared,explained,mu] = pca(SWR.maps);
     subplot(3,2,5)
     h = scatter(score(:,1),score(:,2),3,zeros(length(score(:,2)),3)+.5,'Filled');
     h.SizeData = zeros(length(score(:,2)),1) + 5;
