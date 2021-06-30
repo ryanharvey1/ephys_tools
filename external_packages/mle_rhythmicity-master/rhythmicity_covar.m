@@ -185,27 +185,27 @@ if isequal(display,'verbose')
     fprintf('\nRunning static fit...')
 end
 
-% Static fit
-if any(plotit), HOLD = ishold; end
+% % Static fit
+% if any(plotit), HOLD = ishold; end
+% 
+% if plotit(1)% Static plotting
+%     if any(cellfun(@(x)isequal(x,'plotit'),varargin))
+%         varargin = varargin([1:find(cellfun(@(x)isequal(x,'plotit'),varargin))-1 find(cellfun(@(x)isequal(x,'plotit'),varargin))+2:end]);
+%     end
+%     pos = get(gca,'position');    
+%     if ~HOLD
+%         cla;
+%         axis off
+%     end
+%     if plotit(2)
+%         subplot('position',pos.*[1 1 19/44 1]);
+%     end
+% end
 
-if plotit(1)% Static plotting
-    if any(cellfun(@(x)isequal(x,'plotit'),varargin))
-        varargin = varargin([1:find(cellfun(@(x)isequal(x,'plotit'),varargin))-1 find(cellfun(@(x)isequal(x,'plotit'),varargin))+2:end]);
-    end
-    pos = get(gca,'position');    
-    if ~HOLD
-        cla;
-        axis off
-    end
-    if plotit(2)
-        subplot('position',pos.*[1 1 19/44 1]);
-    end
-end
-
-[~,~,stats0,everything0] = mle_rhythmicity(data,session_duration,'plotit',plotit,varargin{:});
-if plotit(1)&&plotit(2)
-    subplot('position',pos.*[1 1 19/44 1]+[pos(3)*25/44 0 0 0]);
-end
+[~,~,stats0,everything0] = mle_rhythmicity(data,session_duration,'plotit',0,varargin{:});
+% if plotit(1)&&plotit(2)
+%     subplot('position',pos.*[1 1 19/44 1]+[pos(3)*25/44 0 0 0]);
+% end
 
 % Pull out needed indices
 inds = everything0.inds;
@@ -526,13 +526,13 @@ stats.df = numel(everything.phat)-numel(everything.phat0);
 stats.p = 1-chi2cdf(stats.deviance,stats.df);
 stats.post_hoc = post_hoc_results;
 %% Plotit
-if HOLD
-    hold on;
-else
-    hold off;
-end
-if plotit(2)
-    plot_rhythmicity_covar( everything, plot_axis, 'covar_label', covar_labels{plot_axis} );
-end
+% if HOLD
+%     hold on;
+% else
+%     hold off;
+% end
+% if plotit(2)
+%     plot_rhythmicity_covar( everything, plot_axis, 'covar_label', covar_labels{plot_axis} );
+% end
 
 end
