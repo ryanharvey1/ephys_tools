@@ -19,26 +19,27 @@ dataset = 'F:\ClarkP30_Recordings\ProcessedData\';
 
 %% Assign rats to include in analysis (if not assigned, will default to all
 % rats. 
- rats={'LB03','LB04','LB07','LB10'}; 
+ rats={'LB03','LB04','LB07','LB10','PoS4'}; 
  transgenic = {'LB04','LB07','LB10'};
 %% Run compile cell measures to obtain ID of all units with min 100 spikes &
 % 1Hz peak firing rate. 
 compile_cell_measures(rats,transgenic)
 
-%% Runs through Hardcastle LN GLM for HD,Place, and HD/Place(Full model)
-batch_hd_glm(dataset,save_path,'F:\ClarkP30_Recordings\Analysis\cell_list.csv')
-
 %% Import hd_cell_list and create index .csv using find cells (For python processing)
-hd = readtable('F:\ClarkP30_Recordings\Analysis\hd_cell_list.csv');
-cell_idx = table;
-cd 'F:\ClarkP30_Recordings\ProcessedData\'
-for i = 1 : length(hd.SessionID)
-    data = load(['F:\ClarkP30_Recordings\ProcessedData\',hd.SessionID{i}],'spikesID');
-    tet = sscanf(hd.tetrode{i},'TT%d.mat');
-    cell_idx.n(i,1) = find_cells(data,tet,hd.cell(i));
+cell_list = readtable('/Users/lauraberkowitz/github/Berkowitz_et_al_2021/Cell_Classification/data/cell_list.csv');
+cell_idx = [];
+for i = 1 : length(cell_list.session)
+    data = load(['/Users/lauraberkowitz/Google Drive/ClarkP30_Recordings/ProcessedData/',cell_list.session{i}],'spikesID');
+    tet = sscanf(cell_list.tetrode{i},'TT%d.mat');
+    cell_idx(i,1) = find_cells(data,tet,cell_list.cell(i));
 end
 
-writetable(cell_idx,['F:\ClarkP30_Recordings\Analysis\','hd_cell_spike_idx.csv'])
+cell_list.cell_idx = cell_idx;
+writetable(cell_list,'/Users/lauraberkowitz/github/Berkowitz_et_al_2021/Cell_Classification/data/cell_list.csv')
+
+%% Runs through Hardcastle LN GLM for HD,Place, and HD/Place(Full model)
+% batch_hd_glm(dataset,save_path,'F:\ClarkP30_Recordings\Analysis\cell_list.csv')
+
 %% For all cells classified as HD, find additional measures of interest,
 % compile, and save as csv for analysis in R or Python. Saves copy to analysis folder and keeps data_all 
 % (long format of all measures across max 4 conditions) in workspace. 
