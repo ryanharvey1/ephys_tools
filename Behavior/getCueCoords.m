@@ -19,14 +19,18 @@
 %
 % 
 
-function cueCoords=getCueCoords(vidDir)
-vidfile=dir(vidDir);
-vidfile(1:2,:)=[]; %get rid of . & .. entries
-cueCoords=table; %initialize data table.
+function cueCoords = getCueCoords(vidDir,vidformat)
 
-for file=1:length(vidfile) %loop through folders containing subject videos
+% get file directory
+vidfile = struct2table(dir([vidDir,filesep,'**/*.',vidformat]));
+
+%initialize data table.
+cueCoords = table; 
+
+for file = 1:length(vidfile.name) %loop through folders containing subject videos
+    
     %Pull up video
-    videoPathAndFileName = strcat(vidfile(file).folder,filesep,vidfile(file).name,filesep,vidfile(file).name,'.avi');
+    videoPathAndFileName = [vidfile.folder{file},filesep,vidfile.name{file}];
     videoObj = VideoReader(videoPathAndFileName);
     
     %Save first frame as image (jpeg)
@@ -55,8 +59,8 @@ for file=1:length(vidfile) %loop through folders containing subject videos
     end
     
     if leave==1
-         cueCoords.subID{file}=vidfile(file).name; %save the id
-        cueCoords.coords{file}=NaN; 
+         cueCoords.subID{file} = vidfile(file).name; %save the id
+        cueCoords.coords{file} = NaN; 
         continue
     end
     
@@ -64,17 +68,17 @@ for file=1:length(vidfile) %loop through folders containing subject videos
     i=1;
     % let the user click around the boundary (code from Ryan H)
     while true
-        [X,Y]=ginput(1);
+        [X,Y] = ginput(1);
         if isempty(X)
             break
         end
-        corners(i,:)=[X,Y];
+        corners(i,:) = [X,Y];
         plot(corners(:,1),corners(:,2),'r',X,Y,'*r')
         i=i+1;
     end
     
-    cueCoords.subID{file}=vidfile(file).name; %save the id
-    cueCoords.coords{file}=corners; 
+    cueCoords.subID{file} = vidfile(file).name; %save the id
+    cueCoords.coords{file} = corners; 
     
     clear corners
 end
