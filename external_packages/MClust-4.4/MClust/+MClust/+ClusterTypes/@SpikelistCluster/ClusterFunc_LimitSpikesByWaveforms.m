@@ -155,7 +155,7 @@ RedrawWaveforms();
                 if ~isempty(iX)
                     y=[squeeze(WVD(iX(r), jCh, :))';nan(1,nToPlot)];
                     y=y(:);
-                    h=plot(ax(jCh),x,y,'w');
+                    h=plot(ax(jCh),x,y,'Color',[1,1,1,.2]);
                     if useSelfColor, set(h, 'color', self.color); end
                     set(ax(jCh), 'YTick', [0], 'XTick', [], 'UserData', jCh);
                 end
@@ -169,7 +169,7 @@ RedrawWaveforms();
                     y=[squeeze(WVD(iX(r), jCh, :))';packnan];
                     y=y(:);
                     subhandle=findobj(ax(jCh), 'type', 'line');
-                    set(subhandle,'XData',x,'YData',y,'Color','w','Linewidth',.5,'UserData', jCh)
+                    set(subhandle,'XData',x,'YData',y,'Color',[1,1,1,.2],'Linewidth',.5,'UserData', jCh)
                     if useSelfColor, set(subhandle, 'color', self.color); end
                     hold on
                 end

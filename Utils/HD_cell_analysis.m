@@ -74,7 +74,7 @@ classdef HD_cell_analysis
         
         % Tuning Stability
         
-        function stable_score = stability(data_video_spk,samplerate)
+        function [hd_tune,stable_score] = stability(data_video_spk,samplerate)
             % Computes the correlation of tuning curves generated after each
             % complete sampling of the horizontal azimuth.
             
@@ -133,11 +133,15 @@ classdef HD_cell_analysis
             %smooth over 36 degrees
             hd_tune = smoothdata([hd_tune hd_tune hd_tune],2,'gaussian',6);
             hd_tune = hd_tune(:,61:120);
+
             
             % mean pairwise correlations 
             corrMat = corr(hd_tune');
             corrMat(logical(eye(length(corrMat)))) = NaN;
-            stable_score = nanmean(corrMat(:));
+            stable_score = nanmean(corrMat(:)); 
+            
+            % add fano factor
+            
         end
         
         % Tuning Stability across session
@@ -218,6 +222,30 @@ classdef HD_cell_analysis
             %                 normTemp=[normTemp; rescale(tempTune,0,1)];
             %             end
             %             normWithin=normTemp;
+        end
+        
+        % Tuning width  
+        
+        function half_width =  tuning_width(data,session,cell)
+            % returns tuning width in degrees
+            %
+            % appropriate for unimodal tuing curves
+            %bin centers
+            da = pi/30;
+            bin_centers = rad2deg(da/2:da:2*pi-da/2);
+             % Unpack data
+            tuning = data.hdTuning{cell,session};
+            
+            % smooth tuning curve 
+            smoothed = HD_cell_analysis.smooth_hd([tuning,tuning,tuning]);
+            smoothed = smoothed(1, 61:120);
+            % find peak bin 
+            [peak,peak_idx] = max(smoothed);
+            
+            % calculate 50% of max firing rate 
+            half_fr = max(smoothed) - (max(smoothed) - min(smoothed))*0.5; % account for baseline fr and then take 50% of that value
+            half_width = sum(smoothed >= half_fr)*6;
+            
         end
         
         function [tuning_var,tuning_var_vec]= brownian_drift(data_video_spk,samplerate)
@@ -414,6 +442,16 @@ classdef HD_cell_analysis
             
         end
         
+        % smooth tuning curve
+        function smoothed = smooth_hd(tuning)
+            gaus = @(tuning,mu,sig)exp(-(((tuning-mu).^2)/(2*sig.^2)));
+            window = 10;
+            x = -window/2:window/2;
+            mu = 0;
+            sig = 3;
+            kernel = gaus(x,mu,sig);
+            smoothed = conv(tuning,kernel/sum(kernel),'same');
+        end
     end
 end
 

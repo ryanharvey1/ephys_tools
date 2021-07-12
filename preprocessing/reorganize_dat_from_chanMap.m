@@ -13,13 +13,13 @@ D = load_open_ephys_binary(jsonfile{1},'continuous',1,'mmap');
 % Load xml file 
 chanMap = xlsread(channel_map);
 
-% Channel map excel must in in specific format with intan numbers organized
-% in column 11. 
+% Channel map excel must include intan numbers organized in column 11. 
 channel_num = chanMap(1:64,11)+1; % add 1 for matlab
 
 disp('saving separate .dat files for reorganized headstage data and accelerometer data');
 % headstage data
 fidout = fopen(fullfile(data.session_path,[data.basename ,'.dat']), 'w');
+
 fwrite(fidout,D.Data.Data.mapped(channel_num,:),'int16');
 fclose(fidout);
 

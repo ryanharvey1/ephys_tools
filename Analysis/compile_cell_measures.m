@@ -1,17 +1,21 @@
 % compile_cell_measures LB August 2020
 % Compiles all measures across all sessions from indicated animals (rats).
-% Cells with less that 100 spikes and < 1Hz peak rate are excluded. Saves
+% Cells with less that 100 spikes are exluded. Saves
 % compiled data to all_cells.csv and groupid for cells as cell_list.csv stored in location indicated by the save_path
 % variable. 
 function compile_cell_measures(rats,transgenic)
 % Input:
 %  rats: cell array of animal IDs to include e.g. {'LB03','LB10'}
 if ~exist('save_path','var')
-    save_path = 'F:\ClarkP30_Recordings\Analysis\';
+    save_path = 'D:\Users\BClarkLab\github\Berkowitz_et_al_2021\Cell_Classification\data\';
+end
+
+if ~exist('meta_data_path','var')
+    meta_data_path = 'F:\ClarkP30_Recordings\AnimalMetaData\';
 end
 
 %% Pull Data from ProcessedData
-data=compileResults('F:\ClarkP30_Recordings\ProcessedData');
+data=compileResults('d:\Users\BClarkLab\GoogleDrive_\ClarkP30_Recordings\ProcessedData');
 
 %% Compile Data for individual rats
 data.measures=[]; %control measures
@@ -23,6 +27,9 @@ end
 
 %% Unpack structure into matrix and cell array, respectively.
 group=data.measures; groupid=data.id;
+
+%% Pull condition info from metadata
+[condition_matrix,Baseline_location] = pull_condition_from_metadata(groupid,meta_data_path);
 
 %% Delete Measures for linear Track
 varnames=data.varnames; group(isinf(group))=NaN;
@@ -37,29 +44,36 @@ varnames = regexprep(varnames, ' ', '');
 clear colstodelete data
 
 %% Forgo analyzing cells with low firing rate (< 1hz) and limited spikes (< 100spikes) in the first session
-[group,groupid]=quality_filter(group,groupid,varnames);
+% [group,groupid] = quality_filter(group,groupid,varnames);
 
-cell_list = table('Size',[size(groupid)],...
-    'VariableTypes',{'cell','cell','double'},'VariableNames',{'SessionID','tetrode','cell'});
-cell_list.SessionID = groupid(:,1); cell_list.tetrode = groupid(:,2); cell_list.cell = groupid(:,3);
+cell_list = table('Size',[size(groupid,1) size(groupid,2)+1],...
+    'VariableTypes',{'cell','cell','double','double'},'VariableNames',{'session','tetrode','cell','baseline_index'});
+cell_list.session = groupid(:,1); cell_list.tetrode = groupid(:,2); cell_list.cell = groupid(:,3); cell_list.baseline_index = Baseline_location;
 
 writetable(cell_list,[save_path,'cell_list.csv'])
 
 %% Create region ID 
 region = double(contains(groupid(:,1),'ATN')); % 1 if ATN, 0 if Cortex 
 genotype = double(contains(groupid(:,1),transgenic)); % 1 if Tg+, 0 if control; 
-vars = [{'region','genotype','Condition_num'} varnames];
+vars = [{'area','genotype','Condition_num'} varnames];
 
 %% Compile 
 all_data = [region genotype ones(size(group,1),1) group(:,:,1);...
     region genotype ones(size(group,1),1)+1 group(:,:,2);...
     region genotype ones(size(group,1),1)+2 group(:,:,3);...
-    region genotype ones(size(group,1),1)+3 group(:,:,4)]; 
+    region genotype ones(size(group,1),1)+3 group(:,:,4);
+    region genotype ones(size(group,1),1)+4 group(:,:,5);
+    region genotype ones(size(group,1),1)+5 group(:,:,6)]; 
 
-dir_id = [groupid;groupid;groupid;groupid];
+dir_id = [groupid condition_matrix(:,2);...
+            groupid condition_matrix(:,3);...
+            groupid condition_matrix(:,4);...
+            groupid condition_matrix(:,5);...
+            groupid condition_matrix(:,6);...
+            groupid condition_matrix(:,7);];
 
 %% Save Data
-data_all = cell2table([dir_id num2cell(all_data)],'VariableNames',[{'SessionID','tetrode','channel'} vars]);
+data_all = cell2table([dir_id num2cell(all_data)],'VariableNames',[{'session','tetrode','channel','condition_name'} vars]);
 writetable(data_all,[save_path,'all_cells.csv'])
 
 clearvars -except data_all cell_list save_path
@@ -67,6 +81,112 @@ clearvars -except data_all cell_list save_path
 end
 %% ___________________________LOCAL FUNCTION BELOW_________________________
 
+
+function [condition_matrix,Baseline_location] = pull_condition_from_metadata(groupid,meta_data_path)
+
+sessions = unique(groupid(:,1)); 
+unique_rats = unique(extractBefore(sessions,'_'));
+condition_matrix = cell(length(groupid(:,1)),10);
+condition_matrix(:,1) = groupid(:,1);
+% Loop through each unique rat (load metadata only once)
+for rat = 1:length(unique_rats)
+   metadata_file = fullfile(meta_data_path,[unique_rats{rat},'_metadata.mat']);
+   load(metadata_file,'AnimalMetadata');
+   recordings = fieldnames(AnimalMetadata.RecordingLogs);
+   % loop through each recording (collect all data)
+    for sess = 1:length(recordings)
+        try
+            temp_cond = split(AnimalMetadata.RecordingLogs.(recordings{sess}).ConditionTypes,',');
+        catch
+            temp_cond = split(AnimalMetadata.RecordingLogs.(recordings{sess}).MazeTypes,',');
+        end
+        idx = contains(condition_matrix(:,1),recordings{sess});
+        for i = 1:length(temp_cond)
+            condition_matrix(idx,i+1) = temp_cond(i);
+        end
+        
+    end
+end
+
+% Populate empty cells
+for i = 2:size(condition_matrix,2)
+    for ii = 1:size(condition_matrix,1)
+        if isempty(condition_matrix{ii,i})
+            condition_matrix(ii,i) = {'empty'};
+        end
+    end
+end
+
+%%%%%%%%%%% UGLY ass code, but works for ClarkP30 data %%%%%%%%%%%
+% first session is Baseline if its not pedestal
+sess1_idx = ~contains(condition_matrix(:,2),'pedestal');
+condition_matrix(sess1_idx,2) = {'Baseline'};
+
+% first session is Baseline if its not pedestal
+sess1_idx = contains(condition_matrix(:,3),'baseline');
+condition_matrix(sess1_idx,3) = {'Baseline'};
+
+% Populated second session for Standard1 (always follows baseline if standard indicated) 
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'StandardLight');
+condition_matrix(sess1_idx,3) = {'Standard1'};
+% different spelling
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),' Standard1');
+condition_matrix(sess1_idx,3) = {'Standard1'};
+% different spelling
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'Standard');
+condition_matrix(sess1_idx,3) = {'Standard1'};
+
+% Standard 2 after dime sessions
+sess1_idx = contains(condition_matrix(:,3),'Dim') & contains(condition_matrix(:,4),'Standard');
+condition_matrix(sess1_idx,4) = {'Standard2'};
+
+sess1_idx = contains(condition_matrix(:,3),'dim') & contains(condition_matrix(:,4),'Standard');
+condition_matrix(sess1_idx,4) = {'Standard2'};
+
+% Rotation sessions with no condition 
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'Cylinder')...
+    & contains(condition_matrix(:,4),'Cylinder') & contains(condition_matrix(:,5),'Cylinder'); 
+condition_matrix(sess1_idx,3) = {'Standard1'};
+condition_matrix(sess1_idx,4) = {'Rotated'};
+condition_matrix(sess1_idx,5) = {'Standard2'};
+
+% Rotation sessions with no condition 
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'Standard1')...
+    & contains(condition_matrix(:,4),'Rotated') & contains(condition_matrix(:,5),'Standard'); 
+condition_matrix(sess1_idx,3) = {'Standard1'};
+condition_matrix(sess1_idx,4) = {'Rotated'};
+condition_matrix(sess1_idx,5) = {'Standard2'};
+
+% Rotation sessions with no condition 
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'Standard1')...
+    & contains(condition_matrix(:,4),'Rot_90_c') & contains(condition_matrix(:,5),'Standard'); 
+condition_matrix(sess1_idx,3) = {'Standard1'};
+condition_matrix(sess1_idx,4) = {'Rotated'};
+condition_matrix(sess1_idx,5) = {'Standard2'};
+
+% make all box sessions the same
+condition_matrix(contains(condition_matrix(:,4),'ox'),4) = {'box'};
+
+% make all box sessions the same
+condition_matrix(contains(condition_matrix(:,3),'ox'),3) = {'box'};
+
+% Standard 2 after box sessions
+sess1_idx = contains(condition_matrix(:,3),'box') & contains(condition_matrix(:,4),'Standard');
+condition_matrix(sess1_idx,4) = {'Standard2'};
+
+% Standard 2 after box sessions
+sess1_idx = contains(condition_matrix(:,2),'Baseline') & contains(condition_matrix(:,3),'box');
+condition_matrix(sess1_idx,4) = {'Standard2'};
+
+% Standard 2 after box sessions
+sess1_idx = contains(condition_matrix(:,3),'Standard1') & contains(condition_matrix(:,4),'box');
+condition_matrix(sess1_idx,3) = {'Baseline'};
+Baseline_location = nan(length(condition_matrix(:,1)),1);
+temp_baseline = contains(condition_matrix,'Baseline');
+Baseline_location(find(temp_baseline(:,2)))= 1;
+Baseline_location(find(temp_baseline(:,3)))= 2;
+
+end
 
 function [group,groupid]=quality_filter(group,groupid,varnames)
 % 1) Minimum peak firing rate of 1 Hz,
@@ -78,6 +198,8 @@ idx=group(:,contains(varnames,'PeakRate'),1) >= 1 &...
 groupid=groupid(idx,:);
 group=group(idx,:,:);
 end
+
+
 
 %% ADD TO INDICATED SPOT AT LATER TIME AFTER EFFICIENCY IS IMPROVED (CURRENT CODE TAKES TOO MUCH MEMORY TO RUN - LB 10/11/2019
 % % Initalize Matrix for new measures

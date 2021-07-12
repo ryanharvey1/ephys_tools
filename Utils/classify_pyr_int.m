@@ -3,7 +3,7 @@
 % data_path = 'F:\ClarkP30_Recordings\ProcessedData\';
 % save_path = 'F:\ClarkP30_Recordings\Analysis\Cell_Classification\';
 
-df = readtable('F:\Projects\PAE_PlaceCell\analysis\swr_data\post_processed\swr_df.csv');
+df = readtable('F:/Projects/PAE_PlaceCell/analysis/multiunit_data/post_processed/mua_df.csv');
 data_path = 'F:\Projects\PAE_PlaceCell\ProcessedData\';
 save_path = 'F:\Projects\PAE_PlaceCell\analysis\cell_recruitment\';
 mkdir(save_path);
@@ -37,16 +37,29 @@ WaitMessage.Destroy
 df = load_all(save_path);
 df.waves_zscore = zscore(df.waves,0,2);
 
+writeNPY(df.waves_zscore, [save_path,'processed\waves_zscore.npy'])
+writeNPY(df.acg_narrow, [save_path,'processed\acg_narrow.npy'])
+
+
+df.cell_type(:) = {'unidentified'};
+df.cell_type(df.spkW < .5) = {'int'};
+df.cell_type(df.spkW > .5 & df.spkW < 3) = {'pyr'};
+% # There are some odd waveforms due to neuralynx spike detection
+% # here, I split the unidentified by ab ratio which seems produce two unique classes of autocorrs (burst & regular spiking)
+df.cell_type(contains(df.cell_type,'unidentified') & (df.ab_ratio>0)) = {'int'};
+df.cell_type(contains(df.cell_type,'unidentified') & (df.ab_ratio<0)) = {'pyr'};
+
+
 
 % Interneurons are selected by 2 separate criteria:
 % Narrow interneuron assigned if troughToPeak <= 0.425 ms
 % Wide interneuron assigned if troughToPeak > 0.425 ms and acg_tau_rise > 6 ms
 % The remaining cells are assigned as Pyramidal cells.
 
-df.cell_type(:) = {'pyr'};
-df.cell_type(df.troughtoPeak <= 0.425) = {'narrow_int'};
-df.cell_type(df.troughtoPeak > 0.425 & df.acg_tau_rise > 6) = {'wide_int'};
-
+% df.cell_type(:) = {'pyr'};
+% df.cell_type(df.troughtoPeak <= 0.425) = {'narrow_int'};
+% df.cell_type(df.troughtoPeak > 0.425 & df.acg_tau_rise > 6) = {'wide_int'};
+% 
 
 df_to_save = df;
 df_to_save.waves = [];

@@ -7,11 +7,9 @@ Created on Thu Aug 13 18:42:19 2020
 # data managment and math functions
 import pandas as pd
 import numpy as np
-import math
 
-import time
 
-# import neuroseries as nts
+import neuroseries as nts
 
 # plotting
 from matplotlib import pyplot as plt
@@ -20,7 +18,7 @@ from matplotlib import pyplot as plt
 import scipy.io
 import scipy.signal
 from scipy import stats
-from scipy.signal import hilbert,detrend
+from scipy.signal import hilbert,find_peaks
 from scipy.ndimage import gaussian_filter1d
 
 # for loading files
@@ -34,14 +32,9 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 # ripple detector
-from ripple_detection import Kay_ripple_detector, Karlsson_ripple_detector, filter_ripple_band
+from ripple_detection import Karlsson_ripple_detector, filter_ripple_band
 
 from ripple_detection.core import gaussian_smooth, get_envelope
-
-# Continuous Wavelet Transform
-import obspy
-from obspy.imaging.cm import obspy_sequential
-from obspy.signal.tf_misfit import cwt
 
 
 def loadXML(path):
@@ -127,6 +120,7 @@ def load_position(session):
 def get_ripple_channel(ripple_times,filtered_lfps,ts,fs):
     channel = []
     peak_amplitude = []
+    peak_time = []
 
     for ripple in ripple_times.itertuples():
         idx = np.logical_and(ts >= ripple.start_time, ts <= ripple.end_time)
@@ -134,10 +128,12 @@ def get_ripple_channel(ripple_times,filtered_lfps,ts,fs):
         smooth_envelope = gaussian_smooth(get_envelope(filtered_lfps[idx,:]),0.004,fs)
         peaks = np.max(smooth_envelope,axis = 0)
         peak_idx = np.argmax(peaks)
+        peak_time.append(ts[idx][np.argmax(smooth_envelope,axis=0)[peak_idx]])
 
         peak_amplitude.append(peaks[peak_idx])
         channel.append(peak_idx)
-
+        
+    ripple_times['peak_time'] = peak_time
     ripple_times['peak_channel'] = channel
     ripple_times['peak_amplitude'] = peak_amplitude
     return ripple_times
@@ -181,7 +177,7 @@ def get_ripple_freq_peaks_method(ripple_times,filtered_lfps,ts,fs,peak_dist=0.00
         idx = np.logical_and(ts >= ripple.start_time, ts <= ripple.end_time)
         rip = filtered_lfps[idx,ripple.peak_channel]
         # find peaks with a distance of 3.2 ms
-        peakIx = scipy.signal.find_peaks(x = -rip, distance = peak_dist//(1/fs), threshold = 0.0)
+        peakIx = scipy.signal.find_peaks(x = -rip, distance = peak_dist//(1/fs), threshold=0.0)
         peakIx = peakIx[0]
         if (not (peakIx.size == 0)) and (peakIx.size != 1):
             fqcy[i] = fs/np.median(np.diff(peakIx))
@@ -244,50 +240,130 @@ def get_ripple_maps(ripple_times,ts,lfp,filtered_lfps,phase,amp,freq,fs):
     
     return ripple_maps
 
-def normalize(list, range):
-    l = np.array(list) 
-    a = np.max(l)
-    c = np.min(l)
-    b = range[1]
-    d = range[0]
-    m = (b - d) / (a - c)
-    pslope = (m * (l - c)) + d
-    return pslope
-
-def get_scalogram(sig,fs,padding=100,f_min=150,f_max=250,fig=1,ax=0):
+def emg_filter(session,ripple_times,shank,emg_thres=0.85):
+    parts = session.split('\\')
+    f = h5py.File(os.path.join(parts[0],parts[1],parts[2]) + '/EMG_from_LFP/' +
+                  session.split('\\')[-1].split('.mat')[0] + '_emg.mat','r')
+    emg = f['data'][0]
+    emg_ts = f['timestamps'][0]
+    max_emg=[]
+    for ripple in ripple_times.itertuples():
+        idx = np.logical_and(emg_ts >= ripple.start_time,
+                             emg_ts <= ripple.end_time)
+        if np.sum(idx) > 0:
+            max_emg.append(np.max(emg[idx]))
+        else:
+            max_emg.append(1)
     
-    # sample difference
-    dt = 1/fs
-    # pad signal
-    sig_padded = np.pad(sig, (padding, padding), 'linear_ramp')
-    # get time stamps
-    t = np.linspace(0, dt * len(sig), len(sig))
-    # get scalogram
-    scalogram = cwt(sig_padded, dt, 8, f_min, f_max)
-    # delete padding
-    scalogram = np.delete(scalogram, np.s_[1:padding+1], axis=1) 
-    scalogram = np.delete(scalogram, np.s_[-(padding+1):-1], axis=1) 
+    ripple_times['max_emg'] = max_emg 
     
-    # plot figure
-    if fig==1:
-        if ax == 0:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
+    if len(shank) > 8:
+        ripple_times[np.array(max_emg) < emg_thres]
+        
+    return ripple_times
 
-        x, y = np.meshgrid(
-            t,
-            np.logspace(np.log10(f_min), np.log10(f_max), scalogram.shape[0]))
-
-        ax.pcolormesh(x, y, np.abs(scalogram), cmap=obspy_sequential,shading='auto')
-        ax.plot(t,normalize(sig,[f_min,f_max]),'k',linewidth=1)
-        ax.set_ylabel("Frequency [Hz]")
-        ax.set_ylim(f_min, f_max)
-        # ax.set_yscale('log')
-        if ax == 0:
-            plt.show()
+def make_Epochs(start, end):
+    #Function to make an nts.IntervalSet dataframe with starting and ending epochs
+    #Firstly, check whether both the lists are of same size or not
+    if not (len(start) == len(end)):
+        print("Start and End array lists are not of same dimension. Epochs IntervalSet can't be developed.")
+        sys.exit()
+    else:
+        nts_array = []
+        for i in range(len(start)):
+            nts_array.append(nts.IntervalSet(start[i], end[i]))
+        print(nts_array)
+        return nts_array
     
-    return np.abs(scalogram)
+def writeNeuroscopeEvents(path, ep, name):
+    f = open(path, 'w')
+    for i in range(len(ep)):
+        f.writelines(str(ep.as_units('ms').iloc[i]['start']) + " "+name+" start "+ str(1)+"\n")
+        #f.writelines(str(ep.as_units('ms').iloc[i]['peak']) + " "+name+" start "+ str(1)+"\n")
+        f.writelines(str(ep.as_units('ms').iloc[i]['end']) + " "+name+" end "+ str(1)+"\n")
+    f.close()
+    return
 
+def save_ripples(ripple_times,path):
+    rpt_ep = nts.IntervalSet(np.array(ripple_times.start_time),
+                             np.array(ripple_times.end_time),time_units = 's')
+
+    writeNeuroscopeEvents(path + "\Swr_Ripple.evt.rip", rpt_ep, "SWR Ripple event")
+     
+def clipped(x, axis=1):
+       x_diff = np.diff(x,axis=1)
+       return np.sum(x_diff==0,axis=1) / x_diff.shape[1]
+    
+def clip_filter(ripple_times,ripple_maps,clip_thres=0.05):
+    
+    ripple_times['clipped'] = clipped(ripple_maps['ripple_map'])
+    idx = ripple_times.clipped < clip_thres
+    
+    for key in ripple_maps.keys():
+        ripple_maps[key] = ripple_maps[key][idx]
+        
+    ripple_times = ripple_times[idx]
+    
+    ripple_times= ripple_times.reset_index()
+    ripple_times['ripple_number'] = np.arange(0,len(ripple_times),1)
+    
+    return ripple_times,ripple_maps
+    
+def filter_high_amp(ripple_times,ripple_maps,amp_thres=25):
+    
+    idx = ripple_times.peak_amplitude < amp_thres
+    
+    for key in ripple_maps.keys():
+        ripple_maps[key] = ripple_maps[key][idx]
+    
+    ripple_times = ripple_times[idx]
+    
+    ripple_times= ripple_times.reset_index()
+    ripple_times['ripple_number'] = np.arange(0,len(ripple_times),1)
+    
+    ripple_times = ripple_times.drop(columns=['index'])
+    
+    return ripple_times,ripple_maps
+
+def filter_single_peaks(ripple_times,ripple_maps,peak_thres=0.30):
+    peaks = []
+    for x in ripple_maps['ripple_map']:
+        # region around peak
+        x = x[(len(x)//2 - 20) : (len(x)//2 + 20)]
+        # center
+        x = x - np.mean(x)
+        # flip to greater mag 
+        if np.abs(np.min(x)) > np.abs(np.max(x)):
+            x = -x
+        
+        peak, _ = find_peaks(x,height=np.max(x)*peak_thres)
+        peaks.append(len(peak))
+    idx = np.array(peaks) > 1  
+    
+    for key in ripple_maps.keys():
+        ripple_maps[key] = ripple_maps[key][idx]
+    
+    ripple_times = ripple_times[idx]
+    
+    ripple_times= ripple_times.reset_index()
+    ripple_times['ripple_number'] = np.arange(0,len(ripple_times),1)
+    
+    ripple_times = ripple_times.drop(columns=['index'])
+    return ripple_times,ripple_maps 
+    
+
+def get_good_channels(shank):
+    #extract values from dictionary
+    an_array = np.array(list(shank.values()),dtype=object)
+    
+    #loop through array to pull out individual channel        
+    good_ch = []
+    for i in range(len(an_array)):
+        for x in range(len(an_array[i])):
+            good_ch.append(an_array[i][x])
+        
+    return good_ch
+    
 def run_all(session):
     
     # get data session path from mat file
@@ -299,9 +375,14 @@ def run_all(session):
     # load xml which has channel & fs info
     channels,fs,shank = loadXML(path)
     
+    # get good channels
+    good_ch = get_good_channels(shank)
+    
     # load .lfp
     # lfp, ts = load_lfp(glob.glob(path +'\*.lfp')[0],channels,fs)
-    lfp,ts = loadLFP(glob.glob(path +'\*.lfp')[0], n_channels=channels, channel=np.arange(0,channels,1), frequency=1250.0, precision='int16')
+    lfp,ts = loadLFP(glob.glob(path +'\*.lfp')[0], n_channels=channels,
+                     channel=good_ch, frequency=fs,
+                     precision='int16')
     
     # interp speed of the animal
     speed = np.interp(ts,df.ts,df.speed)
@@ -309,15 +390,15 @@ def run_all(session):
     
     # detect ripples
     print('detecting ripples')
-    ripple_times = Karlsson_ripple_detector(ts, lfp, speed, fs,                       
-                            speed_threshold=3.0, minimum_duration=0.02,
-                            zscore_threshold=3.0, smoothing_sigma=0.004,
-                            close_ripple_threshold=0.0)
+    ripple_times = Karlsson_ripple_detector(ts, lfp, speed, fs)
     
-    # restrict ripples to < 150 ms
+    # restrict ripples to < 200 ms
     ripple_times['ripple_duration'] = ripple_times.end_time - ripple_times.start_time
-    ripple_times = ripple_times[ripple_times.ripple_duration < 0.150]
-    
+    ripple_times = ripple_times[ripple_times.ripple_duration < 0.200]
+        
+    # check against emg (< 0.85)
+    ripple_times = emg_filter(session,ripple_times,shank)
+        
     # get filtered signal
     print('filtering signal')
     LFPs = lfp
@@ -326,22 +407,34 @@ def run_all(session):
     
     # add ripple channel and peak amp
     print('getting ripple channel')
-    ripple_times = get_ripple_channel(ripple_times,filtered_lfps,ts,fs)
+    ripple_times = get_ripple_channel(ripple_times,
+                                      stats.zscore(filtered_lfps,axis=0),
+                                      ts,fs)
     
-
     # get instant phase, amp, and freq
     print('get instant phase, amp, and freq')
     phase,amp,freq = get_phase_amp_freq(filtered_lfps,fs)
-    dt = ts[:-1] + (1/fs)/2
-    
-    # get ripple frequency
-    print('getting ripple frequency')
-    ripple_times = get_ripple_freq(ripple_times,freq,dt)
     
     # get ripple_map
     print('getting ripple maps')    
     ripple_maps = get_ripple_maps(ripple_times,ts,lfp,filtered_lfps,phase,amp,freq,fs)
+    
+    # get ripple frequency
+    print('getting ripple frequency')    
+    ripple_times['peak_freq'] = [map[len(map)//2] for map in ripple_maps['freq_map']]
+    
+    # filter out cliped signal
+    ripple_times,ripple_maps = clip_filter(ripple_times,ripple_maps)
+    
+    # filter out very high amplitude ripples
+    ripple_times,ripple_maps = filter_high_amp(ripple_times,ripple_maps)
 
+    # find ripples with a single large jump
+    ripple_times,ripple_maps = filter_single_peaks(ripple_times,ripple_maps)
+
+    # save ripples for neuroscope inspection
+    save_ripples(ripple_times,path)
+    
     return ripple_times,lfp,filtered_lfps,ts,ripple_maps
 
         
@@ -356,7 +449,7 @@ def main_loop(session,data_path,save_path):
         
     # detect ripples and calc some features
     ripple_times,lfp,filtered_lfps,ts,ripple_maps = run_all(session)   
-
+    
     # save file
     with open(save_file, 'wb') as f:
         pickle.dump(ripple_times, f)
@@ -365,14 +458,23 @@ def main_loop(session,data_path,save_path):
 
 data_path = 'F:\\Projects\\PAE_PlaceCell\\ProcessedData\\'
 save_path = "F:\\Projects\\PAE_PlaceCell\\swr_data\\"
-sessions = glob.glob(data_path + '*.mat')
+
+# find HPC sessions
+df_sessions = pd.read_csv('D:/ryanh/github\harvey_et_al_2020/Rdata_pae_track_cylinder_all_cells.csv')
+sessions = pd.unique(df_sessions.session)
+sessions = data_path+sessions
+
+parallel = 0
 # sessions.reverse()
 
-for session in sessions:
-#     sys.stdout.write('\rcurrent cell: %s' %(session))
-#     sys.stdout.flush()
-    print(session)
-    main_loop(session,data_path,save_path)
+if parallel==1:
+    num_cores = multiprocessing.cpu_count()                             
+    processed_list = Parallel(n_jobs=num_cores)(delayed(main_loop)(session,data_path,save_path) for session in sessions)
+else:
+    for session in sessions:
+        sys.stdout.write('\rcurrent cell: %s' %(session))
+        sys.stdout.flush()
+        print(session)
+        main_loop(session,data_path,save_path)
     
-# num_cores = multiprocessing.cpu_count()                             
-# processed_list = Parallel(n_jobs=num_cores)(delayed(main_loop)(session,data_path,save_path) for session in sessions)
+

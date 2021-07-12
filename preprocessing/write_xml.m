@@ -8,8 +8,8 @@
     defaults.VoltageRange = 20;
     defaults.Amplification = 1000;
     defaults.LfpSampleRate = FNew;
-    defaults.PointsPerWaveform = 64;
-    defaults.PeakPointInWaveform = 32;
+    defaults.PointsPerWaveform = 30;
+    defaults.PeakPointInWaveform = 8;
     defaults.FeaturesPerWave = 4;
     [~,basename] = fileparts(path);
     bz_MakeXMLFromProbeMaps({map},path,basename,1,defaults)

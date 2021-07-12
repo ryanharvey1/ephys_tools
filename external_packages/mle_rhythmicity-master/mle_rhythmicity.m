@@ -325,7 +325,7 @@ else % A single run
 end
 
 %% plotting
-if ~ishold
+if ~ishold && plotit(1)
     cla
 end
 if plotit(1)
