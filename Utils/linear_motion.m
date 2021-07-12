@@ -18,7 +18,7 @@ distance_vector = sqrt(sqrXDiff + sqrYDiff);
 velocity = (distance_vector)*fr; %instanteous velocity
 acceleration = gradient(velocity,1/fr); %instanteous acceleration
 
-frames_to_smooth = nearest_odd(samplerate/smooth_factor);
+frames_to_smooth = nearest_odd(fr/smooth_factor);
 velocity = sgolayfilt(velocity,3,frames_to_smooth);
 
 end
