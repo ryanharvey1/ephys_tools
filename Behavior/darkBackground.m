@@ -152,7 +152,7 @@ function [] = recolorChildren(hObject,backColor,foreColor)
 % hierarchy under hObject
 hChild = findall(hObject);
 
-for iChild = 1:length(hChild);
+for iChild = 1:length(hChild)
     % get child type
     typeChild = get(hChild(iChild),'Type');
     % types of objects, and how to treat them
