@@ -257,6 +257,8 @@ classdef after_spikesort_cleanup
             % load kilosort data processed in phy using 'spikes' function
             sp = loadKSdir(myKsDir);
             
+            %%% Need to add option for KS1 vs KS2. The below is KS2 wheras
+            %%% sp has different labels for KS1. LB 11/13/2021
             % read cluster_info.tsv
             opts = delimitedTextImportOptions("NumVariables", 10);
             opts.DataLines = [2, Inf];
@@ -332,6 +334,7 @@ classdef after_spikesort_cleanup
             
             disp('finished... go post process this session :)')
         end
+        
         
         function handle_kwik(basedir)
             
