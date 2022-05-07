@@ -1,11 +1,11 @@
 function  behavior_coding(varargin)
 % behavior_coding: read in video and label different behaviors
 %
-% Input:    
+% Input:
 %           path: path to video file (uigetfile by defalt)
 %           behaviors: cell array of 4 behaviors to label (see default below)
 %
-% output: saves a .mat file containing a structure of occurrences of behaviors 
+% output: saves a .mat file containing a structure of occurrences of behaviors
 %           to the same path as video
 %
 %
@@ -13,10 +13,10 @@ function  behavior_coding(varargin)
 % scroll through the video with the scroll bar. When you see a behavior,
 % toggle the respective behavior button on (it will change color). When the
 % behavior stops, toggle the button off. When done, hit done and the
-% results file will be saved to your directory. 
+% results file will be saved to your directory.
 %
-% Future work: 
-%       make everything robust to user error. 
+% Future work:
+%       make everything robust to user error.
 %       add an option for more behaviors
 %       check if multiple video formats work
 %       clean up UI
@@ -26,23 +26,23 @@ function  behavior_coding(varargin)
 
 % parse input
 p = inputParser;
-p.addParameter('path',[]);
-p.addParameter('behaviors',{'grooming','rearing','head_scan','Trial_Start','Trial_End'});
+p.addParameter('vid_path',[]);
+p.addParameter('behaviors',{'object_1','object_2','grooming','Trial_Start','Trial_End'});
 parse(p,varargin{:});
 
 clear global
 global data
 
-data.path = p.Results.path;
+data.vid_path = p.Results.vid_path;
 data.behaviors = p.Results.behaviors;
 
 
-if isempty(data.path)
-    data.path=uigetfile('*.*','find your video you want to analyze');
+if isempty(data.vid_path)
+    data.vid_path=uigetfile('*.*','find your video you want to analyze');
 end
 
 % load video
-data.video=VideoReader(data.path);
+data.video=VideoReader(data.vid_path);
 data.video.CurrentTime=0;
 data.playbackspeed=1;
 
@@ -154,7 +154,7 @@ behavior5 = uicontrol('Parent', F, ...
 
     function playfast
         if playfastButton.Value==1
-            data.playbackspeed=5; %was 5, changed by LB 09/june/2019. 5 is max without causing delay. 
+            data.playbackspeed=5; %was 5, changed by LB 09/june/2019. 5 is max without causing delay.
             playfastButton.BackgroundColor='r';
         else
             data.playbackspeed=3; %was 1, changed by LB 09/june/2019
@@ -192,13 +192,9 @@ behavior5 = uicontrol('Parent', F, ...
     end
 
     function save_data(data)
-        processedpath=strsplit(data.path,filesep);
-        filename=processedpath(end);
-        processedpath(end)=[];
-        savepath=fullfile(strjoin(processedpath,filesep),extractBefore(filename,'.mov'));
-        save(savepath{1},'-struct','data','-v7.3')
-        
-        disp(['saving data to ',savepath{1}])
+       [processedpath,filename] = fileparts(data.vid_path);
+        save(fullfile(processedpath,filename),'-struct','data','-v7')
+        disp(['saving data to ',fullfile(processedpath,filename)])
     end
 
     function recordtime_behav1
