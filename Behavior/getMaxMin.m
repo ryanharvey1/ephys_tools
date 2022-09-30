@@ -24,11 +24,10 @@ maxmin=table; %initialize data table.
 
 for file=1:length(vidfile) %loop through folders containing subject videos
     %Pull up video
-    videoPathAndFileName = strcat(vidfile(file).folder,filesep,vidfile(file).name,filesep,vidfile(file).name,'.avi');
-    videoObj = VideoReader(videoPathAndFileName);
+    videoObj = VideoReader(fullfile(vidDir,vidfile(file).name));
     
     %Save first frame as image (jpeg)
-    imwrite(readFrame(videoObj),[vidfile(file).folder,filesep,vidfile(file).name,filesep,vidfile(file).name,'.jpeg'])
+    imwrite(readFrame(videoObj),[fullfile(vidDir,vidfile(file).name),'.jpeg'])
     
     % go to folder containing video & image
     cd(strcat(vidfile(file).folder,filesep,vidfile(file).name))
