@@ -4,7 +4,7 @@ function run_ks2(basepath)
 %% you need to change most of the paths in this block
 rootZ = basepath; % the raw data binary file is in this folder
 rootH = basepath; % path to temporary binary file (same size as data, should be on fast SSD)
-pathToYourConfigFile = 'D:\Users\BClarkLab\ephys_tools\external_packages\Kilosort2'; % take from Github folder and put it somewhere else (together with the master_file)
+pathToYourConfigFile = 'C:\Users\schafferlab\github\ephys_tools\ephys_tools\external_packages\Kilosort2'; % take from Github folder and put it somewhere else (together with the master_file)
 
 ops.trange    = [0 Inf]; % time range to sort
 ops.NchanTOT  = 64; % total number of channels in your recording

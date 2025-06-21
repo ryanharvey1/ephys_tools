@@ -13,24 +13,29 @@ if nargin<1
     basepath = pwd;
 end
 
+basename = basenameFromBasepath(basepath); 
+
+ssd_folder = fullfile('C:\kilo_temp',basename);
+
+
 %loading configuration structure
-ops = StandardConfig_KS2Wrapper(basepath);
+ops = StandardConfig_KS2Wrapper(ssd_folder);
 
 %% this block runs all the steps of the algorithm
-fprintf('Looking for data inside %s \n', basepath)
+fprintf('Looking for data inside %s \n', ssd_folder)
 
 % is there a channel map file in this folder?
-fs = dir(fullfile(basepath, 'chan*.mat'));
+fs = dir(fullfile(ssd_folder, 'chan*.mat'));
 if ~isempty(fs)
-    ops.chanMap = fullfile(basepath, fs(1).name);
+    ops.chanMap = fullfile(ssd_folder, fs(1).name);
 else
-    createChannelMapFile_Local(basepath)
+    createChannelMapFile_Local(ssd_folder)
 end
 %IF NOT, CREATE A CHANNEL MAP BASED ON THE XML
 
 % find the binary file
-fs          = [dir(fullfile(basepath, '*.bin')) dir(fullfile(basepath, '*.dat'))];
-ops.fbinary = fullfile(basepath, fs(1).name);
+fs          = [dir(fullfile(ssd_folder, '*.dat'))];
+ops.fbinary = fullfile(ssd_folder, fs(1).name);
 
 % preprocess data to create temp_wh.dat
 disp('Preprocessing data')
@@ -42,7 +47,7 @@ rez = clusterSingleBatches(rez);
 
 %creating a folder to save kilosort results every time
 temp = ['Kilosort2_' datestr(clock,'yyyy-mm-dd_HHMMSS')];
-ks2_folder = fullfile(basepath, temp);
+ks2_folder = fullfile(ssd_folder, temp);
 mkdir(ks2_folder);
 
 % saving here is a good idea, because the rest can be resumed after loading rez
@@ -96,6 +101,6 @@ fname = fullfile(ks2_folder, 'rez2.mat');
 save(fname, 'rez', '-v7.3');
 
 %% creating neurosuite files if specified in the variable neurosuite_files
- if neurosuite_files
-    ConvertKilosort2Neurosuite_KSW(rez) 
- end
+ % if neurosuite_files
+ %    ConvertKilosort2Neurosuite_KSW(rez) 
+ % end

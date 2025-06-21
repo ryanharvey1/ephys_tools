@@ -10,7 +10,7 @@ function ops = StandardConfig_KS2Wrapper(basepath)
 rootH = basepath; 
 
 %loading xml file 
-d   = dir('*.xml');
+d   = dir(fullfile(rootH,'*.xml'));
 if ~isempty(d)
     par = LoadXml(fullfile(basepath,d(1).name));
 else
